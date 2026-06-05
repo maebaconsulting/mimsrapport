@@ -47,3 +47,6 @@ samples/**/*-REEL.xlsx
 
 # Artefacts Playwright (validation rendu)
 .playwright-mcp/
+
+# Artefacts du harness Claude Code
+.claude/
