@@ -1,0 +1,175 @@
+/* Écran d'import (« migration » Manar) · agencement spatial : zone haute en deux
+   colonnes (action + historique), récapitulatif en tuiles horizontales. */
+
+/* Zone haute : carte d'action à gauche, historique à droite */
+.import-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .import-top {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* La carte d'action occupe toute sa colonne (annule le max-width de .card) */
+.import-card {
+  max-width: none;
+}
+
+/* Récapitulatif en tuiles · grille horizontale qui occupe la largeur */
+.import-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(186px, 1fr));
+  gap: 14px;
+}
+
+.stat-tile {
+  background: var(--mw-white);
+  border: 1px solid var(--mw-border);
+  border-radius: var(--mw-radius-lg);
+  box-shadow: var(--mw-shadow-1);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-height: 96px;
+}
+
+.stat-tile__label {
+  color: var(--mw-fg-muted);
+}
+
+.stat-tile__value {
+  font-family: var(--mw-font-display);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--mw-ink);
+}
+
+.stat-tile__sub {
+  font-size: 12px;
+  color: var(--mw-fg-muted);
+  margin-top: auto;
+}
+
+/* Panneau historique des imports */
+.import-history {
+  background: var(--mw-white);
+  border: 1px solid var(--mw-border);
+  border-radius: var(--mw-radius-xl);
+  box-shadow: var(--mw-shadow-1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 420px;
+}
+
+.import-history__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.import-history__count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mw-fg-muted);
+  background: var(--mw-surface-sunken);
+  border-radius: var(--mw-radius-full);
+  padding: 2px 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.import-history__empty {
+  color: var(--mw-fg-muted);
+  font-size: 13px;
+  margin: 4px 0;
+}
+
+.import-history__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.import-history__item {
+  padding: 11px 0;
+  border-bottom: 1px solid var(--mw-border);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.import-history__item:last-child {
+  border-bottom: none;
+}
+
+.import-history__line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.import-history__file {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mw-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-history__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--mw-fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Pastilles de statut de l'historique */
+.histo-pill {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 4px 9px;
+  border-radius: var(--mw-radius-sm);
+  white-space: nowrap;
+}
+.histo-pill--ok {
+  background: var(--mw-success-bg);
+  color: var(--mw-success-fg);
+}
+.histo-pill--echec {
+  background: var(--mw-danger-bg);
+  color: var(--mw-danger-fg);
+}
+.histo-pill--neutre {
+  background: var(--mw-surface-sunken);
+  color: var(--mw-fg-muted);
+}
+.histo-pill--cours {
+  background: var(--mw-warning-bg);
+  color: var(--mw-warning-fg);
+}

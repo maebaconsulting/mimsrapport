@@ -354,6 +354,13 @@
   border-color: #7a3322;
 }
 
+/* Données importées affichées sous le récapitulatif d'import */
+.import-data {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 /* Progression et notices d'import */
 .import-progress {
   display: flex;

@@ -3,6 +3,9 @@ import { getPocketBase } from "../lib/pocketbase";
 import { pickManarFile } from "../lib/fileio";
 import { runImport } from "./import-service";
 import type { ImportResult, ImportSummary } from "./import-service";
+import { ClientsTable } from "../clients/ClientsTable";
+import { ImportHistory } from "./ImportHistory";
+import "./import.css";
 
 type Phase =
   | { kind: "idle" }
@@ -11,25 +14,35 @@ type Phase =
   | { kind: "reussi"; summary: ImportSummary }
   | { kind: "erreur"; message: string };
 
-const COUNT_LABELS: Array<[keyof ImportSummary["counts"], string]> = [
-  ["operations", "Opérations brutes"],
-  ["emetteurs", "Émetteurs"],
-  ["instruments", "Instruments"],
-  ["clients", "Clients"],
-  ["clientsPP", "· dont personnes physiques"],
-  ["clientsPM", "· dont personnes morales"],
-  ["portefeuilles", "Portefeuilles"],
-  ["mouvements", "Mouvements de titres"],
-  ["positions", "Positions"],
-];
-
 function formatXAF(n: number): string {
-  // Espace insécable comme séparateur de milliers.
-  return n.toLocaleString("fr-FR").replace(/ /g, " ") + " XAF";
+  return n.toLocaleString("fr-FR").replace(/ /g, " ") + " XAF";
+}
+
+/** Tuiles du récapitulatif d'import (grille horizontale). */
+function statTiles(s: ImportSummary): Array<{ label: string; value: string; sub?: string }> {
+  const c = s.counts;
+  return [
+    { label: "Opérations brutes", value: c.operations.toLocaleString("fr-FR") },
+    {
+      label: "Clients",
+      value: c.clients.toLocaleString("fr-FR"),
+      sub: `${c.clientsPP} pers. physiques · ${c.clientsPM} pers. morales`,
+    },
+    { label: "Portefeuilles", value: c.portefeuilles.toLocaleString("fr-FR") },
+    { label: "Émetteurs", value: c.emetteurs.toLocaleString("fr-FR") },
+    { label: "Instruments", value: c.instruments.toLocaleString("fr-FR") },
+    { label: "Mouvements de titres", value: c.mouvements.toLocaleString("fr-FR") },
+    { label: "Positions", value: c.positions.toLocaleString("fr-FR") },
+    {
+      label: "Montant brut total",
+      value: formatXAF(Math.round(s.montantTotalXaf)),
+    },
+  ];
 }
 
 export function ImportWizard({ onImported }: { onImported?: () => void }) {
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
+  const [historyKey, setHistoryKey] = useState(0);
 
   async function doImport(
     fileName: string,
@@ -43,8 +56,7 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
         fileName,
         data,
         replace,
-        onProgress: (step) =>
-          setPhase({ kind: "encours", step, fileName }),
+        onProgress: (step) => setPhase({ kind: "encours", step, fileName }),
       });
       if (result.status === "DEJA_IMPORTE") {
         setPhase({
@@ -57,8 +69,10 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
         setPhase({ kind: "reussi", summary: result });
         onImported?.();
       }
+      setHistoryKey((k) => k + 1); // l'historique manar_imports a changé
     } catch (err) {
       setPhase({ kind: "erreur", message: String(err) });
+      setHistoryKey((k) => k + 1);
     }
   }
 
@@ -71,100 +85,111 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
   const busy = phase.kind === "encours";
 
   return (
-    <div className="card" style={{ maxWidth: 720 }}>
-      <span className="small-caps">Assistant d'import</span>
-      <p className="card__lead">
-        Sélectionnez le fichier Manar (« État des instruments saisis sur
-        Manar », format .xls ou .xlsx). L'import matérialise les clients,
-        portefeuilles, instruments, émetteurs, positions et mouvements.
-      </p>
-
-      {phase.kind === "idle" || phase.kind === "encours" ? (
-        <button
-          type="button"
-          className="import-dropzone"
-          onClick={handlePick}
-          disabled={busy}
-        >
-          <span className="import-dropzone__icon" aria-hidden="true">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
-              strokeLinejoin="round">
-              <path d="M12 16V4" />
-              <path d="m7 9 5-5 5 5" />
-              <path d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" />
-            </svg>
-          </span>
-          <span className="import-dropzone__title">
-            {busy ? "Import en cours…" : "Choisir un fichier Manar"}
-          </span>
-          <span className="import-dropzone__hint">
-            Formats acceptés : .xls, .xlsx
-          </span>
-        </button>
-      ) : null}
-
-      {phase.kind === "encours" && (
-        <p className="import-progress">
-          <span className="import-progress__spinner" /> {phase.step}
-        </p>
-      )}
-
-      {phase.kind === "deja" && (
-        <div className="import-notice import-notice--warn">
-          <p>
-            Ce fichier a déjà été importé avec succès (« {phase.existingFileName}{" "}
-            »). Vous pouvez annuler ou remplacer l'import précédent.
+    <>
+      <div className="import-top">
+        <div className="card import-card">
+          <span className="small-caps">Assistant d'import</span>
+          <p className="card__lead">
+            Sélectionnez le fichier Manar (« État des instruments saisis sur
+            Manar », format .xls ou .xlsx). L'import matérialise les clients,
+            portefeuilles, instruments, émetteurs, positions et mouvements.
           </p>
-          <div className="import-notice__actions">
-            <button
-              className="btn btn--danger"
-              onClick={() => doImport(phase.fileName, phase.data, true)}
-            >
-              Remplacer l'import précédent
-            </button>
-            <button
-              className="btn"
-              onClick={() => setPhase({ kind: "idle" })}
-            >
-              Annuler
-            </button>
-          </div>
-        </div>
-      )}
 
-      {phase.kind === "erreur" && (
-        <div className="import-notice import-notice--danger">
-          <p>Échec de l'import : {phase.message}</p>
-          <button className="btn" onClick={() => setPhase({ kind: "idle" })}>
-            Recommencer
-          </button>
+          {(phase.kind === "idle" || phase.kind === "encours") && (
+            <button
+              type="button"
+              className="import-dropzone"
+              onClick={handlePick}
+              disabled={busy}
+            >
+              <span className="import-dropzone__icon" aria-hidden="true">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+                  strokeLinejoin="round">
+                  <path d="M12 16V4" />
+                  <path d="m7 9 5-5 5 5" />
+                  <path d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" />
+                </svg>
+              </span>
+              <span className="import-dropzone__title">
+                {busy ? "Import en cours…" : "Choisir un fichier Manar"}
+              </span>
+              <span className="import-dropzone__hint">
+                Formats acceptés : .xls, .xlsx
+              </span>
+            </button>
+          )}
+
+          {phase.kind === "encours" && (
+            <p className="import-progress">
+              <span className="import-progress__spinner" /> {phase.step}
+            </p>
+          )}
+
+          {phase.kind === "deja" && (
+            <div className="import-notice import-notice--warn">
+              <p>
+                Ce fichier a déjà été importé avec succès (« {phase.existingFileName}{" "}
+                »). Vous pouvez annuler ou remplacer l'import précédent.
+              </p>
+              <div className="import-notice__actions">
+                <button
+                  className="btn btn--danger"
+                  onClick={() => doImport(phase.fileName, phase.data, true)}
+                >
+                  Remplacer l'import précédent
+                </button>
+                <button className="btn" onClick={() => setPhase({ kind: "idle" })}>
+                  Annuler
+                </button>
+              </div>
+            </div>
+          )}
+
+          {phase.kind === "erreur" && (
+            <div className="import-notice import-notice--danger">
+              <p>Échec de l'import : {phase.message}</p>
+              <button className="btn" onClick={() => setPhase({ kind: "idle" })}>
+                Recommencer
+              </button>
+            </div>
+          )}
+
+          {phase.kind === "reussi" && (
+            <div className="import-notice import-notice--success">
+              <p>
+                Import réussi en {(phase.summary.durationMs / 1000).toFixed(1)} s.
+                Les entités ci-dessous ont été matérialisées dans la base locale.
+              </p>
+              <button
+                className="btn"
+                style={{ marginTop: 4 }}
+                onClick={() => setPhase({ kind: "idle" })}
+              >
+                Nouvel import
+              </button>
+            </div>
+          )}
         </div>
-      )}
+
+        <ImportHistory reloadKey={historyKey} />
+      </div>
 
       {phase.kind === "reussi" && (
-        <div className="import-notice import-notice--success">
-          <p>
-            Import réussi en {(phase.summary.durationMs / 1000).toFixed(1)} s ·
-            montant brut total {formatXAF(Math.round(phase.summary.montantTotalXaf))}.
-          </p>
-          <table className="status-table">
-            <tbody>
-              {COUNT_LABELS.map(([key, label]) => (
-                <tr key={key}>
-                  <td className="status-table__name">{label}</td>
-                  <td className="status-table__count">
-                    {phase.summary.counts[key]}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <section className="import-stats">
+          <span className="small-caps">Récapitulatif de l'import</span>
+          <div className="stat-grid">
+            {statTiles(phase.summary).map((t) => (
+              <div key={t.label} className="stat-tile">
+                <span className="small-caps stat-tile__label">{t.label}</span>
+                <span className="stat-tile__value">{t.value}</span>
+                {t.sub && <span className="stat-tile__sub">{t.sub}</span>}
+              </div>
+            ))}
+          </div>
           {phase.summary.warnings.length > 0 && (
             <details className="import-warnings">
-              <summary>
-                {phase.summary.warnings.length} avertissement(s)
-              </summary>
+              <summary>{phase.summary.warnings.length} avertissement(s)</summary>
               <ul>
                 {phase.summary.warnings.slice(0, 20).map((w, i) => (
                   <li key={i}>{w}</li>
@@ -172,15 +197,15 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
               </ul>
             </details>
           )}
-          <button
-            className="btn"
-            style={{ marginTop: 12 }}
-            onClick={() => setPhase({ kind: "idle" })}
-          >
-            Nouvel import
-          </button>
-        </div>
+        </section>
       )}
-    </div>
+
+      {phase.kind === "reussi" && (
+        <section className="import-data">
+          <span className="small-caps">Clients importés</span>
+          <ClientsTable showKpis={false} />
+        </section>
+      )}
+    </>
   );
 }
