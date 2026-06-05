@@ -1,0 +1,91 @@
+/*
+ * Design System v2.2 · tokens portés de MIMS (app/globals.css, bloc LOCKED).
+ * Reproduire les hex à l'identique. En cas de doute, app/globals.css fait foi.
+ *
+ * Périmètre jalon 0 : couleurs de marque, gris WCAG AA, couleurs sémantiques,
+ * typographie, géométrie, focus. Les couleurs métier (secteurs, pays CEMAC,
+ * organismes) seront portées au jalon 5 (tableaux de bord).
+ */
+
+:root {
+  /* Couleurs de marque */
+  --color-ink: #11191f; /* sidebar, boutons primaires, texte sur clair */
+  --color-surface: #f4f3ec; /* fond de canevas principal */
+  --color-surface-raised: #ffffff; /* fond des cartes */
+  --color-accent: #ffed90; /* or pâle, indicateur actif */
+  --color-accent-soft: #fff6c9; /* fond carte attention */
+
+  /* Niveaux de gris (WCAG 2.1 AA) */
+  --color-gray-50: #fafaf9;
+  --color-gray-100: #f0efe8; /* hover, chip neutre */
+  --color-gray-200: #e5e4dc; /* bordures, séparateurs */
+  --color-gray-300: #d1cfc4;
+  --color-gray-400: #6e6c67; /* texte secondaire */
+  --color-gray-500: #5f5c58;
+  --color-gray-600: #424751; /* labels de section, en-têtes de colonne */
+  --color-gray-700: #2d3138;
+  --color-gray-900: #11191f; /* = ink */
+
+  /* Couleurs sémantiques */
+  --color-success: #2d5a2d;
+  --color-success-soft: #e8f0e8;
+  --color-warning: #8c5c0f;
+  --color-warning-soft: #f8efd8;
+  --color-danger: #8a2d2d;
+  --color-danger-soft: #f5e3e3;
+  --color-info: #1f4a57;
+  --color-info-soft: #dee9ed;
+  --color-critical: #7a1e1e;
+  --color-critical-soft: #ecd5d5;
+
+  /* Typographie */
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif; /* titres, labels, nav */
+  --font-mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, monospace; /* nombres, codes, dates */
+  --font-ui: "Inter", system-ui, sans-serif; /* corps, 13-14px */
+
+  /* Géométrie et espacement */
+  --spacing: 4px; /* unité de base */
+  --row-height-dense: 36px; /* tables opérationnelles (LOCKED) */
+  --row-header-height: 40px;
+  --page-header-height: 90px;
+  --document-a4: 794px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+}
+
+/* tabular-nums obligatoire sur toutes les valeurs numériques (réglé globalement) */
+html {
+  font-feature-settings: "tnum" 1;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.43;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Small-caps · labels de colonne et de section */
+.small-caps {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-gray-600);
+}
+
+/* Anneau de focus */
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 237, 144, 0.6);
+}

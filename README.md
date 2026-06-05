@@ -18,7 +18,7 @@ règlement-livraison, ni comptabilité).
 
 Mono-poste hors ligne en v1, conçu pour évoluer vers le multi-poste sans réécriture.
 
-## Démarrer le développement
+## Spécifications
 
 Tout est dans `specs/`. Ce dossier contient **toutes les directives** pour qu'une
 instance de développement (humaine ou Claude Code) démarre sans contexte préalable.
@@ -28,7 +28,36 @@ La plateforme MIMS (`/Users/dan/Documents/SOFTWARE/myProjects/mims`) est sur la 
 machine et sert de **source de port** (gabarits PDF, parser Manar, tokens du design
 system). Voir `specs/PORT-SOURCES.md`.
 
+## Démarrer le développement
+
+Prérequis : Node 20+, pnpm, Rust stable, dépendances Tauri (voir la documentation
+Tauri pour la plateforme).
+
+```bash
+pnpm install        # dépendances frontend
+pnpm dev            # serveur Vite seul (webview dans un navigateur)
+pnpm tauri dev      # application desktop complète (webview + noyau Rust)
+pnpm build          # compile le frontend (tsc + vite)
+pnpm test           # tests Vitest
+```
+
+## Structure
+
+```
+src/                frontend React (webview)
+  design/           tokens du design system portés de MIMS
+  import/           assistant d'import + parsing Manar
+  reports/          gabarits react-pdf + services de rapport
+  dashboards/       vues Recharts + KPI
+  lib/              client PocketBase, configuration
+src-tauri/          coque Rust (sidecar, dialogues, licence)
+pocketbase/         binaire sidecar + migrations de schéma
+samples/manar/      échantillon anonymisé (golden-file)
+scripts/            utilitaires de build
+specs/              spécifications (source de vérité)
+```
+
 ## Statut
 
-Phase de spécification. Aucun code applicatif n'est encore écrit : le dépôt ne
-contient pour l'instant que les directives.
+En cours de développement, jalon par jalon (voir `specs/09-ROADMAP-MVP.md`).
+Jalon 0 (scaffold Tauri + React) : terminé.
