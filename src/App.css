@@ -74,7 +74,17 @@
   cursor: default;
 }
 
-.app-nav__item--active {
+.app-nav__item:not(:disabled) {
+  cursor: pointer;
+}
+
+.app-nav__item:not(:disabled):hover {
+  color: var(--color-surface);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.app-nav__item--active,
+.app-nav__item--active:hover {
   background: rgba(255, 237, 144, 0.12);
   color: var(--color-accent);
   font-weight: 600;
@@ -152,4 +162,120 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
   color: var(--color-ink);
+}
+
+/* Boutons */
+.btn {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 9px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-gray-200);
+  background: var(--color-surface-raised);
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--color-gray-100);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.btn--primary {
+  background: var(--color-ink);
+  color: var(--color-surface);
+  border-color: var(--color-ink);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--color-gray-700);
+}
+
+.btn--danger {
+  background: var(--color-danger);
+  color: #fff;
+  border-color: var(--color-danger);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: var(--color-critical);
+}
+
+/* Progression et notices d'import */
+.import-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  color: var(--color-gray-600);
+  font-size: 13px;
+}
+
+.import-progress__spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-gray-300);
+  border-top-color: var(--color-ink);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.import-notice {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-gray-200);
+  font-size: 13px;
+}
+
+.import-notice p {
+  margin: 0 0 10px;
+}
+
+.import-notice--success {
+  background: var(--color-success-soft);
+  border-color: #c7dcc7;
+}
+
+.import-notice--warn {
+  background: var(--color-warning-soft);
+  border-color: #e8d4a8;
+}
+
+.import-notice--danger {
+  background: var(--color-danger-soft);
+  border-color: #e3c2c2;
+}
+
+.import-notice__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.import-warnings {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--color-gray-600);
+}
+
+.import-warnings summary {
+  cursor: pointer;
+  color: var(--color-warning);
+}
+
+.import-warnings ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
 }

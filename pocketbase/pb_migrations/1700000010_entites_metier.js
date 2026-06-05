@@ -109,8 +109,10 @@ migrate(
         type: "base",
         name: "instruments",
         fields: [
-          { type: "text", name: "isin", max: 12 },
-          { type: "text", name: "code_mims", max: 32 },
+          // Les ISIN Manar ne sont pas strictement ISO 6166 (12 car.) : certains
+          // portent un suffixe (ex. GA000002055-2). Marge de longueur.
+          { type: "text", name: "isin", max: 20 },
+          { type: "text", name: "code_mims", max: 40 },
           { type: "text", name: "libelle_fr", max: 255 },
           { type: "select", name: "type", maxSelect: 1, values: ["ACTION", "OBLIGATION", "OPC"] },
           { type: "text", name: "categorie", max: 32 },

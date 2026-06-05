@@ -47,7 +47,7 @@ migrate(
           { type: "relation", name: "import", required: true, maxSelect: 1, collectionId: id("manar_imports"), cascadeDelete: true },
           { type: "text", name: "manar_op_id", required: true, max: 64 },
           { type: "select", name: "statut", maxSelect: 1, values: ["F", "V", "P", "S"] },
-          { type: "text", name: "isin", max: 12 },
+          { type: "text", name: "isin", max: 20 },
           { type: "text", name: "libelle_instrument", max: 255 },
           { type: "text", name: "poste_code", max: 32 },
           { type: "text", name: "emetteur_code", max: 32 },
