@@ -130,3 +130,26 @@
   color: var(--color-gray-600);
   line-height: 1.5;
 }
+
+.status-table {
+  margin-top: 16px;
+  border-collapse: collapse;
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.status-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.status-table__name {
+  color: var(--color-gray-600);
+}
+
+.status-table__count {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink);
+}
