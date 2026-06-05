@@ -50,3 +50,10 @@ samples/**/*-REEL.xlsx
 
 # Artefacts du harness Claude Code
 .claude/
+
+# Clé privée de signature de licence (jamais committée)
+scripts/license-private-key.pem
+*.license
+
+# Exception : fixtures de licence de test (signées, sans secret, requises par les tests)
+!src-tauri/tests/fixtures/*.license

@@ -5,6 +5,8 @@ import { getPocketBase } from "./lib/pocketbase";
 import { ImportWizard } from "./import/ImportWizard";
 import { ReportsView } from "./reports/ReportsView";
 import { DashboardsView } from "./dashboards/DashboardsView";
+import { LicenseGate } from "./LicenseGate";
+import { getLicenseStatus, type LicenseStatus } from "./lib/license";
 
 type Vue = "accueil" | "import" | "rapports" | "tableaux";
 
@@ -33,6 +35,11 @@ const NAV: Array<{ id: Vue; label: string; enabled: boolean }> = [
 function App() {
   const [vue, setVue] = useState<Vue>("accueil");
   const [state, setState] = useState<ConnState>({ phase: "connexion" });
+  const [license, setLicense] = useState<LicenseStatus | null>(null);
+
+  useEffect(() => {
+    void getLicenseStatus().then(setLicense);
+  }, []);
 
   const rafraichir = useCallback(async () => {
     try {
@@ -51,6 +58,19 @@ function App() {
   useEffect(() => {
     void rafraichir();
   }, [rafraichir]);
+
+  if (license === null) {
+    return (
+      <div className="license-gate">
+        <div className="license-card">
+          <p className="license-card__text">Vérification de la licence…</p>
+        </div>
+      </div>
+    );
+  }
+  if (!license.valid) {
+    return <LicenseGate status={license} onValid={setLicense} />;
+  }
 
   return (
     <div className="app-shell">

@@ -1,0 +1,4 @@
+{
+  "payload": "{\"sdb\":\"CCA Bourse\",\"sdb_code\":\"CCAB\",\"expires_at\":\"2099-12-31\",\"scope\":\"reporting-manar\",\"issued_at\":\"2026-06-05\"}",
+  "signature": "kOrs+2ppE1cN+LgPjvCbKQprTugopcYVJ0Iep98GlYetMk4CfN6lGm4zkpXymBvuf79S9RB7hV7YiHVrmSRxDA=="
+}

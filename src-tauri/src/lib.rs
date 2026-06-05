@@ -5,6 +5,7 @@
 // fichiers natifs et exposera la validation de licence (jalon 7).
 
 mod fileio;
+mod license;
 mod sidecar;
 
 use tauri::RunEvent;
@@ -22,6 +23,8 @@ pub fn run() {
             fileio::read_picked_file,
             fileio::save_pdf,
             fileio::log_pdf_selftest,
+            license::get_license_status,
+            license::install_license,
         ])
         .setup(|app| {
             // Démarrage du sidecar PocketBase avant le chargement effectif de
