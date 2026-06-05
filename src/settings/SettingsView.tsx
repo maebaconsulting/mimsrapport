@@ -1,12 +1,21 @@
 // Écran « Paramètres » · configuration de la société de bourse (parametres_sdb).
 // Ces champs alimentent les en-têtes et pieds de page de tous les rapports.
 // Voir specs/10-CONFIG-SDB.md.
+//
+// Mise en page en panneaux par section (occupe la largeur), aperçu du logo et
+// aperçu en direct des mentions interpolées, barre d'enregistrement collante.
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getPocketBase } from "../lib/pocketbase";
-import { DEFAULT_SDB_CONFIG, type SdbConfig } from "../lib/parametres-sdb";
+import {
+  DEFAULT_SDB_CONFIG,
+  buildMentionsLines,
+  type SdbConfig,
+  type MentionsFamily,
+} from "../lib/parametres-sdb";
+import "./settings.css";
 
-type FieldKind = "text" | "number" | "date" | "textarea";
+type FieldKind = "text" | "number" | "date";
 
 interface FieldDef {
   key: keyof SdbConfig;
@@ -19,7 +28,8 @@ interface Section {
   champs: FieldDef[];
 }
 
-const SECTIONS: Section[] = [
+/** Sections de champs courts, rendues en panneaux avec grille de champs. */
+const FIELD_SECTIONS: Section[] = [
   {
     titre: "Identité",
     champs: [
@@ -60,20 +70,23 @@ const SECTIONS: Section[] = [
     ],
   },
   {
-    titre: "Mentions légales (modèles)",
-    champs: [
-      { key: "mentions_releve", label: "Mentions · relevés et attestations", kind: "textarea" },
-      { key: "mentions_declaration", label: "Mentions · déclarations réglementaires", kind: "textarea" },
-      { key: "mentions_facture", label: "Mentions · factures", kind: "textarea" },
-    ],
-  },
-  {
     titre: "Période d'effet",
     champs: [
       { key: "date_effet_debut", label: "Début d'effet", kind: "date" },
       { key: "date_effet_fin", label: "Fin d'effet (vide = courant)", kind: "date" },
     ],
   },
+];
+
+/** Modèles de mentions (textarea + aperçu interpolé), par famille de document. */
+const MENTIONS_FIELDS: Array<{
+  key: keyof SdbConfig;
+  label: string;
+  family: MentionsFamily;
+}> = [
+  { key: "mentions_releve", label: "Relevés et attestations", family: "releve" },
+  { key: "mentions_declaration", label: "Déclarations réglementaires", family: "declaration" },
+  { key: "mentions_facture", label: "Factures", family: "facture" },
 ];
 
 type FormState = Record<keyof SdbConfig, string>;
@@ -87,6 +100,15 @@ function configToForm(c: SdbConfig): FormState {
   return out;
 }
 
+/** Reconstruit un SdbConfig depuis le formulaire (pour l'aperçu des mentions). */
+function formToConfig(form: FormState): SdbConfig {
+  return {
+    ...DEFAULT_SDB_CONFIG,
+    ...form,
+    capital_social: Number(form.capital_social) || 0,
+  } as SdbConfig;
+}
+
 type Notice =
   | { kind: "idle" }
   | { kind: "chargement" }
@@ -98,6 +120,7 @@ export function SettingsView() {
   const [form, setForm] = useState<FormState>(configToForm(DEFAULT_SDB_CONFIG));
   const [recordId, setRecordId] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoApercu, setLogoApercu] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>({ kind: "chargement" });
 
   useEffect(() => {
@@ -117,6 +140,12 @@ export function SettingsView() {
             }
           }
           setForm(configToForm(merged));
+          // Aperçu du logo déjà enregistré, le cas échéant.
+          if (typeof rec.logo === "string" && rec.logo) {
+            setLogoApercu(
+              `${pb.baseURL}/api/files/${rec.collectionId}/${rec.id}/${rec.logo}`,
+            );
+          }
         }
         setNotice({ kind: "idle" });
       } catch (err) {
@@ -128,6 +157,19 @@ export function SettingsView() {
   function set(key: keyof SdbConfig, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
   }
+
+  function choisirLogo(file: File | null) {
+    setLogoFile(file);
+    if (file) setLogoApercu(URL.createObjectURL(file));
+  }
+
+  // Aperçu des mentions interpolées, recalculé à la frappe.
+  const apercuMentions = useMemo(() => {
+    const cfg = formToConfig(form);
+    const out = {} as Record<MentionsFamily, string[]>;
+    for (const m of MENTIONS_FIELDS) out[m.family] = buildMentionsLines(cfg, m.family);
+    return out;
+  }, [form]);
 
   async function enregistrer() {
     setNotice({ kind: "enregistrement" });
@@ -151,6 +193,25 @@ export function SettingsView() {
     }
   }
 
+  function renderField(champ: FieldDef) {
+    return (
+      <label className="report-field" key={String(champ.key)}>
+        <span className="small-caps">{champ.label}</span>
+        <input
+          type={
+            champ.kind === "number"
+              ? "number"
+              : champ.kind === "date"
+                ? "date"
+                : "text"
+          }
+          value={form[champ.key]}
+          onChange={(e) => set(champ.key, e.target.value)}
+        />
+      </label>
+    );
+  }
+
   return (
     <>
       <header className="app-header">
@@ -160,63 +221,96 @@ export function SettingsView() {
           de page de tous les rapports
         </p>
       </header>
+
       <section className="app-content">
-        <div className="card">
-          {notice.kind === "chargement" ? (
+        {notice.kind === "chargement" ? (
+          <div className="card">
             <p className="card__lead">Chargement de la configuration…</p>
-          ) : (
-            <div className="report-form">
-              {SECTIONS.map((section) => (
-                <div key={section.titre}>
-                  <span className="small-caps">{section.titre}</span>
-                  {section.champs.map((champ) => (
-                    <label className="report-field" key={String(champ.key)}>
-                      <span className="small-caps">{champ.label}</span>
-                      {champ.kind === "textarea" ? (
-                        <textarea
-                          rows={3}
-                          value={form[champ.key]}
-                          onChange={(e) => set(champ.key, e.target.value)}
-                        />
-                      ) : (
-                        <input
-                          type={champ.kind === "number" ? "number" : champ.kind === "date" ? "date" : "text"}
-                          value={form[champ.key]}
-                          onChange={(e) => set(champ.key, e.target.value)}
-                        />
-                      )}
-                    </label>
-                  ))}
+          </div>
+        ) : (
+          <div className="settings-view">
+            <div className="settings-grid">
+              {FIELD_SECTIONS.map((section) => (
+                <div className="settings-panel" key={section.titre}>
+                  <div className="settings-panel__head">
+                    <span className="small-caps">{section.titre}</span>
+                  </div>
+                  <div className="settings-fields">
+                    {section.champs.map(renderField)}
+                  </div>
                 </div>
               ))}
 
-              <div>
-                <span className="small-caps">Logo</span>
-                <label className="report-field">
-                  <span className="small-caps">
-                    Image (PNG, JPEG ou WebP · 5 Mo max)
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
-                  />
-                </label>
+              <div className="settings-panel">
+                <div className="settings-panel__head">
+                  <span className="small-caps">Logo</span>
+                </div>
+                <div className="settings-logo">
+                  <div className="settings-logo__preview">
+                    {logoApercu ? (
+                      <img src={logoApercu} alt="Aperçu du logo" />
+                    ) : (
+                      <span className="settings-logo__placeholder">
+                        Aucun logo
+                      </span>
+                    )}
+                  </div>
+                  <label className="report-field settings-logo__input">
+                    <span className="small-caps">
+                      Image (PNG, JPEG ou WebP · 5 Mo max)
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={(e) => choisirLogo(e.target.files?.[0] ?? null)}
+                    />
+                  </label>
+                </div>
               </div>
 
-              <p
-                style={{
-                  fontSize: 12,
-                  color: "var(--mw-fg-muted, #6b7178)",
-                  margin: 0,
-                }}
-              >
-                Astuce mentions : utilisez des jetons entre accolades, par exemple
-                {" {raison_sociale}, {capital_social}, {rccm}, {niu},"}
-                {" {agrement_cosumaf}, {ville}. Un segment dont tous les jetons sont"}
-                {" vides est automatiquement masqué."}
-              </p>
+              <div className="settings-panel settings-panel--wide">
+                <div className="settings-panel__head">
+                  <span className="small-caps">Mentions légales (modèles)</span>
+                </div>
+                <p className="settings-hint">
+                  Utilisez des jetons entre accolades, par exemple{" "}
+                  <code>{"{raison_sociale}"}</code>, <code>{"{capital_social}"}</code>,{" "}
+                  <code>{"{rccm}"}</code>, <code>{"{niu}"}</code>,{" "}
+                  <code>{"{agrement_cosumaf}"}</code>, <code>{"{ville}"}</code>. Un
+                  segment dont tous les jetons sont vides est automatiquement masqué.
+                </p>
+                <div className="settings-mentions">
+                  {MENTIONS_FIELDS.map((m) => (
+                    <div className="settings-mention" key={String(m.key)}>
+                      <label className="report-field">
+                        <span className="small-caps">{m.label}</span>
+                        <textarea
+                          rows={3}
+                          value={form[m.key]}
+                          onChange={(e) => set(m.key, e.target.value)}
+                        />
+                      </label>
+                      <div className="settings-preview">
+                        <span className="small-caps">Aperçu en pied de page</span>
+                        {apercuMentions[m.family].length > 0 ? (
+                          apercuMentions[m.family].map((ligne, i) => (
+                            <p key={i} className="settings-preview__line">
+                              {ligne}
+                            </p>
+                          ))
+                        ) : (
+                          <p className="settings-preview__vide">
+                            Aucune ligne (jetons vides).
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
 
+            <div className="settings-actions">
               <button
                 className="btn btn--primary"
                 onClick={enregistrer}
@@ -226,23 +320,19 @@ export function SettingsView() {
                   ? "Enregistrement…"
                   : "Enregistrer la configuration"}
               </button>
-
               {notice.kind === "ok" && (
-                <p className="import-notice" style={{ marginTop: 8 }}>
+                <span className="settings-actions__notice settings-actions__notice--ok">
                   Configuration enregistrée. Les prochains rapports l'utiliseront.
-                </p>
+                </span>
               )}
               {notice.kind === "erreur" && (
-                <p
-                  className="import-notice"
-                  style={{ marginTop: 8, color: "var(--color-danger, #8A2D2D)" }}
-                >
+                <span className="settings-actions__notice settings-actions__notice--err">
                   Erreur : {notice.message}
-                </p>
+                </span>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </section>
     </>
   );

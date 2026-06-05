@@ -1,0 +1,176 @@
+/* Écran Paramètres · panneaux par section sur une grille, aperçus, barre
+   d'enregistrement collante. Tokens MoWoBank. */
+
+.settings-view {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+/* Panneau de section · carte blanche arrondie */
+.settings-panel {
+  background: var(--mw-white);
+  border: 1px solid var(--mw-border);
+  border-radius: var(--mw-radius-xl);
+  box-shadow: var(--mw-shadow-1);
+  padding: 20px 22px;
+}
+
+/* Le panneau « large » (mentions) occupe toute la largeur de la grille */
+.settings-panel--wide {
+  grid-column: 1 / -1;
+}
+
+.settings-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--mw-border);
+}
+
+/* Grille de champs courts (2 colonnes quand la place le permet) */
+.settings-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px 16px;
+}
+
+/* Champs (réutilise .report-field) + textarea homogène */
+.settings-view .report-field input,
+.settings-view .report-field textarea {
+  font-family: var(--mw-font-body);
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 10px 12px;
+  border: 1px solid var(--mw-border-strong);
+  border-radius: var(--mw-radius-md);
+  background: var(--mw-white);
+  color: var(--mw-fg);
+  width: 100%;
+  transition: var(--mw-transition);
+}
+.settings-view .report-field textarea {
+  resize: vertical;
+  min-height: 64px;
+}
+.settings-view .report-field input:focus,
+.settings-view .report-field textarea:focus {
+  outline: none;
+  border-color: var(--mw-ink);
+  box-shadow: var(--mw-ring);
+}
+
+/* Logo : aperçu + champ fichier */
+.settings-logo {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.settings-logo__preview {
+  flex-shrink: 0;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--mw-radius-lg);
+  border: 1px solid var(--mw-border);
+  background: var(--mw-surface-muted);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.settings-logo__preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.settings-logo__placeholder {
+  font-size: 11px;
+  color: var(--mw-fg-subtle);
+}
+.settings-logo__input {
+  flex: 1;
+}
+
+/* Astuce jetons */
+.settings-hint {
+  margin: 0 0 16px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--mw-fg-muted);
+}
+.settings-hint code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--mw-surface-sunken);
+  padding: 1px 5px;
+  border-radius: var(--mw-radius-sm);
+  color: var(--mw-fg);
+}
+
+/* Mentions : éditeur (textarea) + aperçu côte à côte */
+.settings-mentions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 18px;
+}
+
+.settings-mention {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-preview {
+  background: var(--mw-surface-muted);
+  border: 1px solid var(--mw-border);
+  border-radius: var(--mw-radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.settings-preview__line {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--mw-fg);
+}
+.settings-preview__vide {
+  margin: 0;
+  font-size: 11px;
+  color: var(--mw-fg-subtle);
+  font-style: normal;
+}
+
+/* Barre d'enregistrement collante en bas du contenu */
+.settings-actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--mw-white);
+  border: 1px solid var(--mw-border);
+  border-radius: var(--mw-radius-xl);
+  box-shadow: var(--mw-shadow-2);
+}
+
+.settings-actions__notice {
+  font-size: 13px;
+}
+.settings-actions__notice--ok {
+  color: var(--mw-success-fg);
+}
+.settings-actions__notice--err {
+  color: var(--mw-danger-fg);
+}
