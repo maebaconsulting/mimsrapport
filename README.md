@@ -59,5 +59,25 @@ specs/              spécifications (source de vérité)
 
 ## Statut
 
-En cours de développement, jalon par jalon (voir `specs/09-ROADMAP-MVP.md`).
-Jalon 0 (scaffold Tauri + React) : terminé.
+MVP complet : les 8 jalons de `specs/09-ROADMAP-MVP.md` sont réalisés.
+
+- Jalon 0 · scaffold Tauri 2 + React 19 + Vite
+- Jalon 1 · sidecar PocketBase (v0.39.1 figée) + schéma par migrations versionnées
+- Jalon 2 · import Manar (parser, dérivation des 6 entités, idempotence)
+- Jalon 3 · pipeline PDF bout-en-bout (rendu navigateur validé WebView2 + WKWebView)
+- Jalon 4 · port de tous les gabarits réglementaires et non réglementaires
+- Jalon 5 · 9 tableaux de bord de pilotage (Recharts + KPI)
+- Jalon 6 · packaging et workflow de release Windows (GitHub Actions)
+- Jalon 7 · licence signée Ed25519, validée hors ligne
+
+Avant de lancer : `pnpm install` puis `./scripts/fetch-pocketbase.sh` (récupère le
+binaire PocketBase, non versionné), puis `pnpm tauri dev`.
+
+### Émission d'une licence (dev)
+
+```bash
+node scripts/sign-license.mjs --sdb "CCA Bourse" --code CCAB \
+  --expires 2027-12-31 --out cca-bourse.license
+```
+
+La clé privée (`scripts/license-private-key.pem`) n'est jamais versionnée.
