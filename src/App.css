@@ -481,6 +481,128 @@
   box-shadow: var(--mw-ring);
 }
 
+/* Page Rapports · contrôles en barre, aperçu en ligne, modale pour l'impression */
+.reports-controls {
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reports-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.reports-field--client {
+  flex: 1 1 280px;
+  min-width: 220px;
+}
+.reports-field--client select {
+  width: 100%;
+}
+.reports-warn {
+  flex-basis: 100%;
+  margin-top: 0;
+}
+.reports-generate {
+  align-self: flex-end;
+}
+
+/* Aperçu en ligne : document à gauche, rail d'informations à droite */
+.reports-preview {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.reports-doc {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--mw-white);
+  border: 1px solid var(--mw-border);
+  border-radius: var(--mw-radius-xl);
+  box-shadow: var(--mw-shadow-1);
+  overflow: hidden;
+}
+
+.reports-doc__head {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--mw-border);
+}
+.reports-doc__title {
+  margin: 3px 0 0;
+  font-family: var(--mw-font-display);
+  font-size: var(--mw-text-h3);
+  color: var(--mw-fg);
+}
+.reports-doc__frame {
+  width: 100%;
+  height: 78vh;
+  border: none;
+  background: var(--mw-surface-sunken);
+}
+
+.reports-rail {
+  width: 300px;
+  flex-shrink: 0;
+  background: var(--mw-white);
+  border: 1px solid var(--mw-border);
+  border-radius: var(--mw-radius-xl);
+  box-shadow: var(--mw-shadow-1);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.reports-rail__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.reports-rail__actions .btn {
+  width: 100%;
+}
+
+/* État vide (aucun aperçu généré) */
+.reports-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 56px 24px;
+  background: var(--mw-white);
+  border: 1px dashed var(--mw-border-strong);
+  border-radius: var(--mw-radius-xl);
+}
+.reports-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--mw-radius-full);
+  background: var(--mw-surface-muted);
+  color: var(--mw-fg-subtle);
+}
+.reports-empty__text {
+  max-width: 440px;
+  margin: 0;
+  color: var(--mw-fg-muted);
+  line-height: 1.55;
+}
+
+/* Modale réservée à l'impression : document plein cadre */
+.print-modal .preview-frame {
+  flex: 1;
+  min-height: 0;
+}
+
 /* Aperçu PDF avant téléchargement ou impression */
 .preview-overlay {
   position: fixed;

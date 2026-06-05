@@ -88,7 +88,8 @@ export function ReportsView() {
   const [preview, setPreview] = useState<Preview | null>(null);
   const [save, setSave] = useState<SaveNotice>({ kind: "idle" });
   const [loadError, setLoadError] = useState<string | null>(null);
-  const frameRef = useRef<HTMLIFrameElement>(null);
+  const [printing, setPrinting] = useState(false); // modale d'impression ouverte
+  const printFrameRef = useRef<HTMLIFrameElement>(null);
 
   const charger = useCallback(async () => {
     try {
@@ -116,6 +117,7 @@ export function ReportsView() {
     if (preview) URL.revokeObjectURL(preview.url);
     setPreview(null);
     setSave({ kind: "idle" });
+    setPrinting(false);
   }
 
   async function generer() {
@@ -184,8 +186,14 @@ export function ReportsView() {
     }
   }
 
+  // L'impression passe par une modale dédiée : on l'ouvre ici, et le rendu du
+  // document y déclenche le dialogue d'impression natif (cf. lancerImpression).
   function imprimer() {
-    const win = frameRef.current?.contentWindow;
+    setPrinting(true);
+  }
+
+  function lancerImpression() {
+    const win = printFrameRef.current?.contentWindow;
     if (win) {
       win.focus();
       win.print();
@@ -202,13 +210,8 @@ export function ReportsView() {
       </header>
 
       <section className="app-content">
-        <div className="card" style={{ maxWidth: 720 }}>
+        <div className="reports-controls card">
           <span className="small-caps">Production de rapports</span>
-          <p className="card__lead">
-            Documents par client ou états réglementaires à l'échelle de la
-            société, à une date d'arrêté, au format PDF fidèle à MIMS. Le document
-            s'affiche en aperçu avant téléchargement ou impression.
-          </p>
 
           {loadError && (
             <div className="import-notice import-notice--danger">
@@ -217,7 +220,7 @@ export function ReportsView() {
           )}
 
           {clients !== null && (
-            <div className="report-form">
+            <div className="reports-form-row">
               <label className="report-field">
                 <span className="small-caps">Type de rapport</span>
                 <select
@@ -238,7 +241,7 @@ export function ReportsView() {
 
               {scopeOf(reportType) === "client" &&
                 (clients.length > 0 ? (
-                  <label className="report-field">
+                  <label className="report-field reports-field--client">
                     <span className="small-caps">Client</span>
                     <select
                       value={clientId}
@@ -253,7 +256,7 @@ export function ReportsView() {
                     </select>
                   </label>
                 ) : (
-                  <div className="import-notice import-notice--warn">
+                  <div className="import-notice import-notice--warn reports-warn">
                     <p>
                       Aucun client avec position. Importez d'abord un fichier
                       Manar pour les documents par client.
@@ -264,7 +267,7 @@ export function ReportsView() {
               <label className="report-field">
                 <span className="small-caps">
                   {scopeOf(reportType) === "societe"
-                    ? "Date d'arrêté (mois de la période)"
+                    ? "Date d'arrêté (mois)"
                     : "Date d'arrêté"}
                 </span>
                 <input
@@ -275,7 +278,7 @@ export function ReportsView() {
               </label>
 
               <button
-                className="btn btn--primary"
+                className="btn btn--primary reports-generate"
                 onClick={generer}
                 disabled={
                   gen.kind === "generation" ||
@@ -296,92 +299,132 @@ export function ReportsView() {
             </div>
           )}
         </div>
+
+        {preview ? (
+          <div className="reports-preview">
+            <div className="reports-doc">
+              <div className="reports-doc__head">
+                <span className="small-caps">Aperçu du document</span>
+                <p className="reports-doc__title">{preview.label}</p>
+              </div>
+              <iframe
+                className="reports-doc__frame"
+                src={preview.url}
+                title={`Aperçu ${preview.label}`}
+              />
+            </div>
+
+            <aside className="reports-rail">
+              <div className="reports-rail__actions">
+                <button className="btn btn--primary" onClick={imprimer}>
+                  Imprimer
+                </button>
+                <button className="btn" onClick={telecharger}>
+                  Télécharger
+                </button>
+                <button className="btn" onClick={fermerApercu}>
+                  Effacer
+                </button>
+              </div>
+
+              {save.kind === "ok" && (
+                <div className="preview-rail__notice preview-rail__notice--ok">
+                  Enregistré · {save.filename}
+                </div>
+              )}
+              {save.kind === "annule" && (
+                <div className="preview-rail__notice">
+                  Enregistrement annulé.
+                </div>
+              )}
+
+              <section className="preview-rail__block">
+                <span className="small-caps">Informations clés</span>
+                <dl className="preview-meta">
+                  <div className="preview-meta__row">
+                    <dt>Périmètre</dt>
+                    <dd>{preview.scopeLabel}</dd>
+                  </div>
+                  <div className="preview-meta__row">
+                    <dt>Fichier</dt>
+                    <dd className="preview-meta__mono">{preview.filename}</dd>
+                  </div>
+                  <div className="preview-meta__row">
+                    <dt>Taille</dt>
+                    <dd>{preview.sizeKo} ko</dd>
+                  </div>
+                  <div className="preview-meta__row">
+                    <dt>Généré le</dt>
+                    <dd>{preview.generatedAt}</dd>
+                  </div>
+                </dl>
+              </section>
+
+              <section className="preview-rail__block">
+                <span className="small-caps">Empreinte SHA-256</span>
+                <code className="preview-hash">{preview.hash}</code>
+              </section>
+
+              <section className="preview-rail__block">
+                <span className="small-caps">Production</span>
+                <ul className="preview-steps">
+                  <li>Données lues depuis la base locale</li>
+                  <li>Rendu PDF · gabarit fidèle MIMS</li>
+                  <li>Empreinte SHA-256 scellée</li>
+                  <li>Aperçu prêt · export journalisé</li>
+                </ul>
+              </section>
+            </aside>
+          </div>
+        ) : (
+          <div className="reports-empty">
+            <div className="reports-empty__icon" aria-hidden="true">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"
+                strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <path d="M14 2v6h6" />
+                <path d="M8 13h8M8 17h6" />
+              </svg>
+            </div>
+            <p className="reports-empty__text">
+              Choisissez un rapport puis cliquez « Générer l'aperçu » : le
+              document s'affichera ici, prêt à imprimer ou télécharger.
+            </p>
+          </div>
+        )}
       </section>
 
-      {preview && (
+      {/* Modale dédiée à l'impression du document affiché. */}
+      {printing && preview && (
         <div
           className="preview-overlay"
           role="dialog"
           aria-modal="true"
-          aria-label={`Aperçu · ${preview.label}`}
+          aria-label={`Impression · ${preview.label}`}
         >
-          <div className="preview-modal">
+          <div className="preview-modal print-modal">
             <div className="preview-modal__head">
               <div>
-                <span className="small-caps">Aperçu avant impression</span>
+                <span className="small-caps">Impression</span>
                 <p className="preview-modal__title">{preview.label}</p>
               </div>
               <div className="preview-actions">
-                <button className="btn" onClick={imprimer}>
+                <button className="btn btn--primary" onClick={lancerImpression}>
                   Imprimer
                 </button>
-                <button className="btn btn--primary" onClick={telecharger}>
-                  Télécharger
-                </button>
-                <button className="btn" onClick={fermerApercu}>
+                <button className="btn" onClick={() => setPrinting(false)}>
                   Fermer
                 </button>
               </div>
             </div>
-
-            <div className="preview-modal__body">
-              <iframe
-                ref={frameRef}
-                className="preview-frame"
-                src={preview.url}
-                title={`Aperçu ${preview.label}`}
-              />
-
-              <aside className="preview-rail">
-                <section className="preview-rail__block">
-                  <span className="small-caps">Informations clés</span>
-                  <dl className="preview-meta">
-                    <div className="preview-meta__row">
-                      <dt>Périmètre</dt>
-                      <dd>{preview.scopeLabel}</dd>
-                    </div>
-                    <div className="preview-meta__row">
-                      <dt>Fichier</dt>
-                      <dd className="preview-meta__mono">{preview.filename}</dd>
-                    </div>
-                    <div className="preview-meta__row">
-                      <dt>Taille</dt>
-                      <dd>{preview.sizeKo} ko</dd>
-                    </div>
-                    <div className="preview-meta__row">
-                      <dt>Généré le</dt>
-                      <dd>{preview.generatedAt}</dd>
-                    </div>
-                  </dl>
-                </section>
-
-                <section className="preview-rail__block">
-                  <span className="small-caps">Empreinte SHA-256</span>
-                  <code className="preview-hash">{preview.hash}</code>
-                </section>
-
-                <section className="preview-rail__block">
-                  <span className="small-caps">Production</span>
-                  <ul className="preview-steps">
-                    <li>Données lues depuis la base locale</li>
-                    <li>Rendu PDF · gabarit fidèle MIMS</li>
-                    <li>Empreinte SHA-256 scellée</li>
-                    <li>Aperçu prêt · export journalisé</li>
-                  </ul>
-                </section>
-
-                {save.kind === "ok" && (
-                  <div className="preview-rail__notice preview-rail__notice--ok">
-                    Enregistré · {save.filename}
-                  </div>
-                )}
-                {save.kind === "annule" && (
-                  <div className="preview-rail__notice">
-                    Enregistrement annulé.
-                  </div>
-                )}
-              </aside>
-            </div>
+            <iframe
+              ref={printFrameRef}
+              className="preview-frame"
+              src={preview.url}
+              title={`Impression ${preview.label}`}
+              onLoad={() => window.setTimeout(lancerImpression, 250)}
+            />
           </div>
         </div>
       )}
