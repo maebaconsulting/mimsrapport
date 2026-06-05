@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getPocketBase } from "../lib/pocketbase";
+import { withRetry } from "../lib/retry";
 import "./import.css";
 
 interface ImportRec {
@@ -63,9 +64,9 @@ export function ImportHistory({ reloadKey = 0 }: { reloadKey?: number }) {
     setState({ kind: "chargement" });
     try {
       const pb = await getPocketBase();
-      const list = await pb
-        .collection("manar_imports")
-        .getList(1, 25, { sort: "-created" });
+      const list = await withRetry(() =>
+        pb.collection("manar_imports").getList(1, 25, { sort: "-created" }),
+      );
       setState({ kind: "pret", rows: list.items as unknown as ImportRec[] });
     } catch (err) {
       setState({ kind: "erreur", message: String(err) });
@@ -90,7 +91,12 @@ export function ImportHistory({ reloadKey = 0 }: { reloadKey?: number }) {
       )}
 
       {state.kind === "erreur" && (
-        <p className="import-history__empty">Indisponible : {state.message}</p>
+        <p className="import-history__empty">
+          Serveur de données momentanément injoignable.{" "}
+          <button className="import-history__retry" onClick={() => void charger()}>
+            Réessayer
+          </button>
+        </p>
       )}
 
       {state.kind === "pret" && state.rows.length === 0 && (

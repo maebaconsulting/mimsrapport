@@ -100,6 +100,17 @@
   margin: 4px 0;
 }
 
+.import-history__retry {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--mw-info-fg);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 .import-history__list {
   list-style: none;
   margin: 0;

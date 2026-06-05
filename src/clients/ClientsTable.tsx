@@ -117,7 +117,19 @@ export function ClientsTable({ showKpis = true, reloadKey = 0 }: ClientsTablePro
   if (state.kind === "erreur") {
     return (
       <div className="import-notice import-notice--danger">
-        <p>Chargement impossible : {state.message}</p>
+        <p>
+          Le serveur de données local est momentanément injoignable. Vérifiez
+          qu'il est démarré, puis réessayez.
+        </p>
+        <details className="import-warnings">
+          <summary>Détail technique</summary>
+          <p style={{ marginTop: 6 }}>{state.message}</p>
+        </details>
+        <div className="import-notice__actions" style={{ marginTop: 10 }}>
+          <button className="btn" onClick={() => void charger()}>
+            Réessayer
+          </button>
+        </div>
       </div>
     );
   }

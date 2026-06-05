@@ -9,6 +9,7 @@ import { DashboardsView } from "./dashboards/DashboardsView";
 import { SettingsView } from "./settings/SettingsView";
 import { LicenseGate } from "./LicenseGate";
 import { getLicenseStatus, type LicenseStatus } from "./lib/license";
+import { withRetry } from "./lib/retry";
 
 type Vue = "accueil" | "import" | "clients" | "rapports" | "tableaux" | "parametres";
 
@@ -50,7 +51,7 @@ function App() {
       const pb = await getPocketBase();
       const counts: Record<string, number> = {};
       for (const name of COLLECTIONS) {
-        const list = await pb.collection(name).getList(1, 1);
+        const list = await withRetry(() => pb.collection(name).getList(1, 1));
         counts[name] = list.totalItems;
       }
       setState({ phase: "pret", url: pb.baseURL, counts });

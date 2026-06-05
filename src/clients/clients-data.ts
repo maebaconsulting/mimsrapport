@@ -5,6 +5,7 @@
 // client, et compose le nom selon le type (PP « prénom nom », PM raison sociale).
 
 import type PocketBase from "pocketbase";
+import { withRetry } from "../lib/retry";
 
 export type StatutCompte = "ACTIF" | "SUSPENDU" | "CLOTURE" | "—";
 
@@ -48,16 +49,19 @@ function composeName(c: ClientRec, raisonSociale: string | undefined): string {
 
 /** Charge et consolide la liste des clients importés. */
 export async function loadClientsData(pb: PocketBase): Promise<ClientsData> {
-  const [clients, clientsPm, portefeuilles, positions] = await Promise.all([
-    pb.collection("clients").getFullList({ fields: "id,code,type,nom,prenom" }),
-    pb.collection("clients_pm").getFullList({ fields: "client,raison_sociale" }),
-    pb
-      .collection("portefeuilles")
-      .getFullList({ fields: "client,code,statut,date_ouverture" }),
-    pb
-      .collection("positions")
-      .getFullList({ fields: "client,quantite_totale,valorisation_xaf" }),
-  ]);
+  // Réessai sur injoignabilité transitoire du sidecar (status 0), tout le lot.
+  const [clients, clientsPm, portefeuilles, positions] = await withRetry(() =>
+    Promise.all([
+      pb.collection("clients").getFullList({ fields: "id,code,type,nom,prenom" }),
+      pb.collection("clients_pm").getFullList({ fields: "client,raison_sociale" }),
+      pb
+        .collection("portefeuilles")
+        .getFullList({ fields: "client,code,statut,date_ouverture" }),
+      pb
+        .collection("positions")
+        .getFullList({ fields: "client,quantite_totale,valorisation_xaf" }),
+    ]),
+  );
 
   const pmByClient = new Map<string, string>();
   for (const pm of clientsPm) pmByClient.set(String(pm.client), pm.raison_sociale);
