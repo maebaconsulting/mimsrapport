@@ -64,11 +64,31 @@ MVP complet : les 8 jalons de `specs/09-ROADMAP-MVP.md` sont réalisés.
 - Jalon 0 · scaffold Tauri 2 + React 19 + Vite
 - Jalon 1 · sidecar PocketBase (v0.39.1 figée) + schéma par migrations versionnées
 - Jalon 2 · import Manar (parser, dérivation des 6 entités, idempotence)
-- Jalon 3 · pipeline PDF bout-en-bout (rendu navigateur validé WebView2 + WKWebView)
+- Jalon 3 · pipeline PDF bout-en-bout (rendu navigateur ; validation WKWebView/Mac de l'aperçu et de l'impression encore à confirmer en GUI)
 - Jalon 4 · port de tous les gabarits réglementaires et non réglementaires
 - Jalon 5 · 9 tableaux de bord de pilotage (Recharts + KPI)
 - Jalon 6 · packaging et workflow de release Windows (GitHub Actions)
 - Jalon 7 · licence signée Ed25519, validée hors ligne
+
+### Rapports surfacés dans l'écran « Rapports »
+
+Tous les gabarits sont portés et testés en rendu ; l'UI en surface sept derrière
+le flux « aperçu PDF » :
+
+- Documents par client : attestation de portefeuille, relevé de compte-titres,
+  confirmation d'ouverture de compte, lettre de relance déshérence.
+- États réglementaires (échelle société) : COSUMAF transactions boursières
+  (obl. 12), COSUMAF situation des avoirs (obl. 15), état des clients en
+  déshérence.
+
+Les états réglementaires fonctionnent en **mode honnête** : l'app desktop ne
+dispose que des données de l'import Manar (positions et mouvements de titres). Les
+dimensions absentes (espèces, exécutions d'ordres détaillées, OST, catégories
+dirigeant/personnel) sont signalées par une **bannière de provenance** dans le PDF
+et marquées « non disponible » ; aucune valeur n'est saisie ni inventée. Ces
+documents ne sont donc pas destinés à une transmission réglementaire en l'état tant
+que le modèle de données n'est pas étendu. Bordereau CDEC/BEAC, compte rendu des
+transactions et rapport de réconciliation restent portés mais non surfacés.
 
 Avant de lancer : `pnpm install` puis `./scripts/fetch-pocketbase.sh` (récupère le
 binaire PocketBase, non versionné), puis `pnpm tauri dev`.

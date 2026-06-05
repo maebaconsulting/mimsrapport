@@ -35,6 +35,11 @@ export interface EtatClientsDesherencePdfProps {
   hash_sha256: string;
   timestamp_rfc3161_mock: string;
   generation_date: string;
+  /**
+   * Bannière de provenance (optionnelle). Signale l'origine Manar des données et
+   * le hors-périmètre (coupons et espèces non disponibles).
+   */
+  provenance?: string[];
 }
 
 function fmtDate(iso: string | null): string {
@@ -99,6 +104,18 @@ const styles = StyleSheet.create({
     borderColor: GRAY_200,
   },
   metaText: { fontFamily: "Inter", fontSize: 8, color: GRAY_700 },
+
+  provenanceBanner: {
+    backgroundColor: GRAY_50,
+    borderWidth: 0.5,
+    borderColor: INFO,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    marginBottom: 6,
+    borderRadius: 2,
+  },
+  provenanceTitre: { fontFamily: "Inter", fontWeight: 600, fontSize: 7, color: INFO, marginBottom: 1, textTransform: "uppercase", letterSpacing: 0.3 },
+  provenanceLine: { fontFamily: "Inter", fontSize: 7, color: GRAY_700 },
 
   tableHeader: {
     flexDirection: "row",
@@ -183,6 +200,7 @@ export function EtatClientsDesherencePdf({
   hash_sha256,
   timestamp_rfc3161_mock,
   generation_date,
+  provenance,
 }: EtatClientsDesherencePdfProps) {
   const hashTronque = hash_sha256.slice(0, 8);
   const totalReverser = lignes.reduce((s, l) => s + l.montant_a_reverser_xaf, 0);
@@ -228,6 +246,19 @@ export function EtatClientsDesherencePdf({
             {"  ·  Devise · XAF"}
           </Text>
         </View>
+
+        {provenance && provenance.length > 0 && (
+          <View style={styles.provenanceBanner}>
+            <Text style={styles.provenanceTitre}>
+              Provenance et périmètre des données
+            </Text>
+            {provenance.map((line, idx) => (
+              <Text key={idx} style={styles.provenanceLine}>
+                {line}
+              </Text>
+            ))}
+          </View>
+        )}
 
         <View style={styles.tableHeader} fixed>
           <Text style={[styles.th, styles.cNom]}>Nom du client</Text>

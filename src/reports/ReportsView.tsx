@@ -7,13 +7,48 @@ import {
   type ClientChoice,
 } from "./services/attestation";
 import { generateReleve } from "./services/releve";
+import { generateConfirmationOuverture } from "./services/confirmation-ouverture";
+import {
+  generateTransactionsBoursieres,
+  generateSituationAvoirs,
+} from "./services/cosumaf";
+import {
+  generateEtatClientsDesherence,
+  generateLettreRelanceDesherence,
+} from "./services/desherence";
 
-type ReportType = "attestation" | "releve";
+type ReportType =
+  | "attestation"
+  | "releve"
+  | "confirmation_ouverture"
+  | "lettre_desherence"
+  | "cosumaf_transactions"
+  | "cosumaf_avoirs"
+  | "etat_desherence";
 
-const REPORT_TYPES: Array<{ id: ReportType; label: string }> = [
-  { id: "attestation", label: "Attestation de portefeuille" },
-  { id: "releve", label: "Relevé de compte-titres" },
+/** Portée d'un rapport : par client sélectionné, ou à l'échelle de la société. */
+type ReportScope = "client" | "societe";
+
+interface ReportDef {
+  id: ReportType;
+  label: string;
+  scope: ReportScope;
+  groupe: string;
+}
+
+const REPORT_TYPES: ReportDef[] = [
+  { id: "attestation", label: "Attestation de portefeuille", scope: "client", groupe: "Documents client" },
+  { id: "releve", label: "Relevé de compte-titres", scope: "client", groupe: "Documents client" },
+  { id: "confirmation_ouverture", label: "Confirmation d'ouverture de compte", scope: "client", groupe: "Documents client" },
+  { id: "lettre_desherence", label: "Lettre de relance déshérence", scope: "client", groupe: "Documents client" },
+  { id: "cosumaf_transactions", label: "COSUMAF · Transactions boursières (obl. 12)", scope: "societe", groupe: "États réglementaires (société)" },
+  { id: "cosumaf_avoirs", label: "COSUMAF · Situation des avoirs (obl. 15)", scope: "societe", groupe: "États réglementaires (société)" },
+  { id: "etat_desherence", label: "État des clients en déshérence", scope: "societe", groupe: "États réglementaires (société)" },
 ];
+
+function scopeOf(id: ReportType): ReportScope {
+  return REPORT_TYPES.find((r) => r.id === id)?.scope ?? "client";
+}
 
 type GenState =
   | { kind: "idle" }
@@ -81,15 +116,36 @@ export function ReportsView() {
   }
 
   async function generer() {
-    if (!clientId) return;
+    const scope = scopeOf(reportType);
+    if (scope === "client" && !clientId) return;
     setGen({ kind: "generation" });
     setSave({ kind: "idle" });
     try {
       const pb = await getPocketBase();
-      const out =
-        reportType === "attestation"
-          ? await generateAttestation(pb, clientId, dateArrete)
-          : await generateReleve(pb, clientId, dateArrete);
+      let out: { blob: Blob; bytes: Uint8Array; hash: string; filename: string };
+      switch (reportType) {
+        case "attestation":
+          out = await generateAttestation(pb, clientId, dateArrete);
+          break;
+        case "releve":
+          out = await generateReleve(pb, clientId, dateArrete);
+          break;
+        case "confirmation_ouverture":
+          out = await generateConfirmationOuverture(pb, clientId, dateArrete);
+          break;
+        case "lettre_desherence":
+          out = await generateLettreRelanceDesherence(pb, clientId, dateArrete);
+          break;
+        case "cosumaf_transactions":
+          out = await generateTransactionsBoursieres(pb, dateArrete);
+          break;
+        case "cosumaf_avoirs":
+          out = await generateSituationAvoirs(pb, dateArrete);
+          break;
+        case "etat_desherence":
+          out = await generateEtatClientsDesherence(pb, dateArrete);
+          break;
+      }
 
       // Aperçu avant tout enregistrement : on n'écrit rien sur disque ici.
       if (preview) URL.revokeObjectURL(preview.url);
@@ -138,11 +194,11 @@ export function ReportsView() {
 
       <section className="app-content">
         <div className="card" style={{ maxWidth: 720 }}>
-          <span className="small-caps">Rapports par client</span>
+          <span className="small-caps">Production de rapports</span>
           <p className="card__lead">
-            Génère le rapport choisi pour un client à une date d'arrêté, au format
-            PDF fidèle à MIMS. Le document s'affiche en aperçu avant
-            téléchargement ou impression.
+            Documents par client ou états réglementaires à l'échelle de la
+            société, à une date d'arrêté, au format PDF fidèle à MIMS. Le document
+            s'affiche en aperçu avant téléchargement ou impression.
           </p>
 
           {loadError && (
@@ -151,15 +207,7 @@ export function ReportsView() {
             </div>
           )}
 
-          {clients !== null && clients.length === 0 && (
-            <div className="import-notice import-notice--warn">
-              <p>
-                Aucun client avec position. Importez d'abord un fichier Manar.
-              </p>
-            </div>
-          )}
-
-          {clients !== null && clients.length > 0 && (
+          {clients !== null && (
             <div className="report-form">
               <label className="report-field">
                 <span className="small-caps">Type de rapport</span>
@@ -167,31 +215,49 @@ export function ReportsView() {
                   value={reportType}
                   onChange={(e) => setReportType(e.target.value as ReportType)}
                 >
-                  {REPORT_TYPES.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.label}
-                    </option>
+                  {[...new Set(REPORT_TYPES.map((r) => r.groupe))].map((g) => (
+                    <optgroup key={g} label={g}>
+                      {REPORT_TYPES.filter((r) => r.groupe === g).map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.label}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </label>
 
-              <label className="report-field">
-                <span className="small-caps">Client</span>
-                <select
-                  value={clientId}
-                  onChange={(e) => setClientId(e.target.value)}
-                >
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nom_complet} · {c.code} ({c.nb_positions} position
-                      {c.nb_positions > 1 ? "s" : ""})
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {scopeOf(reportType) === "client" &&
+                (clients.length > 0 ? (
+                  <label className="report-field">
+                    <span className="small-caps">Client</span>
+                    <select
+                      value={clientId}
+                      onChange={(e) => setClientId(e.target.value)}
+                    >
+                      {clients.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nom_complet} · {c.code} ({c.nb_positions} position
+                          {c.nb_positions > 1 ? "s" : ""})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <div className="import-notice import-notice--warn">
+                    <p>
+                      Aucun client avec position. Importez d'abord un fichier
+                      Manar pour les documents par client.
+                    </p>
+                  </div>
+                ))}
 
               <label className="report-field">
-                <span className="small-caps">Date d'arrêté</span>
+                <span className="small-caps">
+                  {scopeOf(reportType) === "societe"
+                    ? "Date d'arrêté (mois de la période)"
+                    : "Date d'arrêté"}
+                </span>
                 <input
                   type="date"
                   value={dateArrete}
@@ -202,7 +268,11 @@ export function ReportsView() {
               <button
                 className="btn btn--primary"
                 onClick={generer}
-                disabled={gen.kind === "generation"}
+                disabled={
+                  gen.kind === "generation" ||
+                  (scopeOf(reportType) === "client" &&
+                    (clients.length === 0 || !clientId))
+                }
               >
                 {gen.kind === "generation"
                   ? "Génération…"

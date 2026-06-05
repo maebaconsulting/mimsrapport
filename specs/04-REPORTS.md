@@ -97,6 +97,28 @@ Les deux gabarits COSUMAF dépendent du dossier partagé
 - `RectificatifWatermark.tsx` · filigrane « RECTIFICATIF Vn » si version ≥ 2.
 - `cosumaf-tokens.ts` · couleurs + helpers `fmtDate`, `fmtNombre`, `fmtXAF`, `fmtHashCourt`.
 
+#### Périmètre desktop des états réglementaires (mode honnête)
+
+L'app desktop ne dispose que des données de l'import Manar (positions, mouvements
+de titres, clients, instruments, portefeuilles). Les agrégations COSUMAF et
+déshérence sont donc câblées en **mode honnête**, sans saisie ni valeur inventée :
+
+- **COSUMAF transactions (obl. 12)** · agrégées depuis `mouvements_titres`
+  (ACHAT/VENTE), montant estimé par quantité × prix. Hors périmètre : exécutions
+  d'ordres détaillées, OST, frais.
+- **COSUMAF situation des avoirs (obl. 15)** · agrégée depuis `positions`
+  valorisées, tous les comptes en catégorie CLIENTELE (dirigeant/personnel non
+  renseignés dans Manar), soldes espèces à 0.
+- **État de déshérence** · inactivité mesurée sur la seule activité titres (dernier
+  mouvement), montant à reverser = valorisation titres, coupons et espèces hors
+  périmètre, seuils CEMAC par défaut (12 mois / 10 ans).
+
+Chaque PDF porte une **bannière de provenance** rappelant l'origine et les limites
+des données. Les calculs purs sont isolés et testés dans `src/lib/cosumaf-compute.ts`
+et `src/lib/desherence-compute.ts`. Ces documents ne sont pas destinés à une
+transmission réglementaire tant que le modèle de données n'est pas étendu (espèces,
+ordres/exécutions, catégorie de client, OST).
+
 ### Non réglementaires
 | Rapport | Gabarit MIMS |
 |---------|--------------|

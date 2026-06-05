@@ -84,4 +84,18 @@ describe("rendu réel · TransactionsBoursieresPdf", () => {
     expect(buffer.length).toBeGreaterThan(1000);
     expect(buffer.subarray(0, 5).toString("latin1")).toBe("%PDF-");
   });
+
+  it("rend la bannière de provenance quand elle est fournie", async () => {
+    const props = sampleProps();
+    props.shell = {
+      ...props.shell,
+      provenance: [
+        "Source : mouvements de titres importés depuis Manar.",
+        "Hors périmètre : exécutions d'ordres, OST, frais.",
+      ],
+    };
+    const buffer = await renderToBuffer(<TransactionsBoursieresPdf {...props} />);
+    expect(buffer.length).toBeGreaterThan(1000);
+    expect(buffer.subarray(0, 5).toString("latin1")).toBe("%PDF-");
+  });
 });

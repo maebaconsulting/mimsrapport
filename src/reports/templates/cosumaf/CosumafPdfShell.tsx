@@ -33,6 +33,12 @@ export interface CosumafPdfShellProps {
   mentionsLines?: string[];
   /** URL/data du logo (optionnel). */
   logoUrl?: string | null;
+  /**
+   * Bannière de provenance (optionnelle) affichée en tête de contenu. Sert à
+   * signaler honnêtement l'origine et les limites des données côté desktop
+   * (import Manar : espèces, exécutions et catégories de clients non disponibles).
+   */
+  provenance?: string[];
 }
 
 const styles = StyleSheet.create({
@@ -76,6 +82,24 @@ const styles = StyleSheet.create({
   docReg: { fontSize: 8, color: COSUMAF_TOKENS.GRAY_600, marginTop: 2 },
   docRectif: { fontSize: 8, color: COSUMAF_TOKENS.DANGER, marginTop: 2 },
   content: { marginTop: 4 },
+  provenanceBanner: {
+    marginBottom: 10,
+    padding: 8,
+    borderWidth: 0.5,
+    borderColor: COSUMAF_TOKENS.INFO,
+    backgroundColor: COSUMAF_TOKENS.GRAY_50,
+  },
+  provenanceTitre: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    color: COSUMAF_TOKENS.INFO,
+    marginBottom: 2,
+  },
+  provenanceLine: {
+    fontSize: 7,
+    color: COSUMAF_TOKENS.GRAY_700,
+    marginBottom: 1,
+  },
   footer: {
     position: "absolute",
     bottom: 24,
@@ -118,6 +142,7 @@ export function CosumafPdfShell(props: CosumafPdfShellProps) {
     children,
     mentionsLines,
     logoUrl,
+    provenance,
   } = props;
 
   const docTitle = `${titre} · ${sdb_code} · ${periode_libelle}${
@@ -161,6 +186,19 @@ export function CosumafPdfShell(props: CosumafPdfShellProps) {
             ) : null}
           </View>
         </View>
+
+        {provenance && provenance.length > 0 ? (
+          <View style={styles.provenanceBanner}>
+            <Text style={styles.provenanceTitre}>
+              Provenance et périmètre des données
+            </Text>
+            {provenance.map((line, idx) => (
+              <Text key={idx} style={styles.provenanceLine}>
+                {line}
+              </Text>
+            ))}
+          </View>
+        ) : null}
 
         <View style={styles.content}>{children}</View>
 

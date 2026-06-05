@@ -74,4 +74,17 @@ describe("rendu réel · EtatClientsDesherencePdf", () => {
     expect(buffer.length).toBeGreaterThan(1000);
     expect(buffer.subarray(0, 5).toString("latin1")).toBe("%PDF-");
   });
+
+  it("rend la bannière de provenance quand elle est fournie", async () => {
+    const props: EtatClientsDesherencePdfProps = {
+      ...sampleProps("e".repeat(64)),
+      provenance: [
+        "Source : positions et mouvements de titres importés depuis Manar.",
+        "Coupons et espèces hors périmètre.",
+      ],
+    };
+    const buffer = await renderToBuffer(<EtatClientsDesherencePdf {...props} />);
+    expect(buffer.length).toBeGreaterThan(1000);
+    expect(buffer.subarray(0, 5).toString("latin1")).toBe("%PDF-");
+  });
 });

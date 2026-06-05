@@ -91,8 +91,11 @@ déclaration :
 
 ## Reste à faire (suivi)
 
-- Câbler les autres rapports (déshérence, confirmation d'ouverture, états COSUMAF) sur
-  `buildSdbReportContext` au lieu de props figées, à mesure qu'ils sont surfacés dans
-  l'UI.
+- Fait · confirmation d'ouverture, COSUMAF transactions (obl. 12) et situation des
+  avoirs (obl. 15), état des clients en déshérence et lettre de relance sont câblés
+  sur `buildSdbReportContext` et surfacés dans l'UI. Le contexte expose désormais
+  `contact` (email ou téléphone de conformité) pour l'en-tête de l'état déshérence.
+- Restent portés mais non surfacés : bordereau de transfert CDEC/BEAC, compte rendu
+  des transactions, rapport de réconciliation d'import.
 - Optionnel : éditeur de prévisualisation des mentions interpolées dans l'écran
   Paramètres.

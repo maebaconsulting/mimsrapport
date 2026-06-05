@@ -56,6 +56,8 @@ export interface SdbReportContext {
   ville: string;
   logoUrl: string | null;
   mentionsLines: string[];
+  /** Contact de conformité (email ou téléphone), pour les en-têtes qui l'exigent. */
+  contact: string;
 }
 
 const DEFAULT_MENTIONS_RELEVE =
@@ -308,5 +310,6 @@ export async function buildSdbReportContext(
     ville: config.ville || "Douala",
     logoUrl,
     mentionsLines: buildMentionsLines(config, family),
+    contact: config.email_contact || config.telephone_principal || "",
   };
 }
