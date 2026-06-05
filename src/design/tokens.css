@@ -76,12 +76,12 @@
   --mw-text-h2: 24px;
   --mw-text-h3: 20px;
 
-  /* Rayons généreux MoWoBank */
-  --mw-radius-sm: 8px;
-  --mw-radius-md: 12px;
-  --mw-radius-lg: 16px;
-  --mw-radius-xl: 24px;
-  --mw-radius-2xl: 28px;
+  /* Rayons resserrés · rendu plus net et professionnel (pastilles : full) */
+  --mw-radius-sm: 5px;
+  --mw-radius-md: 7px;
+  --mw-radius-lg: 10px;
+  --mw-radius-xl: 13px;
+  --mw-radius-2xl: 16px;
   --mw-radius-full: 999px;
 
   /* Ombres douces, diffuses */

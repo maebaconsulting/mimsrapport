@@ -62,6 +62,9 @@ interface Preview {
   filename: string;
   hash: string;
   label: string;
+  scopeLabel: string; // « Document client » ou « État réglementaire (société) »
+  generatedAt: string; // horodatage de génération (formaté fr-FR)
+  sizeKo: number; // taille du PDF en kilo-octets
 }
 
 type SaveNotice =
@@ -158,6 +161,12 @@ export function ReportsView() {
         filename: out.filename,
         hash: out.hash,
         label,
+        scopeLabel:
+          scope === "societe"
+            ? "État réglementaire · société"
+            : "Document client",
+        generatedAt: new Date().toLocaleString("fr-FR").replace(/ /g, " "),
+        sizeKo: Math.max(1, Math.round(out.bytes.length / 1024)),
       });
       setGen({ kind: "idle" });
     } catch (err) {
@@ -300,9 +309,7 @@ export function ReportsView() {
             <div className="preview-modal__head">
               <div>
                 <span className="small-caps">Aperçu avant impression</span>
-                <p className="preview-modal__title">
-                  {preview.label} · {preview.filename}
-                </p>
+                <p className="preview-modal__title">{preview.label}</p>
               </div>
               <div className="preview-actions">
                 <button className="btn" onClick={imprimer}>
@@ -317,27 +324,63 @@ export function ReportsView() {
               </div>
             </div>
 
-            <iframe
-              ref={frameRef}
-              className="preview-frame"
-              src={preview.url}
-              title={`Aperçu ${preview.label}`}
-            />
+            <div className="preview-modal__body">
+              <iframe
+                ref={frameRef}
+                className="preview-frame"
+                src={preview.url}
+                title={`Aperçu ${preview.label}`}
+              />
 
-            <div className="preview-modal__foot">
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>
-                Empreinte SHA-256 · {preview.hash.slice(0, 16)}…
-              </span>
-              {save.kind === "ok" && (
-                <span className="preview-modal__saved">
-                  Enregistré ({save.filename}).
-                </span>
-              )}
-              {save.kind === "annule" && (
-                <span className="preview-modal__saved">
-                  Enregistrement annulé.
-                </span>
-              )}
+              <aside className="preview-rail">
+                <section className="preview-rail__block">
+                  <span className="small-caps">Informations clés</span>
+                  <dl className="preview-meta">
+                    <div className="preview-meta__row">
+                      <dt>Périmètre</dt>
+                      <dd>{preview.scopeLabel}</dd>
+                    </div>
+                    <div className="preview-meta__row">
+                      <dt>Fichier</dt>
+                      <dd className="preview-meta__mono">{preview.filename}</dd>
+                    </div>
+                    <div className="preview-meta__row">
+                      <dt>Taille</dt>
+                      <dd>{preview.sizeKo} ko</dd>
+                    </div>
+                    <div className="preview-meta__row">
+                      <dt>Généré le</dt>
+                      <dd>{preview.generatedAt}</dd>
+                    </div>
+                  </dl>
+                </section>
+
+                <section className="preview-rail__block">
+                  <span className="small-caps">Empreinte SHA-256</span>
+                  <code className="preview-hash">{preview.hash}</code>
+                </section>
+
+                <section className="preview-rail__block">
+                  <span className="small-caps">Production</span>
+                  <ul className="preview-steps">
+                    <li>Données lues depuis la base locale</li>
+                    <li>Rendu PDF · gabarit fidèle MIMS</li>
+                    <li>Empreinte SHA-256 scellée</li>
+                    <li>Aperçu prêt · export journalisé</li>
+                  </ul>
+                </section>
+
+                {save.kind === "ok" && (
+                  <div className="preview-rail__notice preview-rail__notice--ok">
+                    Enregistré · {save.filename}
+                  </div>
+                )}
+                {save.kind === "annule" && (
+                  <div className="preview-rail__notice">
+                    Enregistrement annulé.
+                  </div>
+                )}
+              </aside>
             </div>
           </div>
         </div>

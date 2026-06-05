@@ -489,8 +489,8 @@
 .preview-modal {
   display: flex;
   flex-direction: column;
-  width: min(960px, 100%);
-  height: min(90vh, 100%);
+  width: min(1140px, 100%);
+  height: min(92vh, 100%);
   background: var(--mw-white);
   border: 1px solid var(--mw-border);
   border-radius: var(--mw-radius-xl);
@@ -520,24 +520,131 @@
   flex-shrink: 0;
 }
 
+/* Corps à deux colonnes : document (iframe) + rail d'informations */
+.preview-modal__body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
 .preview-frame {
   flex: 1;
-  width: 100%;
+  min-width: 0;
   border: none;
+  background: var(--mw-surface-sunken);
+}
+
+/* Rail latéral · métadonnées, empreinte, chronologie de production */
+.preview-rail {
+  width: 304px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--mw-border);
   background: var(--mw-surface-muted);
-}
-
-.preview-modal__foot {
+  overflow-y: auto;
+  padding: 20px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 10px 20px;
-  border-top: 1px solid var(--mw-border);
-  color: var(--mw-fg-muted);
+  flex-direction: column;
+  gap: 22px;
 }
 
-.preview-modal__saved {
-  color: var(--mw-success-fg);
+.preview-rail__block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.preview-meta {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.preview-meta__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--mw-border);
+}
+.preview-meta__row:last-child {
+  border-bottom: none;
+}
+
+.preview-meta__row dt {
   font-size: 12px;
+  color: var(--mw-fg-muted);
+  flex-shrink: 0;
+}
+
+.preview-meta__row dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mw-fg);
+  text-align: right;
+}
+
+.preview-meta__mono {
+  font-family: var(--font-mono);
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  word-break: break-all;
+}
+
+.preview-hash {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--mw-fg-muted);
+  background: var(--mw-white);
+  border: 1px solid var(--mw-border);
+  border-radius: var(--mw-radius-md);
+  padding: 10px 12px;
+  word-break: break-all;
+}
+
+.preview-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.preview-steps li {
+  position: relative;
+  padding-left: 24px;
+  font-size: 12.5px;
+  color: var(--mw-fg);
+  line-height: 1.4;
+}
+
+.preview-steps li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--mw-radius-full);
+  background: var(--mw-success-solid);
+  /* coche blanche centrée */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.preview-rail__notice {
+  font-size: 12px;
+  padding: 10px 12px;
+  border-radius: var(--mw-radius-md);
+  background: var(--mw-warning-bg);
+  color: var(--mw-warning-fg);
+}
+.preview-rail__notice--ok {
+  background: var(--mw-success-bg);
+  color: var(--mw-success-fg);
 }
