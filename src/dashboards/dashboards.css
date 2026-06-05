@@ -1,4 +1,5 @@
-/* Tableaux de bord · grille de panneaux, KPI, légendes. */
+/* Tableaux de bord · look MoWoBank.
+   Cartes indicateur (KPI) sur fonds pastel pleins, panneaux blancs arrondis. */
 
 .dash-grid {
   display: flex;
@@ -9,80 +10,117 @@
 .kpi-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
+  gap: 16px;
 }
 
+/* Carte indicateur · radius 2xl, fond pastel selon le ton, grande valeur display */
 .kpi-card {
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-gray-200);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  min-height: 96px;
+  background: var(--mw-card-yellow);
+  border-radius: var(--mw-radius-2xl);
+  padding: 22px 24px;
+  min-height: 148px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
 }
 
+/* Tons pastel pleins (nouvelle prop tone du composant) */
+.kpi-card--sage {
+  background: var(--mw-card-sage);
+}
+.kpi-card--yellow {
+  background: var(--mw-card-yellow);
+}
+.kpi-card--lilac {
+  background: var(--mw-card-lilac);
+}
+.kpi-card--peach {
+  background: var(--mw-card-peach);
+}
+.kpi-card--white {
+  background: var(--mw-white);
+  box-shadow: var(--mw-shadow-1);
+}
+
+/* Variantes sémantiques héritées · accent doux à gauche, fond crème */
+.kpi-card--default {
+  background: var(--mw-white);
+  box-shadow: var(--mw-shadow-1);
+}
 .kpi-card--danger {
-  border-left: 3px solid var(--color-danger);
+  background: var(--mw-danger-bg);
 }
 .kpi-card--success {
-  border-left: 3px solid var(--color-success);
+  background: var(--mw-success-bg);
 }
 .kpi-card--warn {
-  border-left: 3px solid var(--color-warning);
+  background: var(--mw-warning-bg);
+}
+
+.kpi-card__label {
+  color: var(--mw-ink);
+  opacity: 0.72;
 }
 
 .kpi-card__value {
-  font-family: var(--font-mono);
-  font-size: 24px;
-  font-weight: 600;
+  font-family: var(--mw-font-display);
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
-  color: var(--color-ink);
+  color: var(--mw-ink);
 }
 
 .kpi-card__sub {
-  font-size: 12px;
-  color: var(--color-gray-400);
+  font-size: 13px;
+  color: var(--mw-ink);
+  opacity: 0.65;
+  margin-top: auto;
 }
 
 .dash-panels {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 16px;
+  gap: 20px;
 }
 
+/* Panneau · carte blanche arrondie + ombre douce */
 .dash-panel {
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-gray-200);
-  border-radius: var(--radius-lg);
-  padding: 16px;
+  background: var(--mw-white);
+  border-radius: var(--mw-radius-xl);
+  box-shadow: var(--mw-shadow-1);
+  padding: 22px;
 }
 
 .dash-panel__head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .dash-badge {
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
   font-weight: 600;
-  padding: 2px 8px;
-  border-radius: var(--radius-pill);
+  padding: 4px 11px;
+  border-radius: var(--mw-radius-full);
 }
 .dash-badge--danger {
-  background: var(--color-danger-soft);
-  color: var(--color-danger);
+  background: var(--mw-danger-bg);
+  color: var(--mw-danger-fg);
 }
 .dash-badge--success {
-  background: var(--color-success-soft);
-  color: var(--color-success);
+  background: var(--mw-success-bg);
+  color: var(--mw-success-fg);
 }
 
 .dash-vide {
-  color: var(--color-gray-400);
+  color: var(--mw-fg-muted);
   font-size: 13px;
   padding: 24px 0;
   text-align: center;
@@ -90,11 +128,11 @@
 
 .dash-legend {
   list-style: none;
-  margin: 10px 0 0;
+  margin: 12px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .dash-legend li {
@@ -107,22 +145,23 @@
 .dash-legend__dot {
   width: 10px;
   height: 10px;
-  border-radius: 2px;
+  border-radius: 3px;
   flex-shrink: 0;
 }
 
 .dash-legend__label {
-  color: var(--color-gray-600);
+  color: var(--mw-fg-muted);
   flex: 1;
 }
 
 .dash-legend__value {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  color: var(--color-ink);
+  color: var(--mw-fg);
+  font-weight: 600;
 }
 
 .dash-note {
-  color: var(--color-gray-400);
+  color: var(--mw-fg-muted);
   margin-top: 4px;
 }

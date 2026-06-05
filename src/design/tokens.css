@@ -10,10 +10,88 @@
 :root {
   /* Couleurs de marque */
   --color-ink: #11191f; /* sidebar, boutons primaires, texte sur clair */
-  --color-surface: #f4f3ec; /* fond de canevas principal */
+  --color-surface: #f8f7f2; /* fond de canevas principal (crème chaud MoWoBank) */
   --color-surface-raised: #ffffff; /* fond des cartes */
   --color-accent: #ffed90; /* or pâle, indicateur actif */
   --color-accent-soft: #fff6c9; /* fond carte attention */
+
+  /* ===================================================================
+     Design system MoWoBank · look chaleureux, arrondi et aéré.
+     Ajouts non destructifs : ils complètent les tokens MIMS ci-dessus
+     sans remplacer les couleurs métier ni les couleurs de graphiques.
+     =================================================================== */
+
+  /* Couleurs de base MoWoBank */
+  --mw-ink: #11191f; /* noir profond : sidebar, texte principal */
+  --mw-cream: #f8f7f2; /* crème chaud : fond zone de travail */
+  --mw-accent: #ffed90; /* jaune lumineux : accent, item actif */
+  --mw-white: #ffffff; /* blanc pur : surfaces */
+
+  /* Neutres dérivés MoWoBank */
+  --mw-ink-soft: #1b252d; /* survol sidebar, surfaces sombres 2 */
+  --mw-ink-2: #2a3640; /* bordures sur sombre */
+  --mw-fg: #11191f; /* texte principal */
+  --mw-fg-muted: #6b7178; /* texte secondaire, libellés */
+  --mw-fg-subtle: #9aa0a6; /* texte tertiaire, placeholders */
+  --mw-fg-on-ink: #f4f3ec; /* texte sur fond sombre */
+  --mw-fg-on-ink-muted: #8a949c; /* texte secondaire sur sombre */
+  --mw-border: #e6e4da; /* séparateurs sur crème */
+  --mw-border-strong: #d8d6cc; /* contour des champs */
+  --mw-surface: #ffffff; /* surface carte */
+  --mw-surface-muted: #faf9f3; /* fond atténué, cellule */
+  --mw-surface-sunken: #efeee6; /* fond creusé (track, skeleton) */
+
+  /* Pastels statut / catégorie MoWoBank : fond doux + texte foncé */
+  --mw-neutral-bg: #e8eaec;
+  --mw-neutral-fg: #4a535b;
+  --mw-neutral-solid: #c3c9ce;
+  --mw-info-bg: #e4e1f7;
+  --mw-info-fg: #4b438f;
+  --mw-info-solid: #a8a1ec;
+  --mw-success-bg: #dde7cb;
+  --mw-success-fg: #51663a;
+  --mw-success-solid: #a7c07e;
+  --mw-warning-bg: #fff1b0;
+  --mw-warning-fg: #7a6712;
+  --mw-warning-solid: #ffe15a;
+  --mw-peach-bg: #fbe0cc;
+  --mw-peach-fg: #9a5526;
+  --mw-peach-solid: #f0b488;
+  --mw-danger-bg: #f6d5ce;
+  --mw-danger-fg: #8f3d29;
+  --mw-danger-solid: #e0917d;
+
+  /* Accents pleins pour cartes indicateur (KPI) */
+  --mw-card-sage: #dce5cf;
+  --mw-card-yellow: #fce6a0;
+  --mw-card-lilac: #c8c2f0;
+  --mw-card-peach: #f8d7bf;
+
+  /* Typographie MoWoBank (hors ligne : Inter déjà présent + system-ui en repli) */
+  --mw-font-display: "Inter", system-ui, sans-serif; /* titres généreux */
+  --mw-font-body: "Inter", system-ui, sans-serif; /* corps */
+
+  --mw-text-display: 48px;
+  --mw-text-h1: 32px;
+  --mw-text-h2: 24px;
+  --mw-text-h3: 20px;
+
+  /* Rayons généreux MoWoBank */
+  --mw-radius-sm: 8px;
+  --mw-radius-md: 12px;
+  --mw-radius-lg: 16px;
+  --mw-radius-xl: 24px;
+  --mw-radius-2xl: 28px;
+  --mw-radius-full: 999px;
+
+  /* Ombres douces, diffuses */
+  --mw-shadow-1: 0 1px 2px rgba(17, 25, 31, 0.04), 0 4px 16px rgba(17, 25, 31, 0.04);
+  --mw-shadow-2: 0 4px 12px rgba(17, 25, 31, 0.06), 0 16px 40px rgba(17, 25, 31, 0.08);
+  --mw-shadow-3: 0 8px 24px rgba(17, 25, 31, 0.08), 0 32px 64px rgba(17, 25, 31, 0.12);
+
+  /* Anneau de focus accent + transition douce */
+  --mw-ring: 0 0 0 3px rgba(255, 237, 144, 0.55);
+  --mw-transition: 160ms cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Niveaux de gris (WCAG 2.1 AA) */
   --color-gray-50: #fafaf9;
@@ -75,13 +153,19 @@ html {
 
 body {
   margin: 0;
-  font-family: var(--font-ui);
+  font-family: var(--mw-font-body);
   font-size: 14px;
   line-height: 1.43;
-  color: var(--color-ink);
-  background: var(--color-surface);
+  color: var(--mw-fg);
+  background: var(--mw-cream);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--mw-accent);
+  color: var(--mw-ink);
 }
 
 /* Small-caps · labels de colonne et de section */

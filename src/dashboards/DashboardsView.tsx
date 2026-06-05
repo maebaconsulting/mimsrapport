@@ -29,6 +29,15 @@ const CHART_COLORS = [
 function fmtXAF(n: number): string {
   return `${Math.round(n).toLocaleString("fr-FR")} XAF`;
 }
+/** Montant compact pour les cartes KPI (milliards/millions). */
+function fmtXAFCompact(n: number): string {
+  const abs = Math.abs(n);
+  if (abs >= 1e9)
+    return `${(n / 1e9).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} Md XAF`;
+  if (abs >= 1e6)
+    return `${(n / 1e6).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} M XAF`;
+  return fmtXAF(n);
+}
 function fmtPct(n: number): string {
   return `${n.toFixed(1)} %`;
 }
@@ -101,19 +110,22 @@ function DashboardsContent({ d }: { d: Dashboards }) {
       <div className="kpi-row">
         <KpiCard
           label="Encours global"
-          value={fmtXAF(d.encours.valorisationTotale)}
-          sub={`${d.encours.nbPositions} positions`}
+          value={fmtXAFCompact(d.encours.valorisationTotale)}
+          sub={`${d.encours.nbPositions} positions · ${fmtXAF(d.encours.valorisationTotale)}`}
+          tone="sage"
         />
-        <KpiCard label="Comptes titres" value={String(d.encours.nbComptes)} />
+        <KpiCard label="Comptes titres" value={String(d.encours.nbComptes)} tone="lilac" />
         <KpiCard
           label="Concentration max émetteur"
           value={fmtPct(d.concentrationEmetteur.concentrationMax)}
           sub={`limite COSUMAF 30 %`}
           variant={d.concentrationEmetteur.alerte ? "danger" : "success"}
+          tone={d.concentrationEmetteur.alerte ? "peach" : "yellow"}
         />
         <KpiCard
           label="Taux moyen pondéré obligataire"
           value={fmtPct(d.tauxMoyenPondereObligataire)}
+          tone="yellow"
         />
       </div>
 
