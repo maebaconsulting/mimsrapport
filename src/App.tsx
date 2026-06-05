@@ -3,8 +3,9 @@ import "./design/tokens.css";
 import "./App.css";
 import { getPocketBase } from "./lib/pocketbase";
 import { ImportWizard } from "./import/ImportWizard";
+import { ReportsView } from "./reports/ReportsView";
 
-type Vue = "accueil" | "import";
+type Vue = "accueil" | "import" | "rapports";
 
 type ConnState =
   | { phase: "connexion" }
@@ -24,6 +25,7 @@ const COLLECTIONS = [
 const NAV: Array<{ id: Vue; label: string; enabled: boolean }> = [
   { id: "accueil", label: "Accueil", enabled: true },
   { id: "import", label: "Import Manar", enabled: true },
+  { id: "rapports", label: "Rapports", enabled: true },
 ];
 
 function App() {
@@ -71,9 +73,6 @@ function App() {
             </button>
           ))}
           <button className="app-nav__item" disabled>
-            Rapports
-          </button>
-          <button className="app-nav__item" disabled>
             Tableaux de bord
           </button>
         </nav>
@@ -97,6 +96,7 @@ function App() {
             </section>
           </>
         )}
+        {vue === "rapports" && <ReportsView />}
       </main>
     </div>
   );

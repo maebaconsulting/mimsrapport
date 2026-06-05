@@ -44,3 +44,6 @@ samples/**/*-REEL.xlsx
 # Données PocketBase de test d'intégration
 .pb_integration_data/
 .pb_dbg*/
+
+# Artefacts Playwright (validation rendu)
+.playwright-mcp/

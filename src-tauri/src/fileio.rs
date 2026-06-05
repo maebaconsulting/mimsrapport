@@ -58,6 +58,13 @@ pub fn read_picked_file(state: State<PickedPath>) -> Result<Response, String> {
     Ok(Response::new(bytes))
 }
 
+/// Journalise le résultat de l'auto-test PDF (rendu dans le WKWebView réel) dans
+/// le stdout de l'application. Sert à valider le pipeline PDF côté webview.
+#[tauri::command]
+pub fn log_pdf_selftest(result: String) {
+    println!("[pdf-selftest] {result}");
+}
+
 /// Ouvre le dialogue d'enregistrement et écrit le contenu (ex. un PDF produit).
 /// Retourne true si enregistré, false si annulé. Le chemin est choisi côté Rust.
 #[tauri::command]

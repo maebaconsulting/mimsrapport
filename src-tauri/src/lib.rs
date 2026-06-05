@@ -21,6 +21,7 @@ pub fn run() {
             fileio::pick_manar_file,
             fileio::read_picked_file,
             fileio::save_pdf,
+            fileio::log_pdf_selftest,
         ])
         .setup(|app| {
             // Démarrage du sidecar PocketBase avant le chargement effectif de

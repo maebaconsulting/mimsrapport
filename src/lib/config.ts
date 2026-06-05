@@ -23,6 +23,16 @@ export const LOCAL_AUTH = {
 
 const DEFAULT_URL = "http://127.0.0.1:8090";
 
+/**
+ * Identité de la société de bourse exploitant l'application (mono-poste).
+ * Figée en v1 ; deviendra paramétrable (collection de paramètres) plus tard.
+ */
+export const SDB_IDENTITY = {
+  nom: "CCA Bourse",
+  code: "CCAB",
+  ville: "Douala",
+} as const;
+
 /** Indique si l'app tourne dans la coque Tauri (et non un navigateur seul). */
 export function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
