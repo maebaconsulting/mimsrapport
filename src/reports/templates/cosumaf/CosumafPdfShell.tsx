@@ -19,6 +19,8 @@ export interface CosumafPdfShellProps {
   titre: string;
   sdb_code: string;
   sdb_nom: string;
+  /** Numéro d'agrément COSUMAF (affiché sous la raison sociale si présent). */
+  sdb_agrement?: string;
   periode_libelle: string;
   regulation_ref: string;
   version: number; // 1 ou >= 2 (rectif)
@@ -105,6 +107,7 @@ export function CosumafPdfShell(props: CosumafPdfShellProps) {
     titre,
     sdb_code,
     sdb_nom,
+    sdb_agrement,
     periode_libelle,
     regulation_ref,
     version,
@@ -138,6 +141,11 @@ export function CosumafPdfShell(props: CosumafPdfShellProps) {
             <View style={styles.headerLeftText}>
               <Text style={styles.sdbCode}>{sdb_code}</Text>
               <Text style={styles.sdbNom}>{sdb_nom}</Text>
+              {sdb_agrement ? (
+                <Text style={styles.sdbNom}>
+                  {`Agrément COSUMAF · ${sdb_agrement}`}
+                </Text>
+              ) : null}
             </View>
           </View>
           <View style={styles.headerRight}>

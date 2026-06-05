@@ -25,7 +25,11 @@ const DEFAULT_URL = "http://127.0.0.1:8090";
 
 /**
  * Identité de la société de bourse exploitant l'application (mono-poste).
- * Figée en v1 ; deviendra paramétrable (collection de paramètres) plus tard.
+ *
+ * @deprecated La configuration SDB est désormais paramétrable et persistée dans
+ * la collection PocketBase `parametres_sdb` (voir lib/parametres-sdb.ts et
+ * l'écran Paramètres). Ces valeurs ne servent plus que de repli historique ;
+ * le repli effectif est `DEFAULT_SDB_CONFIG`.
  */
 export const SDB_IDENTITY = {
   nom: "CCA Bourse",

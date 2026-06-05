@@ -47,6 +47,14 @@ seuls l'enregistrement des polices et l'appel de rendu changent.
 > correctement dans WebView2 (Windows, Chromium) et WKWebView (Mac). C'est viable mais
 > à tester tôt (voir `09-ROADMAP-MVP.md`, jalon « 1 rapport bout-en-bout »).
 
+## Identité SDB des en-têtes et pieds de page
+
+L'identité de la société de bourse (raison sociale, agrément COSUMAF, RCCM, NIU,
+capital, mentions légales, logo) n'est pas codée en dur : chaque service de rapport
+appelle `buildSdbReportContext(pb, dateArrete, famille)` (voir `10-CONFIG-SDB.md`) et
+passe au gabarit `sdb`, `ville`, `logoUrl` et `mentionsLines`. L'agrément COSUMAF
+s'affiche en en-tête ; les mentions interpolées (RCCM, NIU, capital, siège) en pied.
+
 ## Patron de génération (porté de MIMS)
 
 Référence : `app/_actions/attestation-pdf.ts` (`generateAttestationPortefeuille`).

@@ -12,7 +12,7 @@ import {
   AttestationPortefeuillePdf,
   type AttestationPortefeuillePdfProps,
 } from "../templates/AttestationPortefeuillePdf";
-import { SDB_IDENTITY } from "../../lib/config";
+import { buildSdbReportContext } from "../../lib/parametres-sdb";
 
 export interface ClientChoice {
   id: string;
@@ -138,14 +138,25 @@ async function buildBaseProps(
     /* pas de portefeuille : on garde le code client */
   }
 
+  // Configuration SDB en vigueur à la date d'arrêté → en-tête + mentions du pied.
+  const ctx = await buildSdbReportContext(pb, dateArrete, "releve");
+
   return {
-    sdb: { nom: SDB_IDENTITY.nom, code: SDB_IDENTITY.code },
+    sdb: {
+      nom: ctx.sdb.nom,
+      code: ctx.sdb.code,
+      agrement_cosumaf: ctx.sdb.agrement_cosumaf,
+      rccm: ctx.sdb.rccm,
+      niu: ctx.sdb.niu,
+    },
     client: { code: client.code, nom_complet: nomComplet, type: client.type },
     numero_compte: numeroCompte,
     date_arrete: dateArrete,
     lignes,
     timestamp_rfc3161_mock: new Date().toISOString(),
-    ville: SDB_IDENTITY.ville,
+    ville: ctx.ville,
+    mentionsLines: ctx.mentionsLines,
+    logoUrl: ctx.logoUrl,
   };
 }
 

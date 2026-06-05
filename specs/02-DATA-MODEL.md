@@ -130,6 +130,12 @@ Traçabilité des PDF produits (équivalent du `auditLogger` MIMS). Champs :
 (relation → users), `created`. Une entrée par export, écrite **avant** de remettre le
 fichier à l'utilisateur.
 
+### `parametres_sdb`
+Configuration de la société de bourse (identité, agrément COSUMAF, RCCM, NIU, capital,
+adresse, contacts, logo, 3 modèles de mentions, période d'effet). Alimente les en-têtes
+et pieds de page des rapports. Détail complet dans `10-CONFIG-SDB.md`. Migration
+`pocketbase/pb_migrations/1700000050_parametres_sdb.js`.
+
 ### `users` (auth natif PocketBase)
 Collection d'authentification fournie par PocketBase. Présente dès la v1. En
 mono-poste : un utilisateur local créé au premier lancement (auto-login). En

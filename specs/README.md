@@ -16,7 +16,8 @@ cite les chemins exacts des fichiers MIMS à porter.
 8. `07-PACKAGING-CICD.md` · build Mac, release Windows via GitHub Actions, licence
 9. `08-TESTING.md` · stratégie de tests
 10. `09-ROADMAP-MVP.md` · ordre de construction recommandé
-11. `PORT-SOURCES.md` · liste exacte des fichiers MIMS à copier / porter
+11. `10-CONFIG-SDB.md` · configuration de la société de bourse (en-têtes et pieds de page)
+12. `PORT-SOURCES.md` · liste exacte des fichiers MIMS à copier / porter
 
 ## Principe directeur
 

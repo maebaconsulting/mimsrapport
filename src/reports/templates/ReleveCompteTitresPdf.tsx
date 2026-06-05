@@ -37,7 +37,14 @@ const INFO = "#3A6B7C";
 // ---------------------------------------------------------------------------
 
 export interface ReleveCompteTitresPdfProps {
-  sdb: { nom: string; code: string };
+  sdb: {
+    nom: string;
+    code: string;
+    /** Numéro d'agrément COSUMAF (affiché en en-tête si présent). */
+    agrement_cosumaf?: string;
+    rccm?: string;
+    niu?: string;
+  };
   client: {
     code: string;
     nom_complet: string;
@@ -569,6 +576,11 @@ export function ReleveCompteTitresPdf({
               <View>
                 <Text style={styles.logoLabel}>{raisonSociale}</Text>
                 <Text style={styles.logoSubLabel}>{sdb.code}</Text>
+                {sdb.agrement_cosumaf ? (
+                  <Text style={styles.logoSubLabel}>
+                    {`Agrément COSUMAF · ${sdb.agrement_cosumaf}`}
+                  </Text>
+                ) : null}
               </View>
             </View>
 

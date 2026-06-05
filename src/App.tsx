@@ -5,10 +5,11 @@ import { getPocketBase } from "./lib/pocketbase";
 import { ImportWizard } from "./import/ImportWizard";
 import { ReportsView } from "./reports/ReportsView";
 import { DashboardsView } from "./dashboards/DashboardsView";
+import { SettingsView } from "./settings/SettingsView";
 import { LicenseGate } from "./LicenseGate";
 import { getLicenseStatus, type LicenseStatus } from "./lib/license";
 
-type Vue = "accueil" | "import" | "rapports" | "tableaux";
+type Vue = "accueil" | "import" | "rapports" | "tableaux" | "parametres";
 
 type ConnState =
   | { phase: "connexion" }
@@ -30,6 +31,7 @@ const NAV: Array<{ id: Vue; label: string; enabled: boolean }> = [
   { id: "import", label: "Import Manar", enabled: true },
   { id: "rapports", label: "Rapports", enabled: true },
   { id: "tableaux", label: "Tableaux de bord", enabled: true },
+  { id: "parametres", label: "Paramètres", enabled: true },
 ];
 
 function App() {
@@ -117,6 +119,7 @@ function App() {
         )}
         {vue === "rapports" && <ReportsView />}
         {vue === "tableaux" && <DashboardsView />}
+        {vue === "parametres" && <SettingsView />}
       </main>
     </div>
   );
