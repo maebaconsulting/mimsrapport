@@ -153,6 +153,98 @@
   font-size: 14px;
 }
 
+/* Barre de pagination */
+.data-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-top: 1px solid var(--mw-border);
+  background: var(--mw-surface-muted);
+}
+
+.data-pager__size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--mw-fg-muted);
+}
+
+.data-pager__size select {
+  font-family: var(--mw-font-body);
+  font-size: 13px;
+  padding: 6px 28px 6px 10px;
+  border: 1px solid var(--mw-border-strong);
+  border-radius: var(--mw-radius-sm);
+  background: var(--mw-white);
+  color: var(--mw-fg);
+  cursor: pointer;
+}
+.data-pager__size select:focus {
+  outline: none;
+  border-color: var(--mw-ink);
+  box-shadow: var(--mw-ring);
+}
+
+.data-pager__nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.data-pager__range {
+  font-size: 12px;
+  color: var(--mw-fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.data-pager__buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.data-pager__page {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mw-fg);
+  font-variant-numeric: tabular-nums;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+
+.data-pager__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  font-size: 15px;
+  line-height: 1;
+  border: 1px solid var(--mw-border-strong);
+  border-radius: var(--mw-radius-sm);
+  background: var(--mw-white);
+  color: var(--mw-ink);
+  cursor: pointer;
+  transition: var(--mw-transition);
+}
+.data-pager__btn:hover:not(:disabled) {
+  background: var(--mw-surface-muted);
+  border-color: var(--mw-fg-subtle);
+}
+.data-pager__btn:focus-visible {
+  outline: none;
+  box-shadow: var(--mw-ring);
+}
+.data-pager__btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 /* Pastilles de statut (mêmes pastels que les notices) */
 .pill {
   display: inline-flex;
