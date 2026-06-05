@@ -1,0 +1,42 @@
+# macOS
+.DS_Store
+
+# Node / frontend
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+
+# Rust / Tauri
+src-tauri/target/
+target/
+
+# PocketBase · données locales (jamais committer la base ni les uploads)
+pb_data/
+pocketbase/pb_data/
+*.db
+*.db-shm
+*.db-wal
+
+# Binaire PocketBase téléchargé (récupéré par script / CI, jamais committé)
+pocketbase/bin/
+src-tauri/binaries/
+
+# Données Manar RÉELLES (PII) · ne jamais committer
+*.xls
+samples/**/*-REEL.xlsx
+!samples/**/*-ANONYME.xlsx
+
+# Builds / releases
+*.dmg
+*.msi
+*.exe
+*.app/
+
+# Licences générées / clés de signature
+*.license
+*.key
+*.p12
+.env
+.env.local
