@@ -1,6 +1,6 @@
-// Accès fichiers côté webview : dialogue natif (chemin) + lecture/écriture des
-// octets via commandes Rust. Hors Tauri (dev navigateur), pickManarFile retombe
-// sur un <input type="file"> pour rester testable.
+// Accès fichiers côté webview. Les dialogues natifs sont pilotés côté Rust et le
+// chemin choisi ne traverse jamais l'IPC (sécurité). Hors Tauri (dev navigateur),
+// on retombe sur les API du navigateur pour rester testable.
 
 import { isTauri } from "./config";
 
@@ -9,21 +9,14 @@ export interface PickedFile {
   bytes: Uint8Array;
 }
 
-const MANAR_FILTERS = [
-  { name: "Fichier Manar", extensions: ["xls", "xlsx"] },
-];
-
 /** Ouvre un dialogue et retourne le fichier Manar choisi (ou null si annulé). */
 export async function pickManarFile(): Promise<PickedFile | null> {
   if (isTauri()) {
-    const { open } = await import("@tauri-apps/plugin-dialog");
     const { invoke } = await import("@tauri-apps/api/core");
-    const selected = await open({ multiple: false, filters: MANAR_FILTERS });
-    if (!selected || typeof selected !== "string") return null;
-    const buffer = await invoke<ArrayBuffer>("read_file_bytes", {
-      path: selected,
-    });
-    const name = selected.split(/[\\/]/).pop() ?? "manar.xlsx";
+    // Le Rust ouvre le dialogue et mémorise le chemin ; on ne reçoit que le nom.
+    const name = await invoke<string | null>("pick_manar_file");
+    if (!name) return null;
+    const buffer = await invoke<ArrayBuffer>("read_picked_file");
     return { name, bytes: new Uint8Array(buffer) };
   }
 
@@ -65,10 +58,10 @@ export async function saveBytes(
     URL.revokeObjectURL(url);
     return true;
   }
-  const { save } = await import("@tauri-apps/plugin-dialog");
   const { invoke } = await import("@tauri-apps/api/core");
-  const path = await save({ defaultPath: defaultName });
-  if (!path) return false;
-  await invoke("write_file_bytes", { path, contents: Array.from(bytes) });
-  return true;
+  // Le Rust ouvre le dialogue d'enregistrement et écrit ; chemin choisi côté Rust.
+  return invoke<boolean>("save_pdf", {
+    contents: Array.from(bytes),
+    defaultName,
+  });
 }

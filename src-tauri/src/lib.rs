@@ -15,10 +15,12 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
+        .manage(fileio::PickedPath::default())
         .invoke_handler(tauri::generate_handler![
             sidecar::get_pocketbase_url,
-            fileio::read_file_bytes,
-            fileio::write_file_bytes,
+            fileio::pick_manar_file,
+            fileio::read_picked_file,
+            fileio::save_pdf,
         ])
         .setup(|app| {
             // Démarrage du sidecar PocketBase avant le chargement effectif de

@@ -166,8 +166,10 @@ export async function runImport(
   const fileHash = await sha256Hex(data);
 
   // Idempotence : un même hash déjà REUSSI ne se réimporte pas sans remplacement.
+  // Binding de paramètres (pb.filter) : les valeurs ne sont jamais interpolées
+  // brutes dans le filtre (protection contre l'injection).
   const priorReussi = await pb.collection("manar_imports").getList(1, 50, {
-    filter: `file_hash="${fileHash}" && statut="REUSSI"`,
+    filter: pb.filter('file_hash = {:h} && statut = "REUSSI"', { h: fileHash }),
     sort: "-created",
   });
 
@@ -225,7 +227,7 @@ export async function runImport(
     progress("Dérivation des émetteurs…");
     const emetteurIdByCode = new Map<string, string>();
     await runPool(derived.emetteurs, POOL, async (e) => {
-      const id = await createOrUpdate(pb, "emetteurs", `code="${e.code}"`, {
+      const id = await createOrUpdate(pb, "emetteurs", pb.filter("code = {:v}", { v: e.code }), {
         code: e.code,
         nom: e.nom,
         type: e.type,
@@ -239,7 +241,7 @@ export async function runImport(
     progress("Dérivation des clients…");
     const clientIdByCode = new Map<string, string>();
     await runPool(derived.clients, POOL, async (c) => {
-      const id = await createOrUpdate(pb, "clients", `code="${c.code}"`, {
+      const id = await createOrUpdate(pb, "clients", pb.filter("code = {:v}", { v: c.code }), {
         code: c.code,
         type: c.type,
         nom: c.nom,
@@ -251,12 +253,13 @@ export async function runImport(
     await runPool(derived.clients, POOL, async (c) => {
       const clientId = clientIdByCode.get(c.code);
       if (!clientId) return;
+      const byClient = pb.filter("client = {:v}", { v: clientId });
       if (c.type === "PP") {
-        await createOrUpdate(pb, "clients_pp", `client="${clientId}"`, {
+        await createOrUpdate(pb, "clients_pp", byClient, {
           client: clientId,
         });
       } else {
-        await createOrUpdate(pb, "clients_pm", `client="${clientId}"`, {
+        await createOrUpdate(pb, "clients_pm", byClient, {
           client: clientId,
           raison_sociale: c.raison_sociale,
           rccm: c.rccm,
@@ -272,7 +275,7 @@ export async function runImport(
     await runPool(derived.portefeuilles, POOL, async (p) => {
       const clientId = clientIdByCode.get(p.client_code);
       if (!clientId) return;
-      await createOrUpdate(pb, "portefeuilles", `code="${p.code}"`, {
+      await createOrUpdate(pb, "portefeuilles", pb.filter("code = {:v}", { v: p.code }), {
         code: p.code,
         libelle: p.libelle,
         client: clientId,
@@ -286,7 +289,7 @@ export async function runImport(
     const instrumentIdByIsin = new Map<string, string>();
     await runPool(derived.instruments, POOL, async (inst) => {
       const emetteurId = emetteurIdByCode.get(inst.emetteur_code) ?? null;
-      const id = await createOrUpdate(pb, "instruments", `isin="${inst.isin}"`, {
+      const id = await createOrUpdate(pb, "instruments", pb.filter("isin = {:v}", { v: inst.isin }), {
         isin: inst.isin,
         code_mims: inst.code_mims,
         libelle_fr: inst.libelle_fr,
@@ -335,7 +338,10 @@ export async function runImport(
       await createOrUpdate(
         pb,
         "positions",
-        `client="${clientId}" && instrument="${instrumentId}"`,
+        pb.filter("client = {:c} && instrument = {:i}", {
+          c: clientId,
+          i: instrumentId,
+        }),
         {
           client: clientId,
           instrument: instrumentId,
