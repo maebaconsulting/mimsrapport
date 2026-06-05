@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
+  CartesianGrid,
   Cell,
+  Label,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -40,6 +44,47 @@ function fmtXAFCompact(n: number): string {
 }
 function fmtPct(n: number): string {
   return `${n.toFixed(1)} %`;
+}
+/** Format compact d'axe : M (millions) / Md (milliards). */
+function fmtAxis(n: number): string {
+  const abs = Math.abs(n);
+  if (abs >= 1e9) return `${(n / 1e9).toFixed(1)} Md`;
+  if (abs >= 1e6) return `${(n / 1e6).toFixed(0)} M`;
+  return String(n);
+}
+
+/** Infobulle MoWoBank : carte blanche arrondie, ombre douce, valeurs mono. */
+function ChartTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: Array<{ name?: string; value?: number | string; color?: string }>;
+  label?: string | number;
+}) {
+  if (!active || !payload || payload.length === 0) return null;
+  return (
+    <div className="chart-tooltip">
+      {label != null && label !== "" ? (
+        <div className="chart-tooltip__label">{String(label)}</div>
+      ) : null}
+      {payload.map((p, i) => (
+        <div className="chart-tooltip__row" key={i}>
+          {p.color ? (
+            <span
+              className="chart-tooltip__dot"
+              style={{ background: p.color }}
+            />
+          ) : null}
+          {p.name ? (
+            <span className="chart-tooltip__name">{p.name}</span>
+          ) : null}
+          <span className="chart-tooltip__value">{fmtXAF(Number(p.value))}</span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 type State =
@@ -113,6 +158,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
           value={fmtXAFCompact(d.encours.valorisationTotale)}
           sub={`${d.encours.nbPositions} positions · ${fmtXAF(d.encours.valorisationTotale)}`}
           tone="sage"
+          spark={d.sparkEncours}
         />
         <KpiCard label="Comptes titres" value={String(d.encours.nbComptes)} tone="lilac" />
         <KpiCard
@@ -130,6 +176,42 @@ function DashboardsContent({ d }: { d: Dashboards }) {
       </div>
 
       <div className="dash-panels">
+        {/* 1. Évolution de l'encours reconstitué (pleine largeur) */}
+        <Panel titre="Évolution de l'encours (reconstitué)" pleineLargeur>
+          {d.evolutionEncours.length === 0 ? (
+            <Vide />
+          ) : (
+            <ResponsiveContainer width="100%" height={240}>
+              <AreaChart data={d.evolutionEncours} margin={{ left: 4, right: 8, top: 8 }}>
+                <defs>
+                  <linearGradient id="grad-encours" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.45} />
+                    <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  vertical={false}
+                  stroke="var(--mw-border)"
+                  strokeDasharray="3 3"
+                />
+                <XAxis dataKey="periode" tick={{ fontSize: 10 }} />
+                <YAxis tickFormatter={(v) => fmtAxis(Number(v))} tick={{ fontSize: 11 }} />
+                <Tooltip content={<ChartTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="cumule"
+                  name="Encours"
+                  stroke="var(--chart-1)"
+                  strokeWidth={2}
+                  fill="url(#grad-encours)"
+                  dot={false}
+                  activeDot={{ r: 3 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </Panel>
+
         {/* 2. Répartition par classe d'actifs */}
         <Panel titre="Répartition par classe d'actifs">
           <DonutChart
@@ -183,10 +265,15 @@ function DashboardsContent({ d }: { d: Dashboards }) {
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={d.echeancier}>
+                <CartesianGrid
+                  vertical={false}
+                  stroke="var(--mw-border)"
+                  strokeDasharray="3 3"
+                />
                 <XAxis dataKey="annee" tick={{ fontSize: 11 }} />
-                <YAxis tickFormatter={(v) => `${(v / 1e6).toFixed(0)}M`} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v) => fmtXAF(Number(v))} />
-                <Bar dataKey="montant" fill="var(--chart-2)" radius={[3, 3, 0, 0]} />
+                <YAxis tickFormatter={(v) => fmtAxis(Number(v))} tick={{ fontSize: 11 }} />
+                <Tooltip content={<ChartTooltip />} />
+                <Bar dataKey="montant" name="Échéance" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -198,13 +285,46 @@ function DashboardsContent({ d }: { d: Dashboards }) {
             <Vide />
           ) : (
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={d.fluxActivite}>
+              <AreaChart data={d.fluxActivite} margin={{ left: 4, right: 8, top: 8 }}>
+                <defs>
+                  <linearGradient id="grad-achat" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--chart-4)" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="var(--chart-4)" stopOpacity={0.08} />
+                  </linearGradient>
+                  <linearGradient id="grad-vente" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--chart-5)" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="var(--chart-5)" stopOpacity={0.08} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  vertical={false}
+                  stroke="var(--mw-border)"
+                  strokeDasharray="3 3"
+                />
                 <XAxis dataKey="periode" tick={{ fontSize: 10 }} />
-                <YAxis tickFormatter={(v) => `${(v / 1e6).toFixed(0)}M`} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v) => fmtXAF(Number(v))} />
-                <Bar dataKey="achat" name="Achat" fill="var(--chart-4)" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="vente" name="Vente" fill="var(--chart-6)" radius={[3, 3, 0, 0]} />
-              </BarChart>
+                <YAxis tickFormatter={(v) => fmtAxis(Number(v))} tick={{ fontSize: 11 }} />
+                <Tooltip content={<ChartTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="achat"
+                  name="Achat"
+                  stackId="flux"
+                  stroke="var(--chart-4)"
+                  strokeWidth={2}
+                  fill="url(#grad-achat)"
+                  dot={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="vente"
+                  name="Vente"
+                  stackId="flux"
+                  stroke="var(--chart-5)"
+                  strokeWidth={2}
+                  fill="url(#grad-vente)"
+                  dot={false}
+                />
+              </AreaChart>
             </ResponsiveContainer>
           )}
         </Panel>
@@ -270,13 +390,15 @@ function Panel({
   titre,
   badge,
   children,
+  pleineLargeur = false,
 }: {
   titre: string;
   badge?: { texte: string; variant: "danger" | "success" };
   children: React.ReactNode;
+  pleineLargeur?: boolean;
 }) {
   return (
-    <div className="dash-panel">
+    <div className={`dash-panel${pleineLargeur ? " dash-panel--full" : ""}`}>
       <div className="dash-panel__head">
         <span className="small-caps">{titre}</span>
         {badge ? (
@@ -294,9 +416,16 @@ function Vide() {
   return <p className="dash-vide">Aucune donnée disponible.</p>;
 }
 
-function DonutChart({ data }: { data: Array<{ name: string; value: number }> }) {
+function DonutChart({
+  data,
+  centerLabel,
+}: {
+  data: Array<{ name: string; value: number }>;
+  centerLabel?: string;
+}) {
   const total = data.reduce((s, x) => s + x.value, 0);
   if (total <= 0) return <Vide />;
+  const centre = centerLabel ?? fmtXAFCompact(total);
   return (
     <ResponsiveContainer width="100%" height={180}>
       <PieChart>
@@ -311,8 +440,26 @@ function DonutChart({ data }: { data: Array<{ name: string; value: number }> }) 
           {data.map((_, i) => (
             <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
           ))}
+          <Label
+            position="center"
+            content={({ viewBox }) => {
+              const vb = viewBox as { cx?: number; cy?: number } | undefined;
+              if (!vb || vb.cx == null || vb.cy == null) return null;
+              return (
+                <text
+                  x={vb.cx}
+                  y={vb.cy}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  className="donut-center"
+                >
+                  {centre}
+                </text>
+              );
+            }}
+          />
         </Pie>
-        <Tooltip formatter={(v) => fmtXAF(Number(v))} />
+        <Tooltip content={<ChartTooltip />} />
       </PieChart>
     </ResponsiveContainer>
   );
@@ -335,11 +482,27 @@ function HBarChart({
           tick={{ fontSize: 10 }}
         />
         <Tooltip
-          formatter={(v, _n, p) =>
-            `${fmtXAF(Number(v))} (${fmtPct((p as { payload: { part: number } }).payload.part)})`
-          }
+          content={({ active, payload }) => {
+            if (!active || !payload || payload.length === 0) return null;
+            const p = payload[0] as {
+              payload?: { name?: string; part?: number };
+              value?: number | string;
+            };
+            return (
+              <div className="chart-tooltip">
+                {p.payload?.name ? (
+                  <div className="chart-tooltip__label">{p.payload.name}</div>
+                ) : null}
+                <div className="chart-tooltip__row">
+                  <span className="chart-tooltip__value">
+                    {fmtXAF(Number(p.value))} ({fmtPct(Number(p.payload?.part ?? 0))})
+                  </span>
+                </div>
+              </div>
+            );
+          }}
         />
-        <Bar dataKey="value" fill="var(--chart-2)" radius={[0, 3, 3, 0]} />
+        <Bar dataKey="value" fill="var(--chart-2)" radius={[0, 4, 4, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

@@ -115,6 +115,33 @@ describe("computeDashboards", () => {
     ]);
   });
 
+  it("reconstitue l'évolution de l'encours par cumul des flux nets mensuels", () => {
+    // Mois 01 : +1000 (achat) −400 (vente) = net +600 → cumul 600.
+    // Mois 02 : +700 (achat) → net +700 → cumul 1300.
+    const mvts: DashMouvement[] = [
+      { sens: "ACHAT", date_operation: "2026-01-15", montant_xaf: 1000 },
+      { sens: "VENTE", date_operation: "2026-01-20", montant_xaf: 400 },
+      { sens: "ACHAT", date_operation: "2026-02-01", montant_xaf: 700 },
+    ];
+    const d = computeDashboards([], mvts);
+    expect(d.evolutionEncours).toEqual([
+      { periode: "2026-01", cumule: 600 },
+      { periode: "2026-02", cumule: 1300 },
+    ]);
+    expect(d.sparkEncours).toEqual([600, 1300]);
+  });
+
+  it("ignore les dates de mouvement nulles ou mal formées dans l'évolution", () => {
+    const mvts: DashMouvement[] = [
+      { sens: "ACHAT", date_operation: null, montant_xaf: 999 },
+      { sens: "ACHAT", date_operation: "bad", montant_xaf: 999 },
+      { sens: "OST_ENTREE", date_operation: "2026-03-10", montant_xaf: 500 },
+      { sens: "OST_SORTIE", date_operation: "2026-03-12", montant_xaf: 200 },
+    ];
+    const d = computeDashboards([], mvts);
+    expect(d.evolutionEncours).toEqual([{ periode: "2026-03", cumule: 300 }]);
+  });
+
   it("calcule le taux moyen pondéré obligataire", () => {
     const d = computeDashboards(
       [

@@ -50,6 +50,10 @@ export interface Dashboards {
   concentrationClient: PartItem[];
   echeancier: Array<{ annee: string; montant: number }>;
   fluxActivite: Array<{ periode: string; achat: number; vente: number }>;
+  /** Encours reconstitué dans le temps : cumul courant des flux nets mensuels. */
+  evolutionEncours: Array<{ periode: string; cumule: number }>;
+  /** Série brute des cumuls (pour les sparklines KPI). */
+  sparkEncours: number[];
   repartitionTypeClient: {
     pp: { comptes: number; valorisation: number };
     pm: { comptes: number; valorisation: number };
@@ -169,6 +173,26 @@ export function computeDashboards(
     .map(([periode, v]) => ({ periode, achat: v.achat, vente: v.vente }))
     .sort((a, b) => a.periode.localeCompare(b.periode));
 
+  // Évolution de l'encours reconstitué : flux net mensuel cumulé.
+  // Flux net = somme(ACHAT|OST_ENTREE) − somme(VENTE|OST_SORTIE) par mois.
+  const fluxNetParMois = new Map<string, number>();
+  for (const m of mouvements) {
+    if (!m.date_operation) continue;
+    const mois = m.date_operation.slice(0, 7); // yyyy-mm
+    if (!/^\d{4}-\d{2}$/.test(mois)) continue;
+    const signe = m.sens === "ACHAT" || m.sens === "OST_ENTREE" ? 1 : -1;
+    fluxNetParMois.set(mois, (fluxNetParMois.get(mois) ?? 0) + signe * m.montant_xaf);
+  }
+  const moisTries = [...fluxNetParMois.entries()].sort((a, b) =>
+    a[0].localeCompare(b[0]),
+  );
+  let cumul = 0;
+  const evolutionEncours = moisTries.map(([periode, net]) => {
+    cumul += net;
+    return { periode, cumule: cumul };
+  });
+  const sparkEncours = evolutionEncours.map((p) => p.cumule);
+
   // Répartition par type de client.
   const ppComptes = new Set<string>();
   const pmComptes = new Set<string>();
@@ -220,6 +244,8 @@ export function computeDashboards(
     concentrationClient: toParts(parClient, valorisationTotale),
     echeancier,
     fluxActivite,
+    evolutionEncours,
+    sparkEncours,
     repartitionTypeClient: {
       pp: { comptes: ppComptes.size, valorisation: ppValo },
       pm: { comptes: pmComptes.size, valorisation: pmValo },

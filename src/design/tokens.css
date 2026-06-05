@@ -116,14 +116,14 @@
   --color-critical: #7a1e1e;
   --color-critical-soft: #ecd5d5;
 
-  /* Palette catégorielle des graphiques (sobre, alignée DS) */
-  --chart-1: #11191f; /* ink */
-  --chart-2: #1f4a57; /* info */
-  --chart-3: #8c5c0f; /* warning */
-  --chart-4: #2d5a2d; /* success */
-  --chart-5: #5f5c58; /* gray-500 */
-  --chart-6: #8a2d2d; /* danger */
-  --chart-accent: #c9a227; /* or soutenu (lisible sur clair) */
+  /* Palette catégorielle des graphiques (vive, harmonieuse, lisible sur blanc) */
+  --chart-1: #2f8f83; /* teal profond */
+  --chart-2: #7b6ef0; /* lilas indigo */
+  --chart-3: #e8a23d; /* ambre */
+  --chart-4: #6da84b; /* vert */
+  --chart-5: #e0735a; /* corail */
+  --chart-6: #4c6171; /* ardoise */
+  --chart-accent: #f5c542; /* jaune soutenu */
 
   /* Typographie */
   --font-sans: "IBM Plex Sans", system-ui, sans-serif; /* titres, labels, nav */
