@@ -50,6 +50,91 @@ function scopeOf(id: ReportType): ReportScope {
   return REPORT_TYPES.find((r) => r.id === id)?.scope ?? "client";
 }
 
+interface ComboOption {
+  id: string;
+  label: string;
+}
+
+/** Liste déroulante recherchable (combobox autonome, sans dépendance). */
+function SearchableSelect({
+  options,
+  value,
+  onChange,
+  placeholder,
+}: {
+  options: ComboOption[];
+  value: string;
+  onChange: (id: string) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  const selected = options.find((o) => o.id === value);
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? options.filter((o) => o.label.toLowerCase().includes(q))
+    : options;
+
+  useEffect(() => {
+    function onDocDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocDown);
+    return () => document.removeEventListener("mousedown", onDocDown);
+  }, []);
+
+  return (
+    <div className="combobox" ref={ref}>
+      <input
+        className="combobox__input"
+        type="text"
+        role="combobox"
+        aria-expanded={open}
+        placeholder={placeholder}
+        value={open ? query : (selected?.label ?? "")}
+        onFocus={() => {
+          setOpen(true);
+          setQuery("");
+        }}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setOpen(true);
+        }}
+      />
+      <span className="combobox__caret" aria-hidden="true">▾</span>
+      {open && (
+        <ul className="combobox__list" role="listbox">
+          {filtered.length === 0 ? (
+            <li className="combobox__empty">Aucun résultat</li>
+          ) : (
+            filtered.slice(0, 50).map((o) => (
+              <li
+                key={o.id}
+                role="option"
+                aria-selected={o.id === value}
+                className={
+                  "combobox__option" +
+                  (o.id === value ? " combobox__option--active" : "")
+                }
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onChange(o.id);
+                  setOpen(false);
+                  setQuery("");
+                }}
+              >
+                {o.label}
+              </li>
+            ))
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 type GenState =
   | { kind: "idle" }
   | { kind: "generation" }
@@ -243,17 +328,15 @@ export function ReportsView() {
                 (clients.length > 0 ? (
                   <label className="report-field reports-field--client">
                     <span className="small-caps">Client</span>
-                    <select
+                    <SearchableSelect
                       value={clientId}
-                      onChange={(e) => setClientId(e.target.value)}
-                    >
-                      {clients.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.nom_complet} · {c.code} ({c.nb_positions} position
-                          {c.nb_positions > 1 ? "s" : ""})
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setClientId}
+                      placeholder="Rechercher un client…"
+                      options={clients.map((c) => ({
+                        id: c.id,
+                        label: `${c.nom_complet} · ${c.code} (${c.nb_positions} position${c.nb_positions > 1 ? "s" : ""})`,
+                      }))}
+                    />
                   </label>
                 ) : (
                   <div className="import-notice import-notice--warn reports-warn">
