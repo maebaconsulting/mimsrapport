@@ -19,6 +19,7 @@
     "pocketbase": "^0.27.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "recharts": "^3.8.1",
     "xlsx": "file:./vendor/xlsx-0.20.3.tgz"
   },
   "devDependencies": {

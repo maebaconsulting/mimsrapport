@@ -4,8 +4,9 @@ import "./App.css";
 import { getPocketBase } from "./lib/pocketbase";
 import { ImportWizard } from "./import/ImportWizard";
 import { ReportsView } from "./reports/ReportsView";
+import { DashboardsView } from "./dashboards/DashboardsView";
 
-type Vue = "accueil" | "import" | "rapports";
+type Vue = "accueil" | "import" | "rapports" | "tableaux";
 
 type ConnState =
   | { phase: "connexion" }
@@ -26,6 +27,7 @@ const NAV: Array<{ id: Vue; label: string; enabled: boolean }> = [
   { id: "accueil", label: "Accueil", enabled: true },
   { id: "import", label: "Import Manar", enabled: true },
   { id: "rapports", label: "Rapports", enabled: true },
+  { id: "tableaux", label: "Tableaux de bord", enabled: true },
 ];
 
 function App() {
@@ -72,9 +74,6 @@ function App() {
               {item.label}
             </button>
           ))}
-          <button className="app-nav__item" disabled>
-            Tableaux de bord
-          </button>
         </nav>
         <div className="app-sidebar__footer small-caps">Version 0.1.0</div>
       </aside>
@@ -97,6 +96,7 @@ function App() {
           </>
         )}
         {vue === "rapports" && <ReportsView />}
+        {vue === "tableaux" && <DashboardsView />}
       </main>
     </div>
   );
