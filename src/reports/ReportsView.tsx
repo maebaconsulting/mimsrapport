@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getPocketBase } from "../lib/pocketbase";
 import { saveBytes } from "../lib/fileio";
 import {
@@ -18,8 +18,21 @@ const REPORT_TYPES: Array<{ id: ReportType; label: string }> = [
 type GenState =
   | { kind: "idle" }
   | { kind: "generation" }
-  | { kind: "ok"; filename: string; hash: string; enregistre: boolean }
   | { kind: "erreur"; message: string };
+
+/** Aperçu PDF courant (avant téléchargement ou impression). */
+interface Preview {
+  url: string; // object URL du Blob (affiché dans l'iframe)
+  bytes: Uint8Array;
+  filename: string;
+  hash: string;
+  label: string;
+}
+
+type SaveNotice =
+  | { kind: "idle" }
+  | { kind: "ok"; filename: string }
+  | { kind: "annule" };
 
 function todayIso(): string {
   const d = new Date();
@@ -34,7 +47,10 @@ export function ReportsView() {
   const [reportType, setReportType] = useState<ReportType>("attestation");
   const [dateArrete, setDateArrete] = useState<string>(todayIso());
   const [gen, setGen] = useState<GenState>({ kind: "idle" });
+  const [preview, setPreview] = useState<Preview | null>(null);
+  const [save, setSave] = useState<SaveNotice>({ kind: "idle" });
   const [loadError, setLoadError] = useState<string | null>(null);
+  const frameRef = useRef<HTMLIFrameElement>(null);
 
   const charger = useCallback(async () => {
     try {
@@ -51,24 +67,63 @@ export function ReportsView() {
     void charger();
   }, [charger]);
 
+  // Libère l'object URL courant au démontage (évite les fuites mémoire).
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview.url);
+    };
+  }, [preview]);
+
+  function fermerApercu() {
+    if (preview) URL.revokeObjectURL(preview.url);
+    setPreview(null);
+    setSave({ kind: "idle" });
+  }
+
   async function generer() {
     if (!clientId) return;
     setGen({ kind: "generation" });
+    setSave({ kind: "idle" });
     try {
       const pb = await getPocketBase();
       const out =
         reportType === "attestation"
           ? await generateAttestation(pb, clientId, dateArrete)
           : await generateReleve(pb, clientId, dateArrete);
-      const enregistre = await saveBytes(out.bytes, out.filename);
-      setGen({
-        kind: "ok",
+
+      // Aperçu avant tout enregistrement : on n'écrit rien sur disque ici.
+      if (preview) URL.revokeObjectURL(preview.url);
+      const url = URL.createObjectURL(out.blob);
+      const label =
+        REPORT_TYPES.find((r) => r.id === reportType)?.label ?? "Rapport";
+      setPreview({
+        url,
+        bytes: out.bytes,
         filename: out.filename,
         hash: out.hash,
-        enregistre,
+        label,
       });
+      setGen({ kind: "idle" });
     } catch (err) {
       setGen({ kind: "erreur", message: String(err) });
+    }
+  }
+
+  async function telecharger() {
+    if (!preview) return;
+    try {
+      const ok = await saveBytes(preview.bytes, preview.filename);
+      setSave(ok ? { kind: "ok", filename: preview.filename } : { kind: "annule" });
+    } catch (err) {
+      setGen({ kind: "erreur", message: String(err) });
+    }
+  }
+
+  function imprimer() {
+    const win = frameRef.current?.contentWindow;
+    if (win) {
+      win.focus();
+      win.print();
     }
   }
 
@@ -86,7 +141,8 @@ export function ReportsView() {
           <span className="small-caps">Rapports par client</span>
           <p className="card__lead">
             Génère le rapport choisi pour un client à une date d'arrêté, au format
-            PDF fidèle à MIMS (rendu côté application).
+            PDF fidèle à MIMS. Le document s'affiche en aperçu avant
+            téléchargement ou impression.
           </p>
 
           {loadError && (
@@ -150,21 +206,8 @@ export function ReportsView() {
               >
                 {gen.kind === "generation"
                   ? "Génération…"
-                  : "Générer le PDF"}
+                  : "Générer l'aperçu"}
               </button>
-            </div>
-          )}
-
-          {gen.kind === "ok" && (
-            <div className="import-notice import-notice--success">
-              <p>
-                {gen.enregistre
-                  ? `Attestation enregistrée (${gen.filename}).`
-                  : "Génération réussie (enregistrement annulé)."}
-              </p>
-              <p style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>
-                Empreinte SHA-256 · {gen.hash.slice(0, 16)}…
-              </p>
             </div>
           )}
 
@@ -175,6 +218,60 @@ export function ReportsView() {
           )}
         </div>
       </section>
+
+      {preview && (
+        <div
+          className="preview-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Aperçu · ${preview.label}`}
+        >
+          <div className="preview-modal">
+            <div className="preview-modal__head">
+              <div>
+                <span className="small-caps">Aperçu avant impression</span>
+                <p className="preview-modal__title">
+                  {preview.label} · {preview.filename}
+                </p>
+              </div>
+              <div className="preview-actions">
+                <button className="btn" onClick={imprimer}>
+                  Imprimer
+                </button>
+                <button className="btn btn--primary" onClick={telecharger}>
+                  Télécharger
+                </button>
+                <button className="btn" onClick={fermerApercu}>
+                  Fermer
+                </button>
+              </div>
+            </div>
+
+            <iframe
+              ref={frameRef}
+              className="preview-frame"
+              src={preview.url}
+              title={`Aperçu ${preview.label}`}
+            />
+
+            <div className="preview-modal__foot">
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>
+                Empreinte SHA-256 · {preview.hash.slice(0, 16)}…
+              </span>
+              {save.kind === "ok" && (
+                <span className="preview-modal__saved">
+                  Enregistré ({save.filename}).
+                </span>
+              )}
+              {save.kind === "annule" && (
+                <span className="preview-modal__saved">
+                  Enregistrement annulé.
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
