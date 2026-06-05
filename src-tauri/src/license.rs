@@ -165,8 +165,11 @@ pub fn get_license_status(app: AppHandle) -> LicenseStatus {
 
 /// Commande : ouvre un dialogue pour choisir un fichier de licence, le vérifie ;
 /// si valide, l'installe (copie dans le dossier de données) et retourne l'état.
+///
+/// `async` requis : `blocking_pick_file()` interbloque sur le thread principal
+/// (cf. `fileio::pick_manar_file`).
 #[tauri::command]
-pub fn install_license(app: AppHandle) -> Result<LicenseStatus, String> {
+pub async fn install_license(app: AppHandle) -> Result<LicenseStatus, String> {
     let picked = app
         .dialog()
         .file()

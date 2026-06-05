@@ -19,10 +19,14 @@ pub struct PickedPath(pub Mutex<Option<PathBuf>>);
 
 /// Ouvre le dialogue de sélection d'un fichier Manar. Mémorise le chemin choisi
 /// côté Rust et retourne seulement le nom du fichier (ou null si annulé).
+///
+/// `async` est requis : une commande synchrone s'exécute sur le thread principal,
+/// où `blocking_pick_file()` interbloque (le dialogue ne peut pas s'afficher). En
+/// async, la commande tourne hors du thread principal et le dialogue fonctionne.
 #[tauri::command]
-pub fn pick_manar_file(
+pub async fn pick_manar_file(
     app: AppHandle,
-    state: State<PickedPath>,
+    state: State<'_, PickedPath>,
 ) -> Result<Option<String>, String> {
     let picked = app
         .dialog()
@@ -67,8 +71,11 @@ pub fn log_pdf_selftest(result: String) {
 
 /// Ouvre le dialogue d'enregistrement et écrit le contenu (ex. un PDF produit).
 /// Retourne true si enregistré, false si annulé. Le chemin est choisi côté Rust.
+///
+/// `async` requis : `blocking_save_file()` interbloque sur le thread principal
+/// (cf. `pick_manar_file`).
 #[tauri::command]
-pub fn save_pdf(
+pub async fn save_pdf(
     app: AppHandle,
     contents: Vec<u8>,
     default_name: String,
