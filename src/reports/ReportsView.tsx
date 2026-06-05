@@ -6,6 +6,14 @@ import {
   listClientsWithPositions,
   type ClientChoice,
 } from "./services/attestation";
+import { generateReleve } from "./services/releve";
+
+type ReportType = "attestation" | "releve";
+
+const REPORT_TYPES: Array<{ id: ReportType; label: string }> = [
+  { id: "attestation", label: "Attestation de portefeuille" },
+  { id: "releve", label: "Relevé de compte-titres" },
+];
 
 type GenState =
   | { kind: "idle" }
@@ -23,6 +31,7 @@ function todayIso(): string {
 export function ReportsView() {
   const [clients, setClients] = useState<ClientChoice[] | null>(null);
   const [clientId, setClientId] = useState<string>("");
+  const [reportType, setReportType] = useState<ReportType>("attestation");
   const [dateArrete, setDateArrete] = useState<string>(todayIso());
   const [gen, setGen] = useState<GenState>({ kind: "idle" });
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -47,7 +56,10 @@ export function ReportsView() {
     setGen({ kind: "generation" });
     try {
       const pb = await getPocketBase();
-      const out = await generateAttestation(pb, clientId, dateArrete);
+      const out =
+        reportType === "attestation"
+          ? await generateAttestation(pb, clientId, dateArrete)
+          : await generateReleve(pb, clientId, dateArrete);
       const enregistre = await saveBytes(out.bytes, out.filename);
       setGen({
         kind: "ok",
@@ -71,10 +83,10 @@ export function ReportsView() {
 
       <section className="app-content">
         <div className="card" style={{ maxWidth: 720 }}>
-          <span className="small-caps">Attestation de portefeuille de titres</span>
+          <span className="small-caps">Rapports par client</span>
           <p className="card__lead">
-            Génère l'attestation d'un client à une date d'arrêté, au format PDF
-            fidèle à MIMS (rendu côté application).
+            Génère le rapport choisi pour un client à une date d'arrêté, au format
+            PDF fidèle à MIMS (rendu côté application).
           </p>
 
           {loadError && (
@@ -93,6 +105,20 @@ export function ReportsView() {
 
           {clients !== null && clients.length > 0 && (
             <div className="report-form">
+              <label className="report-field">
+                <span className="small-caps">Type de rapport</span>
+                <select
+                  value={reportType}
+                  onChange={(e) => setReportType(e.target.value as ReportType)}
+                >
+                  {REPORT_TYPES.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
               <label className="report-field">
                 <span className="small-caps">Client</span>
                 <select

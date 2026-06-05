@@ -12,6 +12,7 @@ import { connect } from "node:net";
 import PocketBase from "pocketbase";
 import { LOCAL_AUTH } from "../lib/config";
 import { runImport } from "./import-service";
+import { listClientsWithPositions } from "../reports/services/attestation";
 
 const RUN = process.env.PB_INTEGRATION === "1";
 const PORT = 8092;
@@ -107,6 +108,17 @@ describe.runIf(RUN)("import-service · intégration PocketBase", () => {
     expect(positions.totalItems).toBe(129);
     expect(operations.totalItems).toBe(166);
   }, 60000);
+
+  it("liste les clients avec positions pour les rapports", async () => {
+    const choices = await listClientsWithPositions(client);
+    expect(choices.length).toBeGreaterThan(0);
+    expect(choices.length).toBeLessThanOrEqual(80);
+    for (const c of choices) {
+      expect(c.code).toMatch(/^CT-MNR-[0-9A-F]{6}$/);
+      expect(c.nb_positions).toBeGreaterThan(0);
+      expect(c.nom_complet.length).toBeGreaterThan(0);
+    }
+  }, 30000);
 
   it("refuse un réimport du même fichier (idempotence)", async () => {
     const data = new Uint8Array(readFileSync(SAMPLE));

@@ -40,7 +40,7 @@ export interface AttestationOutput {
 }
 
 /** Hash SHA-256 (hex) d'un Blob via WebCrypto. */
-async function sha256HexOfBlob(blob: Blob): Promise<string> {
+export async function sha256HexOfBlob(blob: Blob): Promise<string> {
   const buffer = await blob.arrayBuffer();
   const digest = await crypto.subtle.digest("SHA-256", buffer);
   return Array.from(new Uint8Array(digest))
@@ -77,8 +77,11 @@ export async function listClientsWithPositions(
   return choices;
 }
 
+/** Champs d'un record `clients` utilisés par les services de rapport. */
+export type { ClientRecord };
+
 /** Compose le nom du client : PP « prénom nom », PM raison sociale (clients_pm). */
-async function composeClientName(
+export async function composeClientName(
   pb: PocketBase,
   client: ClientRecord,
 ): Promise<string> {
