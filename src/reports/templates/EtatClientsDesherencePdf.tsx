@@ -48,14 +48,14 @@ function fmtDate(iso: string | null): string {
 
 function fmtDateTime(iso: string): string {
   try {
-    return new Date(iso).toLocaleString("fr-FR");
+    return new Date(iso).toLocaleString("fr-FR").replace(/\u202f/g, "\u00a0");
   } catch {
     return iso;
   }
 }
 
 function fmtNombre(n: number): string {
-  return n.toLocaleString("fr-FR");
+  return n.toLocaleString("fr-FR").replace(/\u202f/g, "\u00a0");
 }
 
 const MOTIF_LABEL: Record<string, string> = {

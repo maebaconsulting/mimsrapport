@@ -73,6 +73,37 @@ function isNotFound(err: unknown): boolean {
   return err instanceof ClientResponseError && err.status === 404;
 }
 
+/** Vrai si l'erreur 400 porte des détails de champ (vraie erreur de validation,
+ * ex. conflit d'unicité), faux si `data` est vide (échec transitoire). */
+function hasFieldErrors(err: ClientResponseError): boolean {
+  const data = err.response?.data as Record<string, unknown> | undefined;
+  return !!data && Object.keys(data).length > 0;
+}
+
+/** Erreur transitoire : réseau/abort, 5xx, ou 400 sans détail de champ
+ * (contention d'écriture SQLite sous charge concurrente). */
+function isTransient(err: unknown): boolean {
+  if (!(err instanceof ClientResponseError)) return false;
+  if (err.status === 0 || err.status >= 500) return true;
+  if (err.status === 400) return !hasFieldErrors(err);
+  return false;
+}
+
+/** Réessaie une écriture sur erreur transitoire, avec petit délai croissant. */
+async function withRetry<T>(fn: () => Promise<T>, tries = 5): Promise<T> {
+  let last: unknown;
+  for (let i = 0; i < tries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      last = err;
+      if (!isTransient(err)) throw err;
+      await new Promise((r) => setTimeout(r, 40 * (i + 1)));
+    }
+  }
+  throw last;
+}
+
 /**
  * Crée le record ; en cas de conflit d'unicité (400), retrouve l'existant et le
  * met à jour. Retourne l'id. Optimal pour un import frais (1 aller-retour).
@@ -84,17 +115,18 @@ async function createOrUpdate(
   data: Record<string, unknown>,
 ): Promise<string> {
   try {
-    const rec = await pb.collection(collection).create(data);
+    const rec = await withRetry(() => pb.collection(collection).create(data));
     return rec.id;
   } catch (err) {
-    if (err instanceof ClientResponseError && err.status === 400) {
+    // 400 AVEC détails de champ = conflit d'unicité → bascule en mise à jour.
+    if (err instanceof ClientResponseError && err.status === 400 && hasFieldErrors(err)) {
       try {
         const existing = await pb.collection(collection).getFirstListItem(filter);
-        const rec = await pb.collection(collection).update(existing.id, data);
+        const rec = await withRetry(() =>
+          pb.collection(collection).update(existing.id, data),
+        );
         return rec.id;
       } catch (inner) {
-        // Si rien à mettre à jour, le 400 initial était une vraie erreur de
-        // validation : on le propage.
         if (isNotFound(inner)) throw err;
         throw inner;
       }
@@ -203,23 +235,27 @@ export async function runImport(
     0,
   );
 
-  const importRecord = await pb.collection("manar_imports").create({
-    file_name: fileName,
-    file_hash: fileHash,
-    file_size_bytes: data.length,
-    statut: "EN_COURS",
-    nb_operations: mappingResult.rows.length,
-    montant_total_xaf: montantTotal,
-    started_at: startedAt.toISOString(),
-  });
+  const importRecord = await withRetry(() =>
+    pb.collection("manar_imports").create({
+      file_name: fileName,
+      file_hash: fileHash,
+      file_size_bytes: data.length,
+      statut: "EN_COURS",
+      nb_operations: mappingResult.rows.length,
+      montant_total_xaf: montantTotal,
+      started_at: startedAt.toISOString(),
+    }),
+  );
   const importId = importRecord.id;
 
   try {
     // 1. Opérations brutes (création parallèle).
     progress(`Écriture des ${mappingResult.rows.length} opérations…`);
     await runPool(mappingResult.rows, POOL, async (row) => {
-      await pb.collection("manar_operations").create(
-        toOperationRecord(importId, row),
+      await withRetry(() =>
+        pb.collection("manar_operations").create(
+          toOperationRecord(importId, row),
+        ),
       );
     });
 
@@ -312,19 +348,21 @@ export async function runImport(
       const clientId = clientIdByCode.get(m.client_code);
       const instrumentId = instrumentIdByIsin.get(m.isin);
       if (!clientId || !instrumentId) return; // ISIN sans instrument dérivé
-      await pb.collection("mouvements_titres").create({
-        import: importId,
-        manar_op_id: m.manar_op_id,
-        client: clientId,
-        instrument: instrumentId,
-        sens: m.sens,
-        quantite: m.quantite,
-        prix_unitaire_xaf: m.prix_unitaire_xaf,
-        date_operation: m.date_operation,
-        date_valeur: m.date_valeur,
-        statut: m.statut,
-        source: "MANAR_IMPORT",
-      });
+      await withRetry(() =>
+        pb.collection("mouvements_titres").create({
+          import: importId,
+          manar_op_id: m.manar_op_id,
+          client: clientId,
+          instrument: instrumentId,
+          sens: m.sens,
+          quantite: m.quantite,
+          prix_unitaire_xaf: m.prix_unitaire_xaf,
+          date_operation: m.date_operation,
+          date_valeur: m.date_valeur,
+          statut: m.statut,
+          source: "MANAR_IMPORT",
+        }),
+      );
       nbMouvements++;
     });
 
@@ -361,11 +399,13 @@ export async function runImport(
     // 8. Clôture du journal (REUSSI).
     const completedAt = new Date();
     const durationMs = completedAt.getTime() - startedAt.getTime();
-    await pb.collection("manar_imports").update(importId, {
-      statut: "REUSSI",
-      completed_at: completedAt.toISOString(),
-      duration_ms: durationMs,
-    });
+    await withRetry(() =>
+      pb.collection("manar_imports").update(importId, {
+        statut: "REUSSI",
+        completed_at: completedAt.toISOString(),
+        duration_ms: durationMs,
+      }),
+    );
 
     return {
       status: "REUSSI",

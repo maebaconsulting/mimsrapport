@@ -402,7 +402,7 @@ export function ManarReconciliationReport(props: ManarReconciliationReportProps)
           <Text style={styles.sectionTitle}>Synthèse globale</Text>
           <View style={styles.kpiRow}>
             <View style={styles.kpiBox}>
-              <Text style={styles.kpiValue}>{nbOperations.toLocaleString('fr-FR')}</Text>
+              <Text style={styles.kpiValue}>{nbOperations.toLocaleString('fr-FR').replace(/\u202f/g, "\u00a0")}</Text>
               <Text style={styles.kpiLabel}>Opérations ingérées</Text>
             </View>
             <View style={styles.kpiBox}>
@@ -433,13 +433,13 @@ export function ManarReconciliationReport(props: ManarReconciliationReportProps)
                   <StatutBadge statut={row.statut} />
                 </View>
                 <Text style={[styles.td, { flex: 1, textAlign: 'right' }]}>
-                  {row.nb.toLocaleString('fr-FR')}
+                  {row.nb.toLocaleString('fr-FR').replace(/\u202f/g, "\u00a0")}
                 </Text>
                 <Text style={[styles.td, { flex: 1, textAlign: 'right' }]}>
                   {totalStatutNb > 0 ? fmtPct((row.nb / totalStatutNb) * 100) : '-'}
                 </Text>
                 <Text style={[styles.td, { flex: 3, textAlign: 'right' }]}>
-                  {row.montant.toLocaleString('fr-FR')}
+                  {row.montant.toLocaleString('fr-FR').replace(/\u202f/g, "\u00a0")}
                 </Text>
                 <Text style={[styles.td, { flex: 1, textAlign: 'right' }]}>
                   {totalStatutMontant > 0 ? fmtPct((row.montant / totalStatutMontant) * 100) : '-'}
@@ -449,11 +449,11 @@ export function ManarReconciliationReport(props: ManarReconciliationReportProps)
             <View style={[styles.tableRow, { backgroundColor: GRAY_200 }]}>
               <Text style={[styles.td, { flex: 2, fontWeight: 600 }]}>TOTAL</Text>
               <Text style={[styles.td, { flex: 1, fontWeight: 600, textAlign: 'right' }]}>
-                {totalStatutNb.toLocaleString('fr-FR')}
+                {totalStatutNb.toLocaleString('fr-FR').replace(/\u202f/g, "\u00a0")}
               </Text>
               <Text style={[styles.td, { flex: 1, textAlign: 'right' }]}>100 %</Text>
               <Text style={[styles.td, { flex: 3, fontWeight: 600, textAlign: 'right' }]}>
-                {totalStatutMontant.toLocaleString('fr-FR')}
+                {totalStatutMontant.toLocaleString('fr-FR').replace(/\u202f/g, "\u00a0")}
               </Text>
               <Text style={[styles.td, { flex: 1, textAlign: 'right' }]}>100 %</Text>
             </View>
@@ -474,11 +474,11 @@ export function ManarReconciliationReport(props: ManarReconciliationReportProps)
               <View key={row.code} style={idx % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
                 <Text style={[styles.td, { flex: 2 }]}>{row.code}</Text>
                 <Text style={[styles.td, { flex: 1, textAlign: 'right' }]}>
-                  {row.nb.toLocaleString('fr-FR')}
+                  {row.nb.toLocaleString('fr-FR').replace(/\u202f/g, "\u00a0")}
                 </Text>
                 <Text style={[styles.td, { flex: 1, textAlign: 'right' }]}>{fmtPct(row.pct)}</Text>
                 <Text style={[styles.td, { flex: 3, textAlign: 'right' }]}>
-                  {row.montant.toLocaleString('fr-FR')}
+                  {row.montant.toLocaleString('fr-FR').replace(/\u202f/g, "\u00a0")}
                 </Text>
               </View>
             ))}
@@ -501,13 +501,13 @@ export function ManarReconciliationReport(props: ManarReconciliationReportProps)
                 <View key={row.nom} style={idx % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
                   <Text style={[styles.td, { flex: 2 }]}>{row.nom}</Text>
                   <Text style={[styles.td, { flex: 1, textAlign: 'right' }]}>
-                    {row.nbSaisies.toLocaleString('fr-FR')}
+                    {row.nbSaisies.toLocaleString('fr-FR').replace(/\u202f/g, "\u00a0")}
                   </Text>
                   <Text style={[styles.td, { flex: 1, textAlign: 'right' }]}>
                     {fmtPct(row.pctSaisies)}
                   </Text>
                   <Text style={[styles.td, { flex: 1, textAlign: 'right' }]}>
-                    {row.nbValidations.toLocaleString('fr-FR')}
+                    {row.nbValidations.toLocaleString('fr-FR').replace(/\u202f/g, "\u00a0")}
                   </Text>
                   <Text style={[styles.td, { flex: 1, textAlign: 'right' }]}>
                     {fmtPct(row.pctValidations)}

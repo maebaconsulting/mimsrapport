@@ -58,7 +58,7 @@ function fmtDate(iso: string): string {
 }
 
 function fmtNombre(n: number): string {
-  return n.toLocaleString("fr-FR");
+  return n.toLocaleString("fr-FR").replace(/\u202f/g, "\u00a0");
 }
 
 const styles = StyleSheet.create({

@@ -87,14 +87,14 @@ function fmtDate(iso: string): string {
 
 function fmtDateTime(iso: string): string {
   try {
-    return new Date(iso).toLocaleString('fr-FR')
+    return new Date(iso).toLocaleString('fr-FR').replace(/\u202f/g, "\u00a0")
   } catch {
     return iso
   }
 }
 
 function fmtMontant(n: number): string {
-  return n.toLocaleString('fr-FR') + ' XAF'
+  return n.toLocaleString('fr-FR').replace(/\u202f/g, "\u00a0") + ' XAF'
 }
 
 function statutColor(statut: string): { bg: string; text: string } {
@@ -664,13 +664,13 @@ export function CompteRenduTransactionsPdf({
             </View>
             <View style={styles.caracRow}>
               <Text style={styles.caracKey}>Quantité</Text>
-              <Text style={styles.caracVal}>{ordre.quantite.toLocaleString('fr-FR')} titres</Text>
+              <Text style={styles.caracVal}>{ordre.quantite.toLocaleString('fr-FR').replace(/\u202f/g, "\u00a0")} titres</Text>
             </View>
             <View style={styles.caracRow}>
               <Text style={styles.caracKey}>Prix limite</Text>
               <Text style={styles.caracVal}>
                 {ordre.prix_limite !== null
-                  ? ordre.prix_limite.toLocaleString('fr-FR') + ' XAF'
+                  ? ordre.prix_limite.toLocaleString('fr-FR').replace(/\u202f/g, "\u00a0") + ' XAF'
                   : 'Au marché'}
               </Text>
             </View>

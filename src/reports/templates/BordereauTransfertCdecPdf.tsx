@@ -36,7 +36,7 @@ function fmtDate(iso: string | null): string {
   if (!iso) return "-";
   try { return new Date(iso).toLocaleDateString("fr-FR"); } catch { return iso; }
 }
-function fmtNombre(n: number): string { return n.toLocaleString("fr-FR"); }
+function fmtNombre(n: number): string { return n.toLocaleString("fr-FR").replace(/\u202f/g, "\u00a0"); }
 
 const DEST: Record<string, string> = {
   CDEC: "Caisse des Dépôts et Consignations (CDEC)",

@@ -15,15 +15,17 @@ async function createClient(): Promise<PocketBase> {
   const pb = new PocketBase(url);
   // Mono-poste : pas d'auto-annulation des requêtes concurrentes identiques.
   pb.autoCancellation(false);
+  // Ne jamais faire confiance à un token persisté (localStorage) : il peut
+  // référencer un utilisateur d'une base précédente (token non expiré mais
+  // périmé côté serveur → relations cassées). Identifiants fixes mono-poste :
+  // on (ré)authentifie toujours proprement.
+  pb.authStore.clear();
   await ensureAuth(pb);
   return pb;
 }
 
 /** Authentifie le client comme utilisateur local, avec quelques tentatives. */
 async function ensureAuth(pb: PocketBase, attempts = 10): Promise<void> {
-  if (pb.authStore.isValid) {
-    return;
-  }
   let lastError: unknown;
   for (let i = 0; i < attempts; i++) {
     try {
