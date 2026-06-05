@@ -79,11 +79,30 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
         portefeuilles, instruments, émetteurs, positions et mouvements.
       </p>
 
-      <div style={{ marginTop: 16 }}>
-        <button className="btn btn--primary" onClick={handlePick} disabled={busy}>
-          {busy ? "Import en cours…" : "Choisir un fichier Manar"}
+      {phase.kind === "idle" || phase.kind === "encours" ? (
+        <button
+          type="button"
+          className="import-dropzone"
+          onClick={handlePick}
+          disabled={busy}
+        >
+          <span className="import-dropzone__icon" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+              strokeLinejoin="round">
+              <path d="M12 16V4" />
+              <path d="m7 9 5-5 5 5" />
+              <path d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" />
+            </svg>
+          </span>
+          <span className="import-dropzone__title">
+            {busy ? "Import en cours…" : "Choisir un fichier Manar"}
+          </span>
+          <span className="import-dropzone__hint">
+            Formats acceptés : .xls, .xlsx
+          </span>
         </button>
-      </div>
+      ) : null}
 
       {phase.kind === "encours" && (
         <p className="import-progress">

@@ -175,6 +175,55 @@
 }
 
 /* Écran de licence (blocage) */
+/* Zone de dépôt d'import (état d'invitation) */
+.import-dropzone {
+  margin-top: 18px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 24px;
+  border: 1.5px dashed var(--mw-border-strong);
+  border-radius: var(--mw-radius-xl);
+  background: var(--mw-surface-muted);
+  color: var(--mw-fg);
+  cursor: pointer;
+  transition: var(--mw-transition);
+}
+.import-dropzone:hover:not(:disabled) {
+  border-color: var(--mw-accent);
+  background: #fffdf2;
+}
+.import-dropzone:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.import-dropzone:focus-visible {
+  outline: none;
+  box-shadow: var(--mw-ring);
+}
+.import-dropzone__icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--mw-radius-full);
+  background: var(--mw-accent);
+  color: var(--mw-ink);
+  margin-bottom: 4px;
+}
+.import-dropzone__title {
+  font-family: var(--mw-font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mw-ink);
+}
+.import-dropzone__hint {
+  font-size: 12px;
+  color: var(--mw-fg-muted);
+}
+
 .license-gate {
   display: grid;
   place-items: center;
