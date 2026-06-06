@@ -33,6 +33,18 @@ export function localeFor(lang: Lang): string {
   return LOCALES[lang];
 }
 
+/**
+ * Formate un pourcentage selon la locale (l'entrée est déjà en points de
+ * pourcentage : 74.6 → « 74,6 % » en FR, « 74.6% » en EN). L'espace avant le
+ * « % » suit la convention de la langue (insécable en FR/ES, absent en EN).
+ */
+export function formatPercent(n: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
+    style: "percent",
+    maximumFractionDigits: 1,
+  }).format(n / 100);
+}
+
 /** Signature de la fonction de traduction. */
 export type TFunc = (
   key: TKey,

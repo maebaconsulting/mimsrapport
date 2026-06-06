@@ -5,7 +5,7 @@
 // centrale. Couleurs depuis les tokens --mw-*. Accessible (role="img"+aria-label).
 
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import { useT, type TKey } from "../i18n";
+import { useT, formatPercent, type TKey } from "../i18n";
 
 type Zone = "success" | "warning" | "danger";
 
@@ -17,6 +17,8 @@ export interface GaugeCardProps {
   /** Bornes des zones, en unité de la valeur (attention puis critique). */
   seuils: { attention: number; critique: number };
   unite?: string;
+  /** Locale BCP-47 pour le formatage de l'unité « % » (espace selon la langue). */
+  locale?: string;
   /** true si « haut = bon » (ex. un score /100). */
   sensInverse?: boolean;
   /** Repère de seuil affiché sur l'arc (ex. limite COSUMAF 30 %). */
@@ -55,6 +57,7 @@ export function GaugeCard({
   max,
   seuils,
   unite = "",
+  locale = "fr-FR",
   sensInverse = false,
   reference,
   formatValeur,
@@ -65,7 +68,13 @@ export function GaugeCard({
   const span = max - min || 1;
   const frac = Math.max(0, Math.min(1, (valeur - min) / span));
   const zone = zoneDe(valeur, seuils, sensInverse);
-  const fmt = formatValeur ?? ((n: number) => `${Math.round(n)}${unite ? " " + unite : ""}`);
+  // Valeur + unité : « % » formaté selon la locale (espace insécable en FR/ES,
+  // absent en EN) ; les unités-mots (« ans ») gardent une espace simple.
+  const fmtUnite = (n: number) =>
+    unite === "%"
+      ? formatPercent(n, locale)
+      : `${Math.round(n)}${unite ? " " + unite : ""}`;
+  const fmt = formatValeur ?? fmtUnite;
 
   // Arc de zones (track) : largeurs proportionnelles aux seuils.
   const a = Math.max(0, Math.min(1, (seuils.attention - min) / span));
@@ -104,7 +113,7 @@ export function GaugeCard({
 
   const aria =
     `${label} : ${fmt(valeur)}` +
-    (reference ? `, ${reference.libelle} ${reference.valeur}${unite ? " " + unite : ""}` : "") +
+    (reference ? `, ${reference.libelle} ${fmtUnite(reference.valeur)}` : "") +
     `, ${t("dashboards.gauge-aria-zone", { zone: libelleZone(zone) })}`;
 
   return (
@@ -171,7 +180,7 @@ export function GaugeCard({
       </div>
       <span className={`gauge-card__state gauge-card__state--${zone}`}>
         {libelleZone(zone)}
-        {reference ? ` · ${reference.libelle} ${reference.valeur}${unite ? " " + unite : ""}` : ""}
+        {reference ? ` · ${reference.libelle} ${fmtUnite(reference.valeur)}` : ""}
       </span>
     </div>
   );

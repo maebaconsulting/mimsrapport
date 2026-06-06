@@ -17,7 +17,7 @@ import {
   YAxis,
 } from "recharts";
 import { getPocketBase } from "../lib/pocketbase";
-import { useT, useLocale } from "../i18n";
+import { useT, useLocale, formatPercent } from "../i18n";
 import { loadDashboardData } from "./data";
 import { computeDashboards, type Dashboards } from "./aggregator";
 import { KpiCard } from "./KpiCard";
@@ -47,9 +47,6 @@ function fmtXAFCompact(n: number, locale: string): string {
   if (abs >= 1e6)
     return `${(n / 1e6).toLocaleString(locale, { maximumFractionDigits: 1 })} M XAF`;
   return fmtXAF(n, locale);
-}
-function fmtPct(n: number): string {
-  return `${n.toFixed(1)} %`;
 }
 /** Format compact d'axe : M (millions) / Md (milliards). */
 function fmtAxis(n: number): string {
@@ -186,14 +183,14 @@ function DashboardsContent({ d }: { d: Dashboards }) {
         />
         <KpiCard
           label={t("dashboards.kpi-concentration-max-emetteur")}
-          value={fmtPct(d.concentrationEmetteur.concentrationMax)}
+          value={formatPercent(d.concentrationEmetteur.concentrationMax, locale)}
           sub={t("dashboards.kpi-limite-cosumaf")}
           variant={d.concentrationEmetteur.alerte ? "danger" : "success"}
           tone={d.concentrationEmetteur.alerte ? "peach" : "yellow"}
         />
         <KpiCard
           label={t("dashboards.kpi-taux-moyen-pondere")}
-          value={fmtPct(d.tauxMoyenPondereObligataire)}
+          value={formatPercent(d.tauxMoyenPondereObligataire, locale)}
           tone="yellow"
         />
       </div>
@@ -203,7 +200,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
         <KpiCard
           label={t("dashboards.kpi-pnl-latente")}
           value={fmtXAFCompact(d.pnl.plusValueLatente, locale)}
-          sub={t("dashboards.kpi-pnl-latente-sub", { pct: fmtPct(d.pnl.perfPct) })}
+          sub={t("dashboards.kpi-pnl-latente-sub", { pct: formatPercent(d.pnl.perfPct, locale) })}
           variant={d.pnl.plusValueLatente >= 0 ? "success" : "danger"}
           tone="sage"
         />
@@ -220,13 +217,13 @@ function DashboardsContent({ d }: { d: Dashboards }) {
           value={t("dashboards.kpi-maturite-moyenne-value", {
             ans: d.maturiteMoyenne.toLocaleString(locale),
           })}
-          sub={t("dashboards.kpi-maturite-moyenne-sub", { pct: fmtPct(d.murEcheances.pct12m) })}
+          sub={t("dashboards.kpi-maturite-moyenne-sub", { pct: formatPercent(d.murEcheances.pct12m, locale) })}
           tone="yellow"
         />
         <KpiCard
           label={t("dashboards.kpi-collecte-nette")}
           value={fmtXAFCompact(d.activite.collecteNette, locale)}
-          sub={t("dashboards.kpi-collecte-nette-sub", { pct: fmtPct(d.activite.turnover) })}
+          sub={t("dashboards.kpi-collecte-nette-sub", { pct: formatPercent(d.activite.turnover, locale) })}
           variant={d.activite.collecteNette >= 0 ? "success" : "danger"}
           tone="peach"
         />
@@ -241,8 +238,8 @@ function DashboardsContent({ d }: { d: Dashboards }) {
           max={100}
           seuils={{ attention: 20, critique: 30 }}
           unite="%"
+          locale={locale}
           reference={{ valeur: 30, libelle: t("dashboards.reference-limite-cosumaf") }}
-          formatValeur={(n) => fmtPct(n)}
         />
         <GaugeCard
           label={t("dashboards.gauge-concentration-premier-client")}
@@ -250,7 +247,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
           max={100}
           seuils={{ attention: 15, critique: 25 }}
           unite="%"
-          formatValeur={(n) => fmtPct(n)}
+          locale={locale}
         />
         <GaugeCard
           label={t("dashboards.gauge-mur-echeances")}
@@ -258,7 +255,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
           max={100}
           seuils={{ attention: 15, critique: 30 }}
           unite="%"
-          formatValeur={(n) => fmtPct(n)}
+          locale={locale}
         />
         <GaugeCard
           label={t("dashboards.gauge-score-diversification")}
@@ -274,7 +271,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
         d.qualite.obligSansEcheance > 0 ||
         d.qualite.positionsValoNulle > 0) && (
         <p className="dash-quality small-caps">
-          {t("dashboards.qualite-donnees", { pct: fmtPct(d.qualite.integriteEmetteurPct) })}
+          {t("dashboards.qualite-donnees", { pct: formatPercent(d.qualite.integriteEmetteurPct, locale) })}
           {d.qualite.positionsSansEmetteur > 0 &&
             ` · ${t("dashboards.qualite-sans-emetteur", { nb: String(d.qualite.positionsSansEmetteur) })}`}
           {d.qualite.obligSansEcheance > 0 &&
@@ -332,7 +329,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
           <Legend
             items={d.repartitionClasse.map((c, i) => ({
               libelle: c.libelle,
-              valeur: fmtPct(c.part),
+              valeur: formatPercent(c.part, locale),
               color: CHART_COLORS[i % CHART_COLORS.length],
             }))}
           />
@@ -390,7 +387,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
                 }))}
                 dataKey="size"
                 stroke="var(--mw-white)"
-                content={<TreemapCell />}
+                content={<TreemapCell locale={locale} />}
                 isAnimationActive={false}
               />
             </ResponsiveContainer>
@@ -607,8 +604,18 @@ function TreemapCell(props: {
   name?: string;
   part?: number;
   fill?: string;
+  locale?: string;
 }) {
-  const { x = 0, y = 0, width = 0, height = 0, name, part, fill } = props;
+  const {
+    x = 0,
+    y = 0,
+    width = 0,
+    height = 0,
+    name,
+    part,
+    fill,
+    locale = "fr-FR",
+  } = props;
   return (
     <g>
       <rect x={x} y={y} width={width} height={height} fill={fill} stroke="var(--mw-white)" />
@@ -619,7 +626,7 @@ function TreemapCell(props: {
           </text>
           {part != null && (
             <text x={x + 8} y={y + 33} fontSize={10} fill="var(--mw-ink)">
-              {part.toFixed(1)} %
+              {formatPercent(part, locale)}
             </text>
           )}
         </>
@@ -709,7 +716,7 @@ function HBarChart({
                 ) : null}
                 <div className="chart-tooltip__row">
                   <span className="chart-tooltip__value">
-                    {fmtXAF(Number(p.value), locale)} ({fmtPct(Number(p.payload?.part ?? 0))})
+                    {fmtXAF(Number(p.value), locale)} ({formatPercent(Number(p.payload?.part ?? 0), locale)})
                   </span>
                 </div>
               </div>
