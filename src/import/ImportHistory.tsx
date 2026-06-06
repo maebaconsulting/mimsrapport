@@ -25,7 +25,7 @@ type State =
   | { kind: "erreur"; message: string };
 
 function fmtDateTime(iso: string): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   try {
     return new Date(iso).toLocaleString("fr-FR", {
       day: "2-digit",
@@ -40,7 +40,7 @@ function fmtDateTime(iso: string): string {
 }
 
 function fmtMontant(n: number): string {
-  if (!n) return "—";
+  if (!n) return "-";
   if (n >= 1e9) return `${(n / 1e9).toFixed(1).replace(".", ",")} Md`;
   if (n >= 1e6) return `${(n / 1e6).toFixed(0)} M`;
   return n.toLocaleString("fr-FR");

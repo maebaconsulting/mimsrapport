@@ -31,7 +31,7 @@ function fmtCompact(n: number): string {
 }
 
 function fmtDate(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   try {
     return new Date(iso).toLocaleDateString("fr-FR");
   } catch {
@@ -48,7 +48,7 @@ function statutPill(statut: ClientRow["statut"]) {
     case "CLOTURE":
       return <span className="pill pill--cloture">Clôturé</span>;
     default:
-      return <span className="pill pill--neutre">—</span>;
+      return <span className="pill pill--neutre">-</span>;
   }
 }
 

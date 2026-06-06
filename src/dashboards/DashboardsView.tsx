@@ -353,12 +353,12 @@ function DashboardsContent({ d }: { d: Dashboards }) {
           />
         </Panel>
 
-        {/* 8. Souverain vs corporate */}
-        <Panel titre="Souverain vs corporate">
+        {/* 8. Dette souveraine vs privée */}
+        <Panel titre="Souverain et privé">
           <DonutChart
             data={[
               { name: "Souverain", value: d.souverainVsCorporate.souverain },
-              { name: "Corporate", value: d.souverainVsCorporate.corporate },
+              { name: "Privé", value: d.souverainVsCorporate.corporate },
             ]}
           />
           <Legend
@@ -369,7 +369,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
                 color: CHART_COLORS[0],
               },
               {
-                libelle: "Corporate",
+                libelle: "Privé",
                 valeur: fmtXAF(d.souverainVsCorporate.corporate),
                 color: CHART_COLORS[1],
               },

@@ -28,6 +28,17 @@ const COLLECTIONS = [
   "manar_imports",
 ];
 
+/** Libellés métier français des collections (au lieu des noms techniques). */
+const COLLECTION_LABELS: Record<string, string> = {
+  clients: "Clients",
+  portefeuilles: "Comptes-titres",
+  emetteurs: "Émetteurs",
+  instruments: "Instruments",
+  positions: "Positions",
+  mouvements_titres: "Mouvements de titres",
+  manar_imports: "Imports Manar",
+};
+
 const NAV: Array<{ id: Vue; label: string; enabled: boolean }> = [
   { id: "accueil", label: "Accueil", enabled: true },
   { id: "import", label: "Import Manar", enabled: true },
@@ -152,14 +163,16 @@ function AccueilView({ state }: { state: ConnState }) {
           {state.phase === "pret" && (
             <>
               <p className="card__lead">
-                Connecté à PocketBase ({state.url}). Importez un fichier Manar
+                Base de données locale opérationnelle. Importez un fichier Manar
                 pour alimenter les rapports et tableaux de bord.
               </p>
               <table className="status-table">
                 <tbody>
                   {COLLECTIONS.map((name) => (
                     <tr key={name}>
-                      <td className="status-table__name">{name}</td>
+                      <td className="status-table__name">
+                        {COLLECTION_LABELS[name] ?? name}
+                      </td>
                       <td className="status-table__count">
                         {state.counts[name]}
                       </td>

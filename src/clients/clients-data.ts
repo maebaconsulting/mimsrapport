@@ -7,7 +7,7 @@
 import type PocketBase from "pocketbase";
 import { withRetry } from "../lib/retry";
 
-export type StatutCompte = "ACTIF" | "SUSPENDU" | "CLOTURE" | "—";
+export type StatutCompte = "ACTIF" | "SUSPENDU" | "CLOTURE" | "-";
 
 export interface ClientRow {
   id: string;
@@ -72,8 +72,8 @@ export async function loadClientsData(pb: PocketBase): Promise<ClientsData> {
   >();
   for (const p of portefeuilles) {
     pfByClient.set(String(p.client), {
-      code: p.code || "—",
-      statut: (p.statut as StatutCompte) || "—",
+      code: p.code || "-",
+      statut: (p.statut as StatutCompte) || "-",
       date_ouverture: (p.date_ouverture as string) || null,
     });
   }
@@ -96,8 +96,8 @@ export async function loadClientsData(pb: PocketBase): Promise<ClientsData> {
       code: c.code,
       nom_complet: composeName(c, pmByClient.get(c.id)),
       type: c.type,
-      compte_titres: pf?.code ?? "—",
-      statut: pf?.statut ?? "—",
+      compte_titres: pf?.code ?? "-",
+      statut: pf?.statut ?? "-",
       date_ouverture: pf?.date_ouverture ?? null,
       nb_positions: agg.nb,
       encours_xaf: agg.encours,
@@ -111,7 +111,7 @@ export async function loadClientsData(pb: PocketBase): Promise<ClientsData> {
     nb_clients: rows.length,
     nb_pp: rows.filter((r) => r.type === "PP").length,
     nb_pm: rows.filter((r) => r.type === "PM").length,
-    nb_comptes: new Set(rows.map((r) => r.compte_titres).filter((c) => c !== "—"))
+    nb_comptes: new Set(rows.map((r) => r.compte_titres).filter((c) => c !== "-"))
       .size,
     nb_positions: rows.reduce((s, r) => s + r.nb_positions, 0),
     encours_xaf: rows.reduce((s, r) => s + r.encours_xaf, 0),

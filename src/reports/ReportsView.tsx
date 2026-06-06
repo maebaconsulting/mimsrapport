@@ -406,7 +406,7 @@ export function ReportsView() {
                   Télécharger
                 </button>
                 <button className="btn" onClick={fermerApercu}>
-                  Effacer
+                  Fermer l'aperçu
                 </button>
               </div>
 
@@ -452,9 +452,9 @@ export function ReportsView() {
                 <span className="small-caps">Production</span>
                 <ul className="preview-steps">
                   <li>Données lues depuis la base locale</li>
-                  <li>Rendu PDF · gabarit fidèle MIMS</li>
-                  <li>Empreinte SHA-256 scellée</li>
-                  <li>Aperçu prêt · export journalisé</li>
+                  <li>Rendu PDF · gabarit conforme au modèle réglementaire</li>
+                  <li>Empreinte SHA-256 calculée</li>
+                  <li>Aperçu prêt</li>
                 </ul>
               </section>
             </aside>
