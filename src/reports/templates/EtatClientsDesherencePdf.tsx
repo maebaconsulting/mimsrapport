@@ -7,6 +7,7 @@
 // fontStyle italic (contrainte Inter). Hex codés en dur conservés (fidélité MIMS).
 
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Barcode } from "./Barcode";
 
 const INK = "#11191F";
 const GRAY_50 = "#FAFAF9";
@@ -174,22 +175,6 @@ const styles = StyleSheet.create({
   footerCenter: { fontFamily: "JetBrainsMono", fontSize: 6, color: GRAY_600, textAlign: "center", flex: 1 },
   footerRight: { fontFamily: "Inter", fontSize: 6, color: GRAY_600, textAlign: "right", flex: 1 },
 
-  cachet: {
-    position: "absolute",
-    bottom: 50,
-    right: 30,
-    width: 90,
-    height: 52,
-    borderWidth: 0.5,
-    borderColor: GRAY_200,
-    borderRadius: 3,
-    backgroundColor: GRAY_50,
-    padding: 5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cachetLabel: { fontFamily: "Inter", fontWeight: 600, fontSize: 6, color: GRAY_700, textAlign: "center", textTransform: "uppercase", letterSpacing: 0.3, marginTop: 3 },
-  cachetSub: { fontFamily: "JetBrainsMono", fontSize: 5, color: GRAY_600, textAlign: "center", marginTop: 2 },
 });
 
 export function EtatClientsDesherencePdf({
@@ -198,7 +183,6 @@ export function EtatClientsDesherencePdf({
   seuils,
   lignes,
   hash_sha256,
-  timestamp_rfc3161_mock,
   generation_date,
   provenance,
 }: EtatClientsDesherencePdfProps) {
@@ -318,11 +302,11 @@ export function EtatClientsDesherencePdf({
           <Text style={styles.footerRight}>{"© 2026 MAEBA Consulting · Solution MIMS"}</Text>
         </View>
 
-        <View style={styles.cachet} fixed>
-          <Text style={{ fontFamily: "JetBrainsMono", fontSize: 10, color: INFO }}>[V]</Text>
-          <Text style={styles.cachetLabel}>Cachet électronique</Text>
-          <Text style={styles.cachetLabel}>MIMS REPORTING</Text>
-          <Text style={styles.cachetSub}>{timestamp_rfc3161_mock.slice(0, 10)}</Text>
+        <View
+          style={{ position: "absolute", bottom: 48, right: 30, alignItems: "flex-end" }}
+          fixed
+        >
+          <Barcode value={hash_sha256.slice(0, 8)} height={28} unit={0.6} />
         </View>
       </Page>
     </Document>

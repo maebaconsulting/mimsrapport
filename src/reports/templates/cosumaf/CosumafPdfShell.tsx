@@ -14,6 +14,7 @@ import {
 } from "@react-pdf/renderer";
 import { COSUMAF_TOKENS, fmtHashCourt } from "./cosumaf-tokens";
 import { RectificatifWatermark } from "./RectificatifWatermark";
+import { Barcode } from "../Barcode";
 
 export interface CosumafPdfShellProps {
   titre: string;
@@ -207,6 +208,18 @@ export function CosumafPdfShell(props: CosumafPdfShellProps) {
             <Text>{`Motif de rectification · ${motif_rectification}`}</Text>
           </View>
         ) : null}
+
+        <View
+          style={{ position: "absolute", bottom: 90, right: 32, alignItems: "flex-end" }}
+          fixed
+        >
+          <Barcode
+            value={hash_sha256.slice(0, 8)}
+            height={26}
+            unit={0.6}
+            color={COSUMAF_TOKENS.INK}
+          />
+        </View>
 
         <View style={styles.footer} fixed>
           {mentions.length > 0 ? (

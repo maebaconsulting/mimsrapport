@@ -13,6 +13,7 @@ import {
   View,
   StyleSheet,
 } from "@react-pdf/renderer";
+import { Barcode } from "./Barcode";
 
 // ---------------------------------------------------------------------------
 // Tokens DS v2.2 (hex inline)
@@ -490,39 +491,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     flex: 1,
   },
-
-  // Cachet mock
-  cachet: {
-    position: 'absolute',
-    bottom: 50,
-    right: 40,
-    width: 100,
-    height: 56,
-    borderWidth: 0.5,
-    borderColor: GRAY_200,
-    borderRadius: 3,
-    backgroundColor: GRAY_50,
-    padding: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cachetLabel: {
-    fontFamily: 'Inter',
-    fontWeight: 600,
-    fontSize: 6,
-    color: GRAY_700,
-    textAlign: 'center',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-    marginTop: 3,
-  },
-  cachetSub: {
-    fontFamily: 'JetBrainsMono',
-    fontSize: 5,
-    color: GRAY_600,
-    textAlign: 'center',
-    marginTop: 2,
-  },
 })
 
 // ---------------------------------------------------------------------------
@@ -537,7 +505,6 @@ export function CompteRenduTransactionsPdf({
   workflow,
   signatures,
   hash_sha256,
-  timestamp_rfc3161_mock,
 }: CompteRenduTransactionsPdfProps) {
   const hashTronque = hash_sha256.slice(0, 8)
   const statutChip = statutColor(ordre.statut)
@@ -778,16 +745,12 @@ export function CompteRenduTransactionsPdf({
           </Text>
         </View>
 
-        {/* Section 8 · Cachet électronique mock */}
-        <View style={styles.cachet} fixed>
-          <Text style={{ fontFamily: 'JetBrainsMono', fontSize: 10, color: INFO }}>
-            [V]
-          </Text>
-          <Text style={styles.cachetLabel}>Cachet électronique</Text>
-          <Text style={styles.cachetLabel}>MIMS REPORTING</Text>
-          <Text style={styles.cachetSub}>
-            {timestamp_rfc3161_mock.slice(0, 10)}
-          </Text>
+        {/* Section 8 · Code-barres de référence */}
+        <View
+          style={{ position: 'absolute', bottom: 48, right: 40, alignItems: 'flex-end' }}
+          fixed
+        >
+          <Barcode value={hash_sha256.slice(0, 8)} height={28} unit={0.6} />
         </View>
 
       </Page>

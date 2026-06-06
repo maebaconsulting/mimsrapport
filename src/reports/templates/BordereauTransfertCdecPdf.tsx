@@ -7,6 +7,7 @@
 // italic (contrainte Inter). Hex codés en dur conservés (fidélité MIMS).
 
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Barcode } from "./Barcode";
 
 const INK = "#11191F";
 const GRAY_50 = "#FAFAF9";
@@ -14,7 +15,6 @@ const GRAY_200 = "#E5E4DC";
 const GRAY_600 = "#6B7280";
 const GRAY_700 = "#4A4F4D";
 const ACCENT = "#FFED90";
-const INFO = "#3A6B7C";
 
 export interface BordereauTransfertCdecPdfProps {
   sdb: { nom: string; code: string };
@@ -72,13 +72,10 @@ const styles = StyleSheet.create({
   footer: { position: "absolute", bottom: 20, left: 40, right: 40, borderTopWidth: 0.5, borderTopColor: GRAY_200, paddingTop: 6 },
   footerText: { fontFamily: "Inter", fontSize: 6, color: GRAY_600, textAlign: "center", marginBottom: 2 },
   footerMono: { fontFamily: "JetBrainsMono", fontSize: 6, color: GRAY_600, textAlign: "center" },
-  cachet: { position: "absolute", bottom: 50, right: 40, width: 100, height: 56, borderWidth: 0.5, borderColor: GRAY_200, borderRadius: 3, backgroundColor: GRAY_50, padding: 6, alignItems: "center", justifyContent: "center" },
-  cachetLabel: { fontFamily: "Inter", fontWeight: 600, fontSize: 6, color: GRAY_700, textAlign: "center", textTransform: "uppercase", letterSpacing: 0.3, marginTop: 3 },
-  cachetSub: { fontFamily: "JetBrainsMono", fontSize: 5, color: GRAY_600, textAlign: "center", marginTop: 2 },
 });
 
 export function BordereauTransfertCdecPdf({
-  sdb, destinataire, date_arrete, lignes, hash_sha256, timestamp_rfc3161_mock,
+  sdb, destinataire, date_arrete, lignes, hash_sha256,
 }: BordereauTransfertCdecPdfProps) {
   const hashTronque = hash_sha256.slice(0, 8);
   const total = lignes.reduce((s, l) => s + l.montant_xaf, 0);
@@ -151,11 +148,11 @@ export function BordereauTransfertCdecPdf({
           <Text style={styles.footerText}>Bordereau généré par MIMS REPORTING · Conforme Règlement CEMAC N°02/25 · RG-267</Text>
           <Text style={styles.footerMono}>{"Hash SHA-256 · "}{hashTronque}{"... · Horodatage RFC 3161 mock"}</Text>
         </View>
-        <View style={styles.cachet} fixed>
-          <Text style={{ fontFamily: "JetBrainsMono", fontSize: 10, color: INFO }}>[V]</Text>
-          <Text style={styles.cachetLabel}>Cachet électronique</Text>
-          <Text style={styles.cachetLabel}>MIMS REPORTING</Text>
-          <Text style={styles.cachetSub}>{timestamp_rfc3161_mock.slice(0, 10)}</Text>
+        <View
+          style={{ position: "absolute", bottom: 48, right: 40, alignItems: "flex-end" }}
+          fixed
+        >
+          <Barcode value={hash_sha256.slice(0, 8)} height={28} unit={0.6} />
         </View>
       </Page>
     </Document>
