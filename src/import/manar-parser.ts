@@ -10,6 +10,12 @@
 // Mapping des 54 colonnes (index → champ cible) : voir les commentaires inline.
 
 import * as XLSX from "xlsx";
+import {
+  DEFAULT_MAPPING,
+  DEFAULT_HEADER_ROWS,
+  EXTRA_COL_NAMES,
+  type ColumnMapping,
+} from "./manar-fields";
 
 /** Ligne Manar mappée depuis les 54 colonnes réelles du fichier. */
 export interface ManarRawRow {
@@ -62,39 +68,6 @@ const BIFF8_MAGIC = [0xd0, 0xcf, 0x11, 0xe0];
 /** Magic bytes ZIP (Open XML .xlsx contient un ZIP) : 50 4B 03 04 */
 const ZIP_MAGIC = [0x50, 0x4b, 0x03, 0x04];
 
-/** Colonnes extra (non mappées nommément) · stockées dans extra_columns. */
-const EXTRA_COL_NAMES: Record<number, string> = {
-  1: "no_evenement",
-  3: "titre_code",
-  6: "entite_code",
-  7: "portefeuille_code",
-  13: "date_livraison",
-  16: "intermediaire",
-  17: "depositaire",
-  18: "compte_titres",
-  20: "contrepartie",
-  21: "desc_contrepartie",
-  22: "depositaire_ctr_partie",
-  24: "quantite",
-  27: "devise_ref",
-  28: "taux_ref",
-  29: "devise_reg",
-  30: "frais_tot",
-  32: "montant_net",
-  34: "pmv_back",
-  36: "titre_jouissance",
-  37: "titre_echeance",
-  38: "nego_prix",
-  39: "nego_ppc",
-  40: "nego_spread",
-  42: "taux_placement",
-  43: "nbre_jours_placement",
-  44: "interets",
-  45: "decalage_valeur",
-  52: "classe",
-  53: "categorie",
-};
-
 /** Valeurs sémantiques nulles Manar. */
 const NULL_VALUES = new Set(["NEANT", "NULL", "N/A", "NA", "-"]);
 
@@ -141,14 +114,19 @@ export function parseManarAmount(raw: string | null): number | null {
   return isNaN(parsed) ? null : parsed;
 }
 
-/**
- * Parse un fichier Manar (54 colonnes) en ManarRawRow[].
- *
- * @param data · contenu binaire du fichier (Uint8Array, fourni par Tauri fs)
- * @throws Error si les magic bytes XLS/XLSX sont absents ou si le fichier est vide
- */
-export function parseManarXls(data: Uint8Array): ManarParseResult {
-  // Sécurité : vérification des magic bytes XLS (BIFF8) ou XLSX (ZIP).
+/** Aperçu de structure d'un classeur, pour l'auto-détection et l'UI de mapping. */
+export interface WorkbookPreview {
+  /** Ligne des noms de colonnes (dernière ligne d'en-tête). */
+  headers: string[];
+  /** Quelques lignes de données, en chaînes, pour aperçu. */
+  sampleRows: string[][];
+  /** Toutes les lignes brutes (en-têtes inclus). */
+  allRows: (unknown[] | null)[];
+  sheetName: string;
+}
+
+/** Vérifie les magic bytes XLS/XLSX et lève si le format est invalide. */
+function assertWorkbookBytes(data: Uint8Array): void {
   if (data.length < 4) {
     throw new Error(
       "Fichier invalide · trop court pour être un fichier XLS/XLSX (magic bytes absents)",
@@ -163,9 +141,21 @@ export function parseManarXls(data: Uint8Array): ManarParseResult {
         `${hex(0)} ${hex(1)} ${hex(2)} ${hex(3)}`,
     );
   }
+}
 
-  // Lecture du workbook · cellDates: false obligatoire (dates françaises gérées
-  // manuellement). type: 'array' pour un Uint8Array (build navigateur).
+/**
+ * Lit le classeur et renvoie ses lignes brutes + un aperçu (en-têtes + échantillon).
+ * Une seule lecture SheetJS, réutilisée par l'auto-détection, l'UI de mapping et le parsing.
+ *
+ * @param data · contenu binaire du fichier (Uint8Array, fourni par Tauri fs)
+ * @throws Error si les magic bytes XLS/XLSX sont absents ou si le fichier est vide
+ */
+export function readManarWorkbook(
+  data: Uint8Array,
+  headerRows: number = DEFAULT_HEADER_ROWS,
+): WorkbookPreview {
+  assertWorkbookBytes(data);
+
   let wb: XLSX.WorkBook;
   try {
     wb = XLSX.read(data, { type: "array", cellDates: false });
@@ -180,13 +170,12 @@ export function parseManarXls(data: Uint8Array): ManarParseResult {
   if (!wb.SheetNames.length) {
     throw new Error("Fichier XLS sans feuille de calcul");
   }
-  const ws = wb.Sheets[wb.SheetNames[0]];
+  const sheetName = wb.SheetNames[0];
+  const ws = wb.Sheets[sheetName];
   if (!ws) {
     throw new Error("Feuille de calcul introuvable dans le fichier XLS");
   }
 
-  // header:1 (index numérique), raw:false (tout en string) pour éviter les
-  // objets Date natifs.
   const allRows = XLSX.utils.sheet_to_json(ws, {
     header: 1,
     defval: null,
@@ -197,9 +186,28 @@ export function parseManarXls(data: Uint8Array): ManarParseResult {
     throw new Error("Fichier XLS vide ou sans données");
   }
 
-  // Ignorer les 2 lignes d'en-tête (titre du rapport + noms de colonnes).
-  const dataRows = allRows.slice(2);
+  const toStr = (v: unknown): string =>
+    v === null || v === undefined ? "" : String(v).trim();
+  const headerRow = allRows[Math.max(0, headerRows - 1)] ?? [];
+  const headers = (headerRow as unknown[]).map(toStr);
+  const sampleRows = allRows
+    .slice(headerRows, headerRows + 5)
+    .map((r) => (r ?? []).map(toStr));
 
+  return { headers, sampleRows, allRows, sheetName };
+}
+
+/**
+ * Transforme les lignes brutes en ManarRawRow[] selon une `ColumnMapping`.
+ * Chaque champ logique est résolu vers son index de colonne ; un champ non mappé
+ * (index null) vaut null. `manar_op_id` est obligatoire (ligne ignorée si absent).
+ */
+export function parseManarRows(
+  allRows: (unknown[] | null)[],
+  mapping: ColumnMapping = DEFAULT_MAPPING,
+  headerRows: number = DEFAULT_HEADER_ROWS,
+): ManarParseResult {
+  const dataRows = allRows.slice(headerRows);
   const rows: ManarRawRow[] = [];
   const warnings: ManarParseWarning[] = [];
 
@@ -209,65 +217,76 @@ export function parseManarXls(data: Uint8Array): ManarParseResult {
 
     if (rawRow.length > 54) {
       warnings.push({
-        row: rowIdx + 3, // 2 lignes d'en-tête + index 1-based
+        row: rowIdx + headerRows + 1,
         column: `col_${rawRow.length - 1}`,
         message: `Colonnes supplémentaires détectées (${rawRow.length} colonnes au lieu de 54)`,
         severity: "MEDIUM",
       });
     }
 
-    const cell = (idx: number): string | null => {
+    // Résout un champ logique vers sa valeur normalisée via le mapping.
+    const field = (key: string): string | null => {
+      const idx = mapping[key];
+      if (idx === null || idx === undefined) return null;
       const v = rawRow[idx];
       if (v === null || v === undefined) return null;
       return normalizeManarValue(String(v).trim());
     };
 
-    // manar_op_id (col 0) obligatoire.
-    const manar_op_id = cell(0);
+    const manar_op_id = field("manar_op_id");
     if (!manar_op_id) continue;
 
-    const rawStatut = cell(9);
+    const rawStatut = field("statut");
     const VALID_STATUTS = ["F", "V", "P", "S"];
     const statut =
       rawStatut && VALID_STATUTS.includes(rawStatut)
         ? (rawStatut as "F" | "V" | "P" | "S")
         : "F";
 
+    // extra_columns : remplissage positionnel (format historique), puis la
+    // quantité éventuellement remappée prime (utile aux fichiers réordonnés).
     const extra_columns: Record<string, string | null> = {};
     for (const [idxStr, name] of Object.entries(EXTRA_COL_NAMES)) {
       const idx = parseInt(idxStr, 10);
       if (idx < rawRow.length) {
-        extra_columns[name] = cell(idx);
+        const v = rawRow[idx];
+        extra_columns[name] =
+          v === null || v === undefined
+            ? null
+            : normalizeManarValue(String(v).trim());
       }
+    }
+    if (mapping.quantite !== null && mapping.quantite !== undefined) {
+      extra_columns.quantite = field("quantite");
     }
 
     rows.push({
-      no_ordre: cell(2),
+      no_ordre: field("no_ordre"),
       manar_op_id,
-      date_operation: cell(11),
+      date_operation: field("date_operation"),
       statut,
-      isin: cell(50),
-      libelle_instrument: cell(4),
-      poste_code: cell(5),
-      emetteur_code: cell(51),
+      isin: field("isin"),
+      libelle_instrument: field("libelle_instrument"),
+      poste_code: field("poste_code"),
+      emetteur_code: field("emetteur_code"),
       nature_operation: null,
-      valeur_nominale_xaf: cell(26),
-      prix_xaf: cell(25),
-      montant_brut_xaf: cell(31),
-      taux_interet: cell(41),
-      courus_xaf: cell(33),
-      donneur_ordre: cell(8),
-      operateur_saisie: cell(46),
-      operateur_validation: cell(47),
-      date_saisie: cell(10),
-      date_validation: cell(14),
-      date_valeur: cell(12),
-      date_annulation: cell(15),
-      compte_especes: cell(19),
-      compte_titres_ctr_partie: cell(23),
-      contrat: cell(35),
-      ope_annulation: cell(48),
-      date_echeance: cell(49),
+      valeur_nominale_xaf: field("valeur_nominale_xaf"),
+      prix_xaf: field("prix_xaf"),
+      montant_brut_xaf: field("montant_brut_xaf"),
+      taux_interet: field("taux_interet"),
+      courus_xaf: field("courus_xaf"),
+      donneur_ordre: field("donneur_ordre"),
+      operateur_saisie: field("operateur_saisie"),
+      operateur_validation: field("operateur_validation"),
+      date_saisie: field("date_saisie"),
+      date_validation: field("date_validation"),
+      date_valeur: field("date_valeur"),
+      date_annulation: field("date_annulation"),
+      compte_especes: field("compte_especes"),
+      compte_titres_ctr_partie: field("compte_titres_ctr_partie"),
+      contrat: field("contrat"),
+      ope_annulation: field("ope_annulation"),
+      date_echeance: field("date_echeance"),
       commentaire: null,
       extra_columns,
     });
@@ -287,4 +306,20 @@ export function parseManarXls(data: Uint8Array): ManarParseResult {
       "date_echeance",
     ],
   };
+}
+
+/**
+ * Parse un fichier d'export en ManarRawRow[]. Façade rétrocompatible :
+ * `parseManarXls(data)` applique le mapping par défaut (format historique).
+ *
+ * @param data · contenu binaire du fichier (Uint8Array)
+ * @param mapping · correspondance champ logique → index (défaut : format historique)
+ */
+export function parseManarXls(
+  data: Uint8Array,
+  mapping: ColumnMapping = DEFAULT_MAPPING,
+  headerRows: number = DEFAULT_HEADER_ROWS,
+): ManarParseResult {
+  const wb = readManarWorkbook(data, headerRows);
+  return parseManarRows(wb.allRows, mapping, headerRows);
 }

@@ -14,6 +14,7 @@ import { ClientResponseError } from "pocketbase";
 import { ingestManarBytes } from "./manar-ingestor";
 import type { IngestResult } from "./manar-ingestor";
 import { parseManarAmount, parseManarDate } from "./manar-parser";
+import type { ColumnMapping } from "./manar-fields";
 import type { ManarMappedRow } from "./manar-mapping";
 
 export interface ImportCounts {
@@ -57,6 +58,8 @@ export interface RunImportOptions {
   replace?: boolean;
   /** Callback de progression (étape lisible). */
   onProgress?: (step: string) => void;
+  /** Correspondance de colonnes (défaut : format historique). */
+  mapping?: ColumnMapping;
 }
 
 const POOL = 16;
@@ -191,7 +194,7 @@ export async function runImport(
   pb: PocketBase,
   opts: RunImportOptions,
 ): Promise<ImportResult> {
-  const { fileName, data, replace = false, onProgress } = opts;
+  const { fileName, data, replace = false, onProgress, mapping } = opts;
   const progress = (s: string) => onProgress?.(s);
 
   progress("Calcul de l'empreinte du fichier…");
@@ -226,7 +229,7 @@ export async function runImport(
 
   // Pipeline en mémoire.
   progress("Analyse du fichier (parsing + dérivation)…");
-  const ingest: IngestResult = ingestManarBytes(data);
+  const ingest: IngestResult = ingestManarBytes(data, mapping);
   const { mappingResult, derived } = ingest;
 
   const startedAt = new Date();

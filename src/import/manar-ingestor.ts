@@ -4,6 +4,7 @@
 
 import { parseManarXls } from "./manar-parser";
 import type { ManarParseResult } from "./manar-parser";
+import type { ColumnMapping } from "./manar-fields";
 import { mapManarRows } from "./manar-mapping";
 import type { MappingResult } from "./manar-mapping";
 import { deriveEntities } from "./manar-migration";
@@ -21,10 +22,14 @@ export interface IngestResult {
 /**
  * Exécute le pipeline complet en mémoire à partir du contenu binaire du fichier.
  *
- * @param data · contenu binaire du fichier Manar (Uint8Array)
+ * @param data · contenu binaire du fichier (Uint8Array)
+ * @param mapping · correspondance de colonnes (défaut : format historique)
  */
-export function ingestManarBytes(data: Uint8Array): IngestResult {
-  const parseResult = parseManarXls(data);
+export function ingestManarBytes(
+  data: Uint8Array,
+  mapping?: ColumnMapping,
+): IngestResult {
+  const parseResult = parseManarXls(data, mapping);
   const mappingResult = mapManarRows(parseResult.rows);
   const derived = deriveEntities(mappingResult.rows);
   const reconciliationAggs = computeReconciliationAggs(mappingResult.rows);
