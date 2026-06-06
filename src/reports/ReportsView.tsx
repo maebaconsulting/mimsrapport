@@ -49,8 +49,8 @@ const REPORT_TYPES: ReportDef[] = [
   { id: "releve", label: "Relevé de compte-titres", scope: "client", groupe: "Documents client" },
   { id: "confirmation_ouverture", label: "Confirmation d'ouverture de compte", scope: "client", groupe: "Documents client" },
   { id: "lettre_desherence", label: "Lettre de relance déshérence", scope: "client", groupe: "Documents client" },
-  { id: "cosumaf_transactions", label: "COSUMAF · Transactions boursières (obl. 12)", scope: "societe", groupe: "États réglementaires (société)" },
-  { id: "cosumaf_avoirs", label: "COSUMAF · Situation des avoirs (obl. 15)", scope: "societe", groupe: "États réglementaires (société)" },
+  { id: "cosumaf_transactions", label: "COSUMAF · Transactions boursières (obligation réglementaire 12)", scope: "societe", groupe: "États réglementaires (société)" },
+  { id: "cosumaf_avoirs", label: "COSUMAF · Situation des avoirs (obligation réglementaire 15)", scope: "societe", groupe: "États réglementaires (société)" },
   { id: "etat_desherence", label: "État des clients en déshérence", scope: "societe", groupe: "États réglementaires (société)" },
 ];
 
@@ -353,7 +353,7 @@ export function ReportsView() {
           scope === "societe"
             ? "État réglementaire · société"
             : "Document client",
-        generatedAt: new Date().toLocaleString("fr-FR").replace(/ /g, " "),
+        generatedAt: new Date().toLocaleString("fr-FR"),
         sizeKo: Math.max(1, Math.round(out.bytes.length / 1024)),
       });
       setGen({ kind: "idle" });

@@ -16,7 +16,7 @@ type Phase =
   | { kind: "erreur"; message: string };
 
 function formatXAF(n: number): string {
-  return n.toLocaleString("fr-FR").replace(/ /g, " ") + " XAF";
+  return n.toLocaleString("fr-FR") + " XAF";
 }
 
 /** Tuiles du récapitulatif d'import (grille horizontale). */

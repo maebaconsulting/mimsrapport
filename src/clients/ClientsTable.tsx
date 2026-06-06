@@ -13,6 +13,12 @@ import "./clients.css";
 
 type Filtre = "tous" | "PP" | "PM";
 
+/** Libellé complet d'un type de client (PP/PM) pour les infobulles. */
+const TYPE_LABEL: Record<"PP" | "PM", string> = {
+  PP: "Personne physique",
+  PM: "Personne morale",
+};
+
 const PAGE_SIZE_OPTIONS = [15, 30, 50];
 
 type State =
@@ -21,7 +27,7 @@ type State =
   | { kind: "erreur"; message: string };
 
 function fmtXAF(n: number): string {
-  return `${Math.round(n).toLocaleString("fr-FR").replace(/ /g, " ")} XAF`;
+  return `${Math.round(n).toLocaleString("fr-FR")} XAF`;
 }
 
 /** Encours compact en milliards/millions pour les KPI. */
@@ -183,6 +189,8 @@ export function ClientsTable({ showKpis = true, reloadKey = 0 }: ClientsTablePro
               key={f}
               aria-pressed={filtre === f}
               onClick={() => setFiltre(f)}
+              title={f === "tous" ? "Tous les clients" : TYPE_LABEL[f]}
+              aria-label={f === "tous" ? "Tous les clients" : TYPE_LABEL[f]}
             >
               {f === "tous" ? "Tous" : f}
             </button>
@@ -220,8 +228,12 @@ export function ClientsTable({ showKpis = true, reloadKey = 0 }: ClientsTablePro
                   <td className="data-cell-code">{r.code}</td>
                   <td className="data-cell-name">{r.nom_complet}</td>
                   <td>
-                    <span className={`pill pill--${r.type.toLowerCase()}`}>
-                      {r.type}
+                    <span
+                      className={`pill pill--${r.type.toLowerCase()}`}
+                      title={TYPE_LABEL[r.type]}
+                    >
+                      <span aria-hidden="true">{r.type}</span>
+                      <span className="sr-only">{TYPE_LABEL[r.type]}</span>
                     </span>
                   </td>
                   <td className="data-cell-mono">{r.compte_titres}</td>

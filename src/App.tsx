@@ -134,7 +134,7 @@ function App() {
             <header className="app-header">
               <h1 className="app-header__title">Import Manar</h1>
               <p className="app-header__subtitle">
-                Chargement du fichier Manar et matérialisation des entités
+                Chargement du fichier Manar et enregistrement des entités
               </p>
             </header>
             <section className="app-content">
