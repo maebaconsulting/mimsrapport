@@ -5,7 +5,7 @@ import { runImport } from "./import-service";
 import type { ImportResult, ImportSummary } from "./import-service";
 import { readManarWorkbook } from "./manar-parser";
 import { detectMapping } from "./manar-detect";
-import { loadMappingForHeaders } from "./mapping-store";
+import { loadMappingForHeaders, saveMapping } from "./mapping-store";
 import { REQUIRED_FIELDS, type ColumnMapping } from "./manar-fields";
 import { MappingStep } from "./MappingStep";
 import { ClientsTable } from "../clients/ClientsTable";
@@ -245,9 +245,7 @@ export function ImportWizard({
                 if (remember) {
                   void getPocketBase()
                     .then((pb) =>
-                      import("./mapping-store").then((m) =>
-                        m.saveMapping(pb, { headers: phase.headers, mapping }),
-                      ),
+                      saveMapping(pb, { headers: phase.headers, mapping }),
                     )
                     .catch(() => {
                       /* la mémorisation est best-effort */
