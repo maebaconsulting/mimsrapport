@@ -330,6 +330,9 @@ export function ReportsView({
   const printFrameRef = useRef<HTMLIFrameElement>(null);
   const printOverlayRef = useRef<HTMLDivElement>(null);
   const focusAvantModaleRef = useRef<HTMLElement | null>(null);
+  // Dernière sélection déjà rendue en aperçu : évite de régénérer (et de
+  // rejournaliser) la même combinaison lors d'un nouveau rendu.
+  const dernierApercuRef = useRef<string>("");
 
   // `silent` : rafraîchissement en arrière-plan (focus/import) ; conserve la
   // sélection courante si le client existe toujours, n'écrase pas en cas
@@ -360,6 +363,22 @@ export function ReportsView({
   }, [charger]);
 
   useRefreshOnSignal(() => void charger(true));
+
+  // Aperçu automatique : dès qu'une sélection valide est prête (type + client
+  // pour les documents client, type + date pour les états société), on génère
+  // l'aperçu sans clic. Anti-rebond léger pour ne pas régénérer à chaque frappe,
+  // dé-duplication via dernierApercuRef pour ne pas refaire la même combinaison.
+  useEffect(() => {
+    const scope = scopeOf(reportType);
+    if (scope === "client" && !clientId) return;
+    const cle = `${reportType}|${clientId}|${dateArrete}`;
+    if (cle === dernierApercuRef.current) return;
+    const timer = window.setTimeout(() => void generer(), 350);
+    return () => window.clearTimeout(timer);
+    // generer est volontairement hors deps (recréée à chaque rendu) ; on ne
+    // dépend que de la sélection.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportType, clientId, dateArrete]);
 
   // Libère l'object URL courant au démontage (évite les fuites mémoire).
   useEffect(() => {
@@ -427,6 +446,9 @@ export function ReportsView({
   async function generer() {
     const scope = scopeOf(reportType);
     if (scope === "client" && !clientId) return;
+    // Mémorise la sélection rendue (même en cas d'échec) pour ne pas relancer
+    // automatiquement la même combinaison en boucle.
+    dernierApercuRef.current = `${reportType}|${clientId}|${dateArrete}`;
     setGen({ kind: "generation" });
     setSave({ kind: "idle" });
     try {
