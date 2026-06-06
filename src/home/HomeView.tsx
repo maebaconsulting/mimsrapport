@@ -4,6 +4,7 @@
 // un appel à l'action invite à importer un fichier d'export.
 
 import { useCallback, useEffect, useState } from "react";
+import { useT, useLocale } from "../i18n";
 import { getPocketBase } from "../lib/pocketbase";
 import { loadClientsData, type ClientsData } from "../clients/clients-data";
 import { KpiCard } from "../dashboards/KpiCard";
@@ -21,18 +22,19 @@ type State =
   | { kind: "pret"; data: ClientsData }
   | { kind: "erreur"; message: string };
 
-function fmtXAF(n: number): string {
-  return `${Math.round(n).toLocaleString("fr-FR")} XAF`;
+function fmtXAF(n: number, locale: string): string {
+  return `${Math.round(n).toLocaleString(locale)} XAF`;
 }
 
 /** Encours compact en milliards/millions pour les KPI. */
-function fmtCompact(n: number): string {
+function fmtCompact(n: number, locale: string): string {
   if (n >= 1e9) return `${(n / 1e9).toFixed(2).replace(".", ",")} Md XAF`;
   if (n >= 1e6) return `${(n / 1e6).toFixed(1).replace(".", ",")} M XAF`;
-  return fmtXAF(n);
+  return fmtXAF(n, locale);
 }
 
 export function HomeView({ onNavigate }: { onNavigate: (c: Cible) => void }) {
+  const t = useT();
   const [state, setState] = useState<State>({ kind: "chargement" });
 
   const charger = useCallback(async () => {
@@ -57,9 +59,9 @@ export function HomeView({ onNavigate }: { onNavigate: (c: Cible) => void }) {
   return (
     <>
       <header className="app-header">
-        <h1 className="app-header__title">Accueil</h1>
+        <h1 className="app-header__title">{t("home.header-title")}</h1>
         <p className="app-header__subtitle">
-          Outil de reporting pour société de bourse · marché CEMAC / BVMAC
+          {t("home.header-subtitle")}
         </p>
       </header>
 
@@ -67,12 +69,12 @@ export function HomeView({ onNavigate }: { onNavigate: (c: Cible) => void }) {
         {state.kind === "chargement" && (
           <LoadingState
             variant="cards"
-            label="Chargement des indicateurs d'accueil en cours…"
+            label={t("home.loading-label")}
           />
         )}
         {state.kind === "erreur" && (
           <ErrorState
-            message="Connexion à la base de données locale impossible. Vérifiez que le serveur est démarré, puis réessayez."
+            message={t("home.error-message")}
             detail={state.message}
             onRetry={() => void charger()}
           />
@@ -90,6 +92,7 @@ export function HomeView({ onNavigate }: { onNavigate: (c: Cible) => void }) {
 
 /** Accueil quand la base est vide : invitation à importer. */
 function EmptyHome({ onImport }: { onImport: () => void }) {
+  const t = useT();
   return (
     <div className="home-empty">
       <div className="home-empty__icon" aria-hidden="true">
@@ -108,14 +111,12 @@ function EmptyHome({ onImport }: { onImport: () => void }) {
           <path d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" />
         </svg>
       </div>
-      <h2 className="home-empty__title">Aucune donnée pour l'instant</h2>
+      <h2 className="home-empty__title">{t("home.empty-title")}</h2>
       <p className="home-empty__text">
-        Importez un fichier d'export pour
-        alimenter les indicateurs, les tableaux de bord et la production de
-        rapports.
+        {t("home.empty-text")}
       </p>
       <button className="btn btn--primary" onClick={onImport}>
-        Importer un fichier d'export
+        {t("home.empty-import-button")}
       </button>
     </div>
   );
@@ -152,7 +153,9 @@ function ReadyHome({
   data: ClientsData;
   onNavigate: (c: Cible) => void;
 }) {
-  const t = data.totaux;
+  const t = useT();
+  const locale = useLocale();
+  const tot = data.totaux;
   return (
     <div className="home-grid">
       <ProvenanceBanner />
@@ -160,50 +163,50 @@ function ReadyHome({
       <div className="kpi-row">
         <KpiCard
           tone="yellow"
-          label="Clients"
-          value={t.nb_clients.toLocaleString("fr-FR")}
-          sub={`${t.nb_pp} pers. physiques · ${t.nb_pm} pers. morales`}
+          label={t("home.kpi-clients-label")}
+          value={tot.nb_clients.toLocaleString(locale)}
+          sub={t("home.kpi-clients-sub", { pp: String(tot.nb_pp), pm: String(tot.nb_pm) })}
         />
         <KpiCard
           tone="sage"
-          label="Comptes-titres"
-          value={t.nb_comptes.toLocaleString("fr-FR")}
-          sub="Portefeuilles-titres distincts"
+          label={t("home.kpi-accounts-label")}
+          value={tot.nb_comptes.toLocaleString(locale)}
+          sub={t("home.kpi-accounts-sub")}
         />
         <KpiCard
           tone="lilac"
-          label="Positions"
-          value={t.nb_positions.toLocaleString("fr-FR")}
+          label={t("home.kpi-positions-label")}
+          value={tot.nb_positions.toLocaleString(locale)}
         />
         <KpiCard
           tone="peach"
-          label="Encours total"
-          value={fmtCompact(t.encours_xaf)}
-          sub={fmtXAF(t.encours_xaf)}
+          label={t("home.kpi-total-label")}
+          value={fmtCompact(tot.encours_xaf, locale)}
+          sub={fmtXAF(tot.encours_xaf, locale)}
         />
       </div>
 
       <div className="home-actions">
-        <span className="small-caps home-actions__title">Que faire ensuite</span>
+        <span className="small-caps home-actions__title">{t("home.actions-title")}</span>
         <div className="home-actions__grid">
           <ActionCard
-            titre="Consulter les clients"
-            texte="Parcourir, rechercher et trier les comptes-titres importés."
+            titre={t("home.action-clients-title")}
+            texte={t("home.action-clients-text")}
             onClick={() => onNavigate("clients")}
           />
           <ActionCard
-            titre="Voir les tableaux de bord"
-            texte="Encours, concentration, allocation et flux d'activité."
+            titre={t("home.action-dashboards-title")}
+            texte={t("home.action-dashboards-text")}
             onClick={() => onNavigate("tableaux")}
           />
           <ActionCard
-            titre="Générer un rapport"
-            texte="Documents client et états réglementaires COSUMAF."
+            titre={t("home.action-report-title")}
+            texte={t("home.action-report-text")}
             onClick={() => onNavigate("rapports")}
           />
           <ActionCard
-            titre="Nouvel import"
-            texte="Charger un nouveau fichier ou remplacer l'import courant."
+            titre={t("home.action-import-title")}
+            texte={t("home.action-import-text")}
             onClick={() => onNavigate("import")}
           />
         </div>

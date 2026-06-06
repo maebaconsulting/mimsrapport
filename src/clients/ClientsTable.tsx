@@ -8,16 +8,11 @@ import { getPocketBase } from "../lib/pocketbase";
 import { KpiCard } from "../dashboards/KpiCard";
 import { loadClientsData, type ClientRow, type ClientsData } from "./clients-data";
 import { LoadingState, ErrorState } from "../ui/states";
+import { useT, useLocale, type TFunc, type TKey } from "../i18n";
 import "../dashboards/dashboards.css";
 import "./clients.css";
 
 type Filtre = "tous" | "PP" | "PM";
-
-/** Libellé complet d'un type de client (PP/PM) pour les infobulles. */
-const TYPE_LABEL: Record<"PP" | "PM", string> = {
-  PP: "Personne physique",
-  PM: "Personne morale",
-};
 
 type SortKey =
   | "code"
@@ -29,21 +24,21 @@ type SortKey =
   | "statut"
   | "date_ouverture";
 
-/** Colonnes triables de la table (libellé, clé de tri, alignement, type). */
+/** Colonnes triables de la table (clé de libellé i18n, clé de tri, alignement, type). */
 const COLUMNS: Array<{
   key: SortKey;
-  label: string;
+  labelKey: TKey;
   num?: boolean;
   numeric?: boolean;
 }> = [
-  { key: "code", label: "Code" },
-  { key: "nom_complet", label: "Nom" },
-  { key: "type", label: "Type" },
-  { key: "compte_titres", label: "Compte-titres" },
-  { key: "nb_positions", label: "Positions", num: true, numeric: true },
-  { key: "encours_xaf", label: "Encours", num: true, numeric: true },
-  { key: "statut", label: "Statut" },
-  { key: "date_ouverture", label: "Ouverture" },
+  { key: "code", labelKey: "clients.col-code" },
+  { key: "nom_complet", labelKey: "clients.col-nom" },
+  { key: "type", labelKey: "clients.col-type" },
+  { key: "compte_titres", labelKey: "clients.col-compte-titres" },
+  { key: "nb_positions", labelKey: "clients.col-positions", num: true, numeric: true },
+  { key: "encours_xaf", labelKey: "clients.col-encours", num: true, numeric: true },
+  { key: "statut", labelKey: "clients.col-statut" },
+  { key: "date_ouverture", labelKey: "clients.col-ouverture" },
 ];
 
 type SortState = { key: SortKey; dir: "asc" | "desc" };
@@ -55,34 +50,34 @@ type State =
   | { kind: "pret"; data: ClientsData }
   | { kind: "erreur"; message: string };
 
-function fmtXAF(n: number): string {
-  return `${Math.round(n).toLocaleString("fr-FR")} XAF`;
+function fmtXAF(n: number, locale: string): string {
+  return `${Math.round(n).toLocaleString(locale)} XAF`;
 }
 
 /** Encours compact en milliards/millions pour les KPI. */
-function fmtCompact(n: number): string {
+function fmtCompact(n: number, locale: string): string {
   if (n >= 1e9) return `${(n / 1e9).toFixed(2).replace(".", ",")} Md XAF`;
   if (n >= 1e6) return `${(n / 1e6).toFixed(1).replace(".", ",")} M XAF`;
-  return fmtXAF(n);
+  return fmtXAF(n, locale);
 }
 
-function fmtDate(iso: string | null): string {
+function fmtDate(iso: string | null, locale: string): string {
   if (!iso) return "-";
   try {
-    return new Date(iso).toLocaleDateString("fr-FR");
+    return new Date(iso).toLocaleDateString(locale);
   } catch {
     return iso;
   }
 }
 
-function statutPill(statut: ClientRow["statut"]) {
+function statutPill(statut: ClientRow["statut"], t: TFunc) {
   switch (statut) {
     case "ACTIF":
-      return <span className="pill pill--actif">Actif</span>;
+      return <span className="pill pill--actif">{t("clients.statut-actif")}</span>;
     case "SUSPENDU":
-      return <span className="pill pill--suspendu">Suspendu</span>;
+      return <span className="pill pill--suspendu">{t("clients.statut-suspendu")}</span>;
     case "CLOTURE":
-      return <span className="pill pill--cloture">Clôturé</span>;
+      return <span className="pill pill--cloture">{t("clients.statut-cloture")}</span>;
     default:
       return <span className="pill pill--neutre">-</span>;
   }
@@ -110,6 +105,11 @@ export function ClientsTable({
   onGenerateReport,
   onOpenClient,
 }: ClientsTableProps) {
+  const t = useT();
+  const locale = useLocale();
+  /** Libellé complet d'un type de client (PP/PM) pour les infobulles. */
+  const typeLabel = (type: "PP" | "PM") =>
+    type === "PP" ? t("clients.type-pp") : t("clients.type-pm");
   const [state, setState] = useState<State>({ kind: "chargement" });
   const [recherche, setRecherche] = useState("");
   const [filtre, setFiltre] = useState<Filtre>("tous");
@@ -188,7 +188,7 @@ export function ClientsTable({
     return (
       <LoadingState
         variant={showKpis ? "table" : "card"}
-        label="Chargement des clients en cours…"
+        label={t("clients.chargement")}
         cols={8}
       />
     );
@@ -197,7 +197,7 @@ export function ClientsTable({
   if (state.kind === "erreur") {
     return (
       <ErrorState
-        message="Le serveur de données local est momentanément injoignable. Vérifiez qu'il est démarré, puis réessayez."
+        message={t("clients.erreur-serveur")}
         detail={state.message}
         onRetry={() => void charger()}
       />
@@ -207,10 +207,7 @@ export function ClientsTable({
   if (state.data.totaux.nb_clients === 0) {
     return (
       <div className="import-notice import-notice--warn">
-        <p>
-          Aucun client. Importez d'abord un fichier d'export pour alimenter cette
-          vue.
-        </p>
+        <p>{t("clients.vide-aucun-client")}</p>
       </div>
     );
   }
@@ -223,25 +220,28 @@ export function ClientsTable({
         <div className="kpi-row">
           <KpiCard
             tone="yellow"
-            label="Clients actifs"
-            value={data.totaux.nb_clients.toLocaleString("fr-FR")}
-            sub={`${data.totaux.nb_pp} pers. physiques · ${data.totaux.nb_pm} pers. morales`}
+            label={t("clients.kpi-clients-actifs")}
+            value={data.totaux.nb_clients.toLocaleString(locale)}
+            sub={t("clients.kpi-repartition-pp-pm", {
+              pp: data.totaux.nb_pp,
+              pm: data.totaux.nb_pm,
+            })}
           />
           <KpiCard
             tone="sage"
-            label="Comptes-titres"
-            value={data.totaux.nb_comptes.toLocaleString("fr-FR")}
+            label={t("clients.kpi-comptes-titres")}
+            value={data.totaux.nb_comptes.toLocaleString(locale)}
           />
           <KpiCard
             tone="lilac"
-            label="Positions"
-            value={data.totaux.nb_positions.toLocaleString("fr-FR")}
+            label={t("clients.kpi-positions")}
+            value={data.totaux.nb_positions.toLocaleString(locale)}
           />
           <KpiCard
             tone="peach"
-            label="Encours total"
-            value={fmtCompact(data.totaux.encours_xaf)}
-            sub={fmtXAF(data.totaux.encours_xaf)}
+            label={t("clients.kpi-encours-total")}
+            value={fmtCompact(data.totaux.encours_xaf, locale)}
+            sub={fmtXAF(data.totaux.encours_xaf, locale)}
           />
         </div>
       )}
@@ -250,20 +250,26 @@ export function ClientsTable({
         <input
           className="clients-search"
           type="search"
-          placeholder="Rechercher un client, un code, un compte…"
+          placeholder={t("clients.recherche-placeholder")}
           value={recherche}
           onChange={(e) => setRecherche(e.target.value)}
         />
-        <div className="clients-segment" role="group" aria-label="Filtre par type">
+        <div
+          className="clients-segment"
+          role="group"
+          aria-label={t("clients.filtre-par-type")}
+        >
           {(["tous", "PP", "PM"] as Filtre[]).map((f) => (
             <button
               key={f}
               aria-pressed={filtre === f}
               onClick={() => setFiltre(f)}
-              title={f === "tous" ? "Tous les clients" : TYPE_LABEL[f]}
-              aria-label={f === "tous" ? "Tous les clients" : TYPE_LABEL[f]}
+              title={f === "tous" ? t("clients.tous-les-clients") : typeLabel(f)}
+              aria-label={
+                f === "tous" ? t("clients.tous-les-clients") : typeLabel(f)
+              }
             >
-              {f === "tous" ? "Tous" : f}
+              {f === "tous" ? t("clients.filtre-tous") : f}
             </button>
           ))}
         </div>
@@ -276,25 +282,25 @@ export function ClientsTable({
             }
             aria-pressed={nouveauxSeulement}
             onClick={() => setNouveauxSeulement((v) => !v)}
-            title="N'afficher que les clients apparus au dernier import"
+            title={t("clients.filtre-nouveaux-titre")}
           >
-            Nouveaux ({data.rows.filter((r) => r.is_new).length})
+            {t("clients.filtre-nouveaux", {
+              n: data.rows.filter((r) => r.is_new).length,
+            })}
           </button>
         )}
         <span className="clients-count">
-          {lignesFiltrees.length.toLocaleString("fr-FR")} sur{" "}
-          {data.totaux.nb_clients.toLocaleString("fr-FR")}
+          {t("clients.compte-sur", {
+            n: lignesFiltrees.length.toLocaleString(locale),
+            total: data.totaux.nb_clients.toLocaleString(locale),
+          })}
         </span>
       </div>
 
       <div className="data-card">
         <div className="data-scroll">
           <table className="data-table">
-            <caption className="sr-only">
-              Liste des clients consolidés issus du dernier import : code, nom,
-              type, compte-titres, nombre de positions, encours, statut et date
-              d'ouverture.
-            </caption>
+            <caption className="sr-only">{t("clients.table-caption")}</caption>
             <thead>
               <tr>
                 {COLUMNS.map((col) => {
@@ -319,7 +325,7 @@ export function ClientsTable({
                         }
                         onClick={() => trier(col.key)}
                       >
-                        {col.label}
+                        {t(col.labelKey)}
                         <span className="data-sort__icon" aria-hidden="true">
                           {actif ? (sort.dir === "asc" ? "▲" : "▼") : "↕"}
                         </span>
@@ -329,7 +335,7 @@ export function ClientsTable({
                 })}
                 {onGenerateReport && (
                   <th scope="col" className="num">
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">{t("clients.col-actions")}</span>
                   </th>
                 )}
               </tr>
@@ -344,7 +350,7 @@ export function ClientsTable({
                         type="button"
                         className="data-cell-namebtn"
                         onClick={() => onOpenClient(r.id, r.nom_complet)}
-                        title="Ouvrir la fiche de contact"
+                        title={t("clients.ouvrir-fiche-contact")}
                       >
                         {r.nom_complet}
                       </button>
@@ -354,42 +360,49 @@ export function ClientsTable({
                     {r.has_contact && (
                       <span
                         className="contact-dot"
-                        title="Fiche de contact renseignée"
-                        aria-label="Fiche de contact renseignée"
+                        title={t("clients.contact-renseigne")}
+                        aria-label={t("clients.contact-renseigne")}
                       >
                         ✉
                       </span>
                     )}
                     {r.is_new && (
-                      <span className="pill pill--nouveau" title="Apparu au dernier import">
-                        Nouveau
+                      <span
+                        className="pill pill--nouveau"
+                        title={t("clients.nouveau-titre")}
+                      >
+                        {t("clients.nouveau")}
                       </span>
                     )}
                   </td>
                   <td>
                     <span
                       className={`pill pill--${r.type.toLowerCase()}`}
-                      title={TYPE_LABEL[r.type]}
+                      title={typeLabel(r.type)}
                     >
                       <span aria-hidden="true">{r.type}</span>
-                      <span className="sr-only">{TYPE_LABEL[r.type]}</span>
+                      <span className="sr-only">{typeLabel(r.type)}</span>
                     </span>
                   </td>
                   <td className="data-cell-mono">{r.compte_titres}</td>
                   <td className="num">{r.nb_positions}</td>
-                  <td className="num data-cell-encours">{fmtXAF(r.encours_xaf)}</td>
-                  <td>{statutPill(r.statut)}</td>
-                  <td className="data-cell-mono">{fmtDate(r.date_ouverture)}</td>
+                  <td className="num data-cell-encours">{fmtXAF(r.encours_xaf, locale)}</td>
+                  <td>{statutPill(r.statut, t)}</td>
+                  <td className="data-cell-mono">{fmtDate(r.date_ouverture, locale)}</td>
                   {onGenerateReport && (
                     <td className="num">
                       {r.nb_positions > 0 && (
                         <button
                           className="data-row-action"
                           onClick={() => onGenerateReport(r.id)}
-                          aria-label={`Générer un rapport pour ${r.nom_complet}`}
-                          title={`Générer un rapport pour ${r.nom_complet}`}
+                          aria-label={t("clients.generer-rapport-pour", {
+                            nom: r.nom_complet,
+                          })}
+                          title={t("clients.generer-rapport-pour", {
+                            nom: r.nom_complet,
+                          })}
                         >
-                          Rapport
+                          {t("clients.rapport")}
                           <span aria-hidden="true"> →</span>
                         </button>
                       )}
@@ -403,7 +416,7 @@ export function ClientsTable({
                     className="data-empty"
                     colSpan={COLUMNS.length + (onGenerateReport ? 1 : 0)}
                   >
-                    Aucun client ne correspond à la recherche.
+                    {t("clients.aucun-resultat")}
                   </td>
                 </tr>
               )}
@@ -414,7 +427,7 @@ export function ClientsTable({
         {lignesFiltrees.length > 0 && (
           <div className="data-pager">
             <label className="data-pager__size">
-              <span>Lignes par page</span>
+              <span>{t("clients.lignes-par-page")}</span>
               <select
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
@@ -429,18 +442,21 @@ export function ClientsTable({
 
             <div className="data-pager__nav">
               <span className="data-pager__range">
-                {(debut + 1).toLocaleString("fr-FR")}–
-                {Math.min(debut + pageSize, lignesFiltrees.length).toLocaleString(
-                  "fr-FR",
-                )}{" "}
-                sur {lignesFiltrees.length.toLocaleString("fr-FR")}
+                {t("clients.pager-plage", {
+                  debut: (debut + 1).toLocaleString(locale),
+                  fin: Math.min(
+                    debut + pageSize,
+                    lignesFiltrees.length,
+                  ).toLocaleString(locale),
+                  total: lignesFiltrees.length.toLocaleString(locale),
+                })}
               </span>
               <div className="data-pager__buttons">
                 <button
                   className="data-pager__btn"
                   onClick={() => setPage(1)}
                   disabled={pageSure <= 1}
-                  aria-label="Première page"
+                  aria-label={t("clients.premiere-page")}
                 >
                   «
                 </button>
@@ -448,18 +464,18 @@ export function ClientsTable({
                   className="data-pager__btn"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={pageSure <= 1}
-                  aria-label="Page précédente"
+                  aria-label={t("clients.page-precedente")}
                 >
                   ‹
                 </button>
                 <span className="data-pager__page">
-                  Page {pageSure} / {pageCount}
+                  {t("clients.pager-page", { page: pageSure, total: pageCount })}
                 </span>
                 <button
                   className="data-pager__btn"
                   onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
                   disabled={pageSure >= pageCount}
-                  aria-label="Page suivante"
+                  aria-label={t("clients.page-suivante")}
                 >
                   ›
                 </button>
@@ -467,7 +483,7 @@ export function ClientsTable({
                   className="data-pager__btn"
                   onClick={() => setPage(pageCount)}
                   disabled={pageSure >= pageCount}
-                  aria-label="Dernière page"
+                  aria-label={t("clients.derniere-page")}
                 >
                   »
                 </button>

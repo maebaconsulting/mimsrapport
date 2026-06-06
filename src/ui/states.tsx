@@ -8,6 +8,7 @@
 // Ces composants se branchent directement sur les branches "chargement" et
 // "erreur" de ce type.
 
+import { useT } from "../i18n";
 import "./states.css";
 
 /* ------------------------------------------------------------------ */
@@ -97,7 +98,7 @@ type LoadingVariant = "card" | "table" | "cards" | "panels";
  * annonce la progression aux lecteurs d'écran (role="status", aria-live="polite").
  */
 export function LoadingState({
-  label = "Chargement en cours…",
+  label,
   variant = "card",
   rows,
   cols,
@@ -107,9 +108,10 @@ export function LoadingState({
   rows?: number;
   cols?: number;
 }) {
+  const t = useT();
   return (
     <div className="loading-state" role="status" aria-live="polite">
-      <span className="sr-only">{label}</span>
+      <span className="sr-only">{label ?? t("states.loading")}</span>
       {variant === "card" && (
         <div className="card">
           <Skeleton width={140} height={11} />
@@ -158,7 +160,7 @@ export function ErrorState({
   message,
   detail,
   onRetry,
-  retryLabel = "Réessayer",
+  retryLabel,
   tone = "danger",
 }: {
   message: string;
@@ -167,19 +169,20 @@ export function ErrorState({
   retryLabel?: string;
   tone?: "danger" | "warn";
 }) {
+  const t = useT();
   return (
     <div className={`import-notice import-notice--${tone}`} role="alert">
       <p>{message}</p>
       {onRetry && (
         <div className="import-notice__actions">
           <button className="btn" onClick={onRetry}>
-            {retryLabel}
+            {retryLabel ?? t("states.retry")}
           </button>
         </div>
       )}
       {detail && (
         <details className="import-warnings">
-          <summary>Détail technique</summary>
+          <summary>{t("states.technical-detail")}</summary>
           <p style={{ marginTop: 6 }}>{detail}</p>
         </details>
       )}

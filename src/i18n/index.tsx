@@ -71,6 +71,17 @@ function interpolate(
   );
 }
 
+/**
+ * Typographie française : remplace l'espace ordinaire précédant la ponctuation
+ * haute (`:` `;` `!` `?` `%` `»`) et suivant `«` par une espace insécable (U+00A0).
+ * Appliqué uniquement en FR, sur le gabarit (avant interpolation) : les
+ * dictionnaires peuvent ainsi s'écrire avec des espaces normales. N'altère
+ * pas `://` (aucune espace avant les deux-points dans une URL).
+ */
+function frenchTypography(s: string): string {
+  return s.replace(/ ([:;!?%»])/g, " $1").replace(/(«) /g, "$1 ");
+}
+
 /** Provider i18n : englobe l'application (monté dans `main.tsx`). */
 export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(readStoredLang);
@@ -91,8 +102,11 @@ export function LangProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<LangContextValue>(() => {
     const dict = DICTS[lang];
-    const t: TFunc = (key, vars) =>
-      interpolate(dict[key] ?? fr[key] ?? String(key), vars);
+    const t: TFunc = (key, vars) => {
+      const template = dict[key] ?? fr[key] ?? String(key);
+      const typed = lang === "fr" ? frenchTypography(template) : template;
+      return interpolate(typed, vars);
+    };
     return { lang, setLang, locale: LOCALES[lang], t };
   }, [lang, setLang]);
 

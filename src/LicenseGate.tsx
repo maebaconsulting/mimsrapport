@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { installLicense, type LicenseStatus } from "./lib/license";
+import { useT } from "./i18n";
 
 // Écran de blocage affiché si la licence est absente, invalide ou expirée.
 // L'application ne charge pas les fonctions d'import/reporting sans licence
@@ -12,6 +13,7 @@ export function LicenseGate({
   status: LicenseStatus;
   onValid: (s: LicenseStatus) => void;
 }) {
+  const t = useT();
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
 
@@ -23,7 +25,7 @@ export function LicenseGate({
       if (next.valid) {
         onValid(next);
       } else {
-        setErreur(next.reason ?? "Licence non valide");
+        setErreur(next.reason ?? t("license.invalid"));
       }
     } catch (err) {
       setErreur(String(err));
@@ -41,16 +43,17 @@ export function LicenseGate({
             MIMS REPORTING
           </span>
         </div>
-        <h1 className="license-card__title">Licence requise</h1>
+        <h1 className="license-card__title">{t("license.required")}</h1>
         <p className="license-card__text">
-          {status.reason ?? "Aucune licence valide n'a été trouvée."} Pour
-          utiliser l'application, installez votre fichier de licence fourni par
-          MAEBA Consulting.
+          {status.reason ?? t("license.none-found")}{" "}
+          {t("license.instructions")}
         </p>
         {status.sdb && status.sdb !== "Mode développement" && (
           <p className="license-card__meta">
-            Licence détectée : {status.sdb}
-            {status.expires_at ? ` · expiration ${status.expires_at}` : ""}
+            {t("license.detected", { sdb: status.sdb })}
+            {status.expires_at
+              ? t("license.expires", { date: status.expires_at })
+              : ""}
           </p>
         )}
         {erreur && (
@@ -61,7 +64,7 @@ export function LicenseGate({
           onClick={importer}
           disabled={enCours}
         >
-          {enCours ? "Vérification…" : "Installer une licence"}
+          {enCours ? t("license.checking") : t("license.install")}
         </button>
       </div>
     </div>

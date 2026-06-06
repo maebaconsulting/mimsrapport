@@ -2,13 +2,15 @@
  * Dictionnaire français : source de vérité de l'i18n.
  *
  * Les clés sont à plat, préfixées par domaine (`nav.*`, `header.*`, `home.*`,
- * `import.*`, `clients.*`, `reports.*`, `dashboards.*`, `settings.*`,
- * `states.*`, `contact.*`, `mapping.*`). Le type `Dict` est dérivé de cet
- * objet : les dictionnaires `en`/`es` doivent en couvrir toutes les clés
- * (complétude garantie à la compilation).
+ * `clients.*`, `contact.*`, `dashboards.*`, `reports.*`, `import.*`,
+ * `mapping.*`, `settings.*`, `license.*`, `states.*`, `provenance.*`). Le type
+ * `Dict` est dérivé de cet objet : les dictionnaires `en`/`es` doivent en
+ * couvrir toutes les clés (complétude garantie à la compilation).
  *
- * Note : pas d'`as const` ici, pour que les valeurs soient typées `string`
- * (et non leur littéral), afin que `en`/`es` puissent fournir d'autres textes.
+ * Note : les valeurs françaises s'écrivent avec des espaces ordinaires ; la
+ * fonction `t()` applique au rendu la typographie française (espace insécable
+ * avant : ; ! ? % » et après «). Pas d'`as const` : les valeurs restent typées
+ * `string` pour que `en`/`es` puissent fournir d'autres textes.
  */
 export const fr = {
   // Navigation (menu latéral + fil d'Ariane)
@@ -31,6 +33,406 @@ export const fr = {
   "header.accountRole": "Administrateur",
   "header.signIn": "Se connecter",
   "header.signOut": "Se déconnecter",
+
+  // Accueil
+  "home.header-title": "Accueil",
+  "home.header-subtitle":
+    "Outil de reporting pour société de bourse · marché CEMAC / BVMAC",
+  "home.loading-label": "Chargement des indicateurs d'accueil en cours…",
+  "home.error-message":
+    "Connexion à la base de données locale impossible. Vérifiez que le serveur est démarré, puis réessayez.",
+  "home.empty-title": "Aucune donnée pour l'instant",
+  "home.empty-text":
+    "Importez un fichier d'export pour alimenter les indicateurs, les tableaux de bord et la production de rapports.",
+  "home.empty-import-button": "Importer un fichier d'export",
+  "home.kpi-clients-label": "Clients",
+  "home.kpi-clients-sub": "{pp} pers. physiques · {pm} pers. morales",
+  "home.kpi-accounts-label": "Comptes-titres",
+  "home.kpi-accounts-sub": "Portefeuilles-titres distincts",
+  "home.kpi-positions-label": "Positions",
+  "home.kpi-total-label": "Encours total",
+  "home.actions-title": "Que faire ensuite",
+  "home.action-clients-title": "Consulter les clients",
+  "home.action-clients-text":
+    "Parcourir, rechercher et trier les comptes-titres importés.",
+  "home.action-dashboards-title": "Voir les tableaux de bord",
+  "home.action-dashboards-text":
+    "Encours, concentration, allocation et flux d'activité.",
+  "home.action-report-title": "Générer un rapport",
+  "home.action-report-text":
+    "Documents client et états réglementaires COSUMAF.",
+  "home.action-import-title": "Nouvel import",
+  "home.action-import-text":
+    "Charger un nouveau fichier ou remplacer l'import courant.",
+
+  // Clients
+  "clients.titre": "Clients",
+  "clients.sous-titre":
+    "Données consolidées issues du dernier import · comptes, positions et encours par client",
+  "clients.col-code": "Code",
+  "clients.col-nom": "Nom",
+  "clients.col-type": "Type",
+  "clients.col-compte-titres": "Compte-titres",
+  "clients.col-positions": "Positions",
+  "clients.col-encours": "Encours",
+  "clients.col-statut": "Statut",
+  "clients.col-ouverture": "Ouverture",
+  "clients.col-actions": "Actions",
+  "clients.type-pp": "Personne physique",
+  "clients.type-pm": "Personne morale",
+  "clients.statut-actif": "Actif",
+  "clients.statut-suspendu": "Suspendu",
+  "clients.statut-cloture": "Clôturé",
+  "clients.chargement": "Chargement des clients en cours…",
+  "clients.erreur-serveur":
+    "Le serveur de données local est momentanément injoignable. Vérifiez qu'il est démarré, puis réessayez.",
+  "clients.vide-aucun-client":
+    "Aucun client. Importez d'abord un fichier d'export pour alimenter cette vue.",
+  "clients.kpi-clients-actifs": "Clients actifs",
+  "clients.kpi-repartition-pp-pm": "{pp} pers. physiques · {pm} pers. morales",
+  "clients.kpi-comptes-titres": "Comptes-titres",
+  "clients.kpi-positions": "Positions",
+  "clients.kpi-encours-total": "Encours total",
+  "clients.recherche-placeholder": "Rechercher un client, un code, un compte…",
+  "clients.filtre-par-type": "Filtre par type",
+  "clients.tous-les-clients": "Tous les clients",
+  "clients.filtre-tous": "Tous",
+  "clients.filtre-nouveaux-titre":
+    "N'afficher que les clients apparus au dernier import",
+  "clients.filtre-nouveaux": "Nouveaux ({n})",
+  "clients.compte-sur": "{n} sur {total}",
+  "clients.table-caption":
+    "Liste des clients consolidés issus du dernier import : code, nom, type, compte-titres, nombre de positions, encours, statut et date d'ouverture.",
+  "clients.ouvrir-fiche-contact": "Ouvrir la fiche de contact",
+  "clients.contact-renseigne": "Fiche de contact renseignée",
+  "clients.nouveau": "Nouveau",
+  "clients.nouveau-titre": "Apparu au dernier import",
+  "clients.generer-rapport-pour": "Générer un rapport pour {nom}",
+  "clients.rapport": "Rapport",
+  "clients.aucun-resultat": "Aucun client ne correspond à la recherche.",
+  "clients.lignes-par-page": "Lignes par page",
+  "clients.pager-plage": "{debut}–{fin} sur {total}",
+  "clients.premiere-page": "Première page",
+  "clients.page-precedente": "Page précédente",
+  "clients.pager-page": "Page {page} / {total}",
+  "clients.page-suivante": "Page suivante",
+  "clients.derniere-page": "Dernière page",
+
+  // Fiche de contact
+  "contact.titre-aria": "Fiche de contact · {nom}",
+  "contact.fiche-de-contact": "Fiche de contact",
+  "contact.fermer": "Fermer",
+  "contact.chargement": "Chargement de la fiche…",
+  "contact.erreur-chargement": "Impossible de charger la fiche de contact.",
+  "contact.email": "Email",
+  "contact.email-invalide": "Adresse email invalide.",
+  "contact.mobile": "Mobile",
+  "contact.telephone": "Téléphone",
+  "contact.whatsapp": "WhatsApp",
+  "contact.adresse": "Adresse",
+  "contact.notes": "Notes",
+  "contact.enregistrement": "Enregistrement…",
+  "contact.enregistrer": "Enregistrer",
+  "contact.enregistre-ok": "Coordonnées enregistrées.",
+  "contact.enregistre-erreur": "Échec de l'enregistrement : {msg}",
+
+  // Tableaux de bord
+  "dashboards.titre": "Tableaux de bord",
+  "dashboards.sous-titre":
+    "Pilotage des encours, concentration, allocation et flux",
+  "dashboards.chargement": "Calcul des indicateurs en cours…",
+  "dashboards.vide": "Aucune position. Importez d'abord un fichier d'export.",
+  "dashboards.erreur":
+    "Impossible de calculer les indicateurs. Vérifiez que le serveur de données local est démarré, puis réessayez.",
+  "dashboards.kpi-encours-global": "Encours global",
+  "dashboards.kpi-encours-global-sub": "{nb} positions · {montant}",
+  "dashboards.kpi-comptes-titres": "Comptes-titres",
+  "dashboards.kpi-comptes-titres-sub": "Portefeuilles-titres distincts",
+  "dashboards.kpi-concentration-max-emetteur": "Concentration max émetteur",
+  "dashboards.kpi-limite-cosumaf": "limite COSUMAF 30 %",
+  "dashboards.kpi-taux-moyen-pondere": "Taux moyen pondéré obligataire",
+  "dashboards.kpi-pnl-latente": "Plus/moins-value latente",
+  "dashboards.kpi-pnl-latente-sub": "{pct} vs coût de revient",
+  "dashboards.kpi-encours-moyen-median": "Encours moyen / médian",
+  "dashboards.kpi-encours-moyen-median-sub": "médian {median}",
+  "dashboards.kpi-maturite-moyenne": "Maturité moyenne obligataire",
+  "dashboards.kpi-maturite-moyenne-value": "{ans} ans",
+  "dashboards.kpi-maturite-moyenne-sub": "échéant < 12 mois : {pct}",
+  "dashboards.kpi-collecte-nette": "Collecte nette (période)",
+  "dashboards.kpi-collecte-nette-sub": "rotation {pct}",
+  "dashboards.section-risque-conformite": "Risque et conformité",
+  "dashboards.gauge-concentration-max-emetteur": "Concentration max émetteur",
+  "dashboards.reference-limite-cosumaf": "limite COSUMAF",
+  "dashboards.gauge-concentration-premier-client": "Concentration 1er client",
+  "dashboards.gauge-mur-echeances": "Mur d'échéances < 12 mois",
+  "dashboards.gauge-score-diversification": "Score de diversification",
+  "dashboards.qualite-donnees":
+    "Qualité des données : intégrité émetteur {pct}",
+  "dashboards.qualite-sans-emetteur": "{nb} position(s) sans émetteur",
+  "dashboards.qualite-sans-echeance": "{nb} obligation(s) sans échéance",
+  "dashboards.qualite-valo-nulle": "{nb} position(s) à valorisation nulle",
+  "dashboards.panel-evolution-encours":
+    "Évolution de l'encours (reconstitué)",
+  "dashboards.serie-encours": "Encours",
+  "dashboards.panel-repartition-classe": "Répartition par classe d'actifs",
+  "dashboards.panel-concentration-emetteur": "Concentration par émetteur",
+  "dashboards.badge-alerte-30": "Alerte > 30 %",
+  "dashboards.badge-score": "Score {score}/100",
+  "dashboards.panel-concentration-client": "Concentration par client (top 8)",
+  "dashboards.panel-treemap-exposition": "Exposition par émetteur (treemap)",
+  "dashboards.panel-flux-net-mensuel": "Flux net mensuel (collecte)",
+  "dashboards.serie-flux-net": "Flux net",
+  "dashboards.panel-echeancier-obligataire":
+    "Échéancier obligataire (mur de liquidité)",
+  "dashboards.serie-echeance": "Échéance",
+  "dashboards.panel-flux-activite": "Flux d'activité (achat / vente)",
+  "dashboards.serie-achat": "Achat",
+  "dashboards.serie-vente": "Vente",
+  "dashboards.panel-repartition-type-client": "Répartition par type de client",
+  "dashboards.serie-personnes-physiques": "Personnes physiques",
+  "dashboards.serie-personnes-morales": "Personnes morales",
+  "dashboards.legende-pp": "PP · {comptes} comptes",
+  "dashboards.legende-pm": "PM · {comptes} comptes",
+  "dashboards.panel-souverain-prive": "Souverain et privé",
+  "dashboards.serie-souverain": "Souverain",
+  "dashboards.serie-prive": "Privé",
+  "dashboards.note-evolution-temporelle":
+    "Les vues d'évolution temporelle s'appuient sur la chronologie des mouvements importés ; sur un import unique, elles restent partielles.",
+  "dashboards.aucune-donnee": "Aucune donnée disponible.",
+  "dashboards.gauge-zone-bon": "Bon",
+  "dashboards.gauge-zone-a-surveiller": "À surveiller",
+  "dashboards.gauge-zone-alerte": "Alerte",
+  "dashboards.gauge-aria-zone": "zone {zone}",
+
+  // Rapports (UI ; les gabarits PDF restent en français hors i18n)
+  "reports.type-attestation": "Attestation de portefeuille",
+  "reports.type-releve": "Relevé de compte-titres",
+  "reports.type-confirmation-ouverture": "Confirmation d'ouverture de compte",
+  "reports.type-lettre-desherence": "Lettre de relance déshérence",
+  "reports.type-cosumaf-transactions":
+    "COSUMAF · Transactions boursières (obligation réglementaire 12)",
+  "reports.type-cosumaf-avoirs":
+    "COSUMAF · Situation des avoirs (obligation réglementaire 15)",
+  "reports.type-etat-desherence": "État des clients en déshérence",
+  "reports.group-client-documents": "Documents client",
+  "reports.group-regulatory-company": "États réglementaires (société)",
+  "reports.no-result": "Aucun résultat",
+  "reports.fallback-label": "Rapport",
+  "reports.scope-regulatory-company": "État réglementaire · société",
+  "reports.scope-client-document": "Document client",
+  "reports.header-title": "Rapports",
+  "reports.header-subtitle":
+    "Production des rapports réglementaires et non réglementaires",
+  "reports.production-title": "Production de rapports",
+  "reports.load-error":
+    "Impossible de charger la liste des clients. Vérifiez que le serveur de données local est démarré, puis réessayez.",
+  "reports.field-report-type": "Type de rapport",
+  "reports.field-client": "Client",
+  "reports.client-search-placeholder": "Rechercher un client…",
+  "reports.positions-singular": "{count} position",
+  "reports.positions-plural": "{count} positions",
+  "reports.no-client-with-position":
+    "Aucun client avec position. Importez d'abord un fichier d'export pour les documents par client.",
+  "reports.field-cutoff-month": "Mois d'arrêté",
+  "reports.field-cutoff-date": "Date d'arrêté",
+  "reports.generating": "Génération…",
+  "reports.generate-preview": "Générer l'aperçu",
+  "reports.generation-error":
+    "La génération du rapport a échoué. Réessayez ; si le problème persiste, vérifiez les données importées.",
+  "reports.generation-in-progress": "Génération du rapport en cours…",
+  "reports.document-preview": "Aperçu du document",
+  "reports.preview-frame-title": "Aperçu {label}",
+  "reports.print": "Imprimer",
+  "reports.download": "Télécharger",
+  "reports.close-preview": "Fermer l'aperçu",
+  "reports.saved-notice": "Enregistré · {filename}",
+  "reports.save-cancelled": "Enregistrement annulé.",
+  "reports.key-info": "Informations clés",
+  "reports.meta-scope": "Périmètre",
+  "reports.meta-file": "Fichier",
+  "reports.meta-size": "Taille",
+  "reports.meta-size-value": "{size} ko",
+  "reports.meta-generated-on": "Généré le",
+  "reports.sha256-fingerprint": "Empreinte SHA-256",
+  "reports.production-steps-title": "Production",
+  "reports.step-data-read": "Données lues depuis la base locale",
+  "reports.step-pdf-render":
+    "Rendu PDF · gabarit conforme au modèle réglementaire",
+  "reports.step-sha256-computed": "Empreinte SHA-256 calculée",
+  "reports.step-preview-ready": "Aperçu prêt",
+  "reports.empty-hint":
+    "Choisissez un rapport puis cliquez « Générer l'aperçu » : le document s'affichera ici, prêt à imprimer ou télécharger.",
+
+  // Import
+  "import.page-title": "Import des données",
+  "import.page-subtitle":
+    "Chargement du fichier d'export et enregistrement des entités",
+  "import.wizard-title": "Assistant d'import",
+  "import.wizard-lead":
+    "Sélectionnez le fichier d'export (.xls ou .xlsx). L'import enregistre les clients, portefeuilles, instruments, émetteurs, positions et mouvements.",
+  "import.dropzone-busy": "Import en cours…",
+  "import.dropzone-drop-here": "Déposez le fichier ici",
+  "import.dropzone-choose": "Choisir un fichier d'export",
+  "import.dropzone-hint": "Glissez-déposez un fichier ou cliquez · .xls, .xlsx",
+  "import.step-preparing": "Préparation…",
+  "import.step-analyzing": "Analyse de la structure…",
+  "import.unsupported-format":
+    "Format non pris en charge : « {nom} ». Déposez un fichier .xls ou .xlsx.",
+  "import.already-imported":
+    "Ce fichier a déjà été importé avec succès (« {fichier} »). Vous pouvez annuler ou remplacer l'import précédent.",
+  "import.replace-previous": "Remplacer l'import précédent",
+  "import.cancel": "Annuler",
+  "import.confirm-replace-warning":
+    "Confirmer le remplacement ? Les données de l'import précédent seront définitivement supprimées puis recréées à partir de ce fichier. Cette action est irréversible.",
+  "import.confirm-replace-yes": "Oui, remplacer définitivement",
+  "import.go-back": "Revenir",
+  "import.error-failed":
+    "L'import du fichier d'export a échoué. Vérifiez le fichier puis recommencez.",
+  "import.retry-label": "Recommencer",
+  "import.success-message":
+    "Import réussi en {s} s. Les entités ci-dessous ont été enregistrées dans la base locale.",
+  "import.view-dashboards": "Voir les tableaux de bord",
+  "import.generate-report": "Générer un rapport",
+  "import.new-import": "Nouvel import",
+  "import.recap-title": "Récapitulatif de l'import",
+  "import.tile-operations": "Opérations brutes",
+  "import.tile-clients": "Clients",
+  "import.tile-clients-sub": "{pp} pers. physiques · {pm} pers. morales",
+  "import.tile-portfolios": "Portefeuilles",
+  "import.tile-issuers": "Émetteurs",
+  "import.tile-instruments": "Instruments",
+  "import.tile-movements": "Mouvements de titres",
+  "import.tile-positions": "Positions",
+  "import.tile-new-clients": "Nouveaux clients",
+  "import.tile-new-clients-since": "depuis le dernier import",
+  "import.tile-new-clients-none": "aucun",
+  "import.tile-total-amount": "Montant brut total",
+  "import.new-clients-detected": "{n} nouveau(x) client(s) détecté(s)",
+  "import.warnings-count": "{n} avertissement(s)",
+  "import.imported-clients": "Clients importés",
+  "import.history-title": "Historique des imports",
+  "import.loading": "Chargement…",
+  "import.server-unreachable": "Serveur de données momentanément injoignable.",
+  "import.retry": "Réessayer",
+  "import.history-empty": "Aucun import enregistré pour l'instant.",
+  "import.operations-count": "{n} op.",
+  "import.duration-seconds": "{s} s",
+  "import.status-success": "Réussi",
+  "import.status-failed": "Échoué",
+  "import.status-cancelled": "Annulé",
+  "import.status-running": "En cours",
+
+  // Étape de correspondance (mapping) + champs Manar
+  "mapping.field-manar_op_id": "Identifiant d'opération",
+  "mapping.field-donneur_ordre": "Client (donneur d'ordre)",
+  "mapping.field-isin": "Code ISIN",
+  "mapping.field-emetteur_code": "Code émetteur",
+  "mapping.field-poste_code": "Poste",
+  "mapping.field-libelle_instrument": "Libellé de l'instrument",
+  "mapping.field-statut": "Statut",
+  "mapping.field-quantite": "Quantité",
+  "mapping.field-prix_xaf": "Prix unitaire",
+  "mapping.field-valeur_nominale_xaf": "Valeur nominale",
+  "mapping.field-montant_brut_xaf": "Montant brut",
+  "mapping.field-courus_xaf": "Intérêts courus",
+  "mapping.field-taux_interet": "Taux d'intérêt",
+  "mapping.field-date_operation": "Date d'opération",
+  "mapping.field-date_valeur": "Date de valeur",
+  "mapping.field-date_saisie": "Date de saisie",
+  "mapping.field-date_validation": "Date de validation",
+  "mapping.field-operateur_saisie": "Opérateur saisie",
+  "mapping.field-operateur_validation": "Opérateur validation",
+  "mapping.unrecognized-structure":
+    "La structure de ce fichier n'est pas reconnue. Reliez chaque champ attendu à la colonne correspondante du fichier, puis lancez l'import.",
+  "mapping.error-not-mapped": "À relier à une colonne.",
+  "mapping.error-empty-column": "La colonne choisie semble vide.",
+  "mapping.option-unmapped": "— Non mappé —",
+  "mapping.option-column": "Col {n} · {titre}",
+  "mapping.column-untitled": "(sans titre)",
+  "mapping.preview": "Aperçu : {valeurs}",
+  "mapping.remember":
+    "Mémoriser cette correspondance pour ce format de fichier",
+  "mapping.confirm": "Importer avec cette correspondance",
+  "mapping.cancel": "Annuler",
+
+  // Paramètres
+  "settings.title": "Paramètres de la société de bourse",
+  "settings.subtitle":
+    "Identité, agrément et mentions légales repris dans les en-têtes et pieds de page de tous les rapports",
+  "settings.load-error":
+    "Impossible de charger la configuration. Vérifiez que le serveur de données local est démarré, puis réessayez.",
+  "settings.loading": "Chargement de la configuration en cours…",
+  "settings.section-identite": "Identité",
+  "settings.section-identifiants": "Identifiants légaux",
+  "settings.section-adresse": "Adresse",
+  "settings.section-contacts": "Contacts",
+  "settings.section-periode": "Période d'effet",
+  "settings.field-raison-sociale": "Raison sociale",
+  "settings.field-code": "Code",
+  "settings.field-forme-juridique": "Forme juridique",
+  "settings.field-capital-social": "Capital social",
+  "settings.field-devise-capital": "Devise du capital",
+  "settings.field-agrement-cosumaf": "Agrément COSUMAF",
+  "settings.field-date-agrement": "Date d'agrément",
+  "settings.field-rccm": "RCCM",
+  "settings.field-niu": "NIU",
+  "settings.field-code-membre-bvmac": "Code membre BVMAC",
+  "settings.field-code-dcr": "Code DCR",
+  "settings.field-bp": "Boîte postale",
+  "settings.field-rue": "Rue",
+  "settings.field-ville": "Ville",
+  "settings.field-pays": "Pays",
+  "settings.field-telephone-principal": "Téléphone principal",
+  "settings.field-telephone-secondaire": "Téléphone secondaire",
+  "settings.field-email-contact": "Email de contact",
+  "settings.field-site-web": "Site web",
+  "settings.field-date-debut": "Début d'effet",
+  "settings.field-date-fin": "Fin d'effet (vide = courant)",
+  "settings.mentions-releve": "Relevés et attestations",
+  "settings.mentions-declaration": "Déclarations réglementaires",
+  "settings.mentions-facture": "Factures",
+  "settings.error-required": "Ce champ est obligatoire.",
+  "settings.error-email": "Adresse email invalide (ex. contact@societe.cm).",
+  "settings.error-url": "URL invalide (commencez par http:// ou https://).",
+  "settings.notice-validation":
+    "Certains champs obligatoires sont manquants ou invalides. Corrigez-les avant d'enregistrer.",
+  "settings.logo-title": "Logo",
+  "settings.logo-alt": "Aperçu du logo",
+  "settings.logo-empty": "Aucun logo",
+  "settings.logo-input": "Image (PNG, JPEG ou WebP · 5 Mo max)",
+  "settings.mentions-title": "Mentions légales (modèles)",
+  "settings.mentions-hint-intro":
+    "Utilisez des jetons entre accolades, par exemple",
+  "settings.mentions-hint-outro":
+    "Un segment dont tous les jetons sont vides est automatiquement masqué.",
+  "settings.preview-footer": "Aperçu en pied de page",
+  "settings.preview-empty": "Aucune ligne (jetons vides).",
+  "settings.save": "Enregistrer la configuration",
+  "settings.saving": "Enregistrement…",
+  "settings.dirty": "Modifications non enregistrées",
+  "settings.saved":
+    "Configuration enregistrée. Les prochains rapports l'utiliseront.",
+
+  // Licence
+  "license.required": "Licence requise",
+  "license.none-found": "Aucune licence valide n'a été trouvée.",
+  "license.instructions":
+    "Pour utiliser l'application, installez votre fichier de licence fourni par MAEBA Consulting.",
+  "license.invalid": "Licence non valide",
+  "license.detected": "Licence détectée : {sdb}",
+  "license.expires": " · expiration {date}",
+  "license.checking": "Vérification…",
+  "license.verifying": "Vérification de la licence…",
+  "license.install": "Installer une licence",
+
+  // États génériques (chargement, erreur)
+  "states.loading": "Chargement en cours…",
+  "states.retry": "Réessayer",
+  "states.technical-detail": "Détail technique",
+
+  // Bannière de provenance
+  "provenance.source": "Source",
+  "provenance.imported-on": "importé le {date}",
 };
 
 /** Type structurel du dictionnaire (toutes les clés, valeurs `string`). */

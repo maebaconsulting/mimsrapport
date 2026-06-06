@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import { getPocketBase } from "../lib/pocketbase";
 import { withRetry } from "../lib/retry";
 import { LoadingState, ErrorState } from "../ui/states";
+import { useT } from "../i18n";
 
 const RE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -45,6 +46,7 @@ export function ClientContactPanel({
   onClose: () => void;
   onSaved?: () => void;
 }) {
+  const t = useT();
   const [state, setState] = useState<State>({ kind: "chargement" });
   const [recordId, setRecordId] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(EMPTY);
@@ -145,7 +147,7 @@ export function ClientContactPanel({
   async function enregistrer() {
     const email = form.email.trim();
     if (email && !RE_EMAIL.test(email)) {
-      setEmailErr("Adresse email invalide.");
+      setEmailErr(t("contact.email-invalide"));
       document.getElementById("contact-email")?.focus();
       return;
     }
@@ -179,7 +181,7 @@ export function ClientContactPanel({
       className="contact-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label={`Fiche de contact · ${clientName}`}
+      aria-label={t("contact.titre-aria", { nom: clientName })}
       ref={overlayRef}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -188,21 +190,21 @@ export function ClientContactPanel({
       <div className="contact-modal">
         <div className="contact-modal__head">
           <div>
-            <span className="small-caps">Fiche de contact</span>
+            <span className="small-caps">{t("contact.fiche-de-contact")}</span>
             <p className="contact-modal__title">{clientName}</p>
           </div>
           <button className="btn" onClick={onClose}>
-            Fermer
+            {t("contact.fermer")}
           </button>
         </div>
 
         <div className="contact-modal__body">
           {state.kind === "chargement" && (
-            <LoadingState variant="card" label="Chargement de la fiche…" />
+            <LoadingState variant="card" label={t("contact.chargement")} />
           )}
           {state.kind === "erreur" && (
             <ErrorState
-              message="Impossible de charger la fiche de contact."
+              message={t("contact.erreur-chargement")}
               detail={state.message}
               onRetry={() => void charger()}
             />
@@ -210,7 +212,7 @@ export function ClientContactPanel({
           {state.kind === "pret" && (
             <div className="contact-fields">
               <label className="report-field" htmlFor="contact-email">
-                <span className="small-caps">Email</span>
+                <span className="small-caps">{t("contact.email")}</span>
                 <input
                   id="contact-email"
                   type="email"
@@ -224,7 +226,7 @@ export function ClientContactPanel({
                 )}
               </label>
               <label className="report-field" htmlFor="contact-mobile">
-                <span className="small-caps">Mobile</span>
+                <span className="small-caps">{t("contact.mobile")}</span>
                 <input
                   id="contact-mobile"
                   type="tel"
@@ -233,7 +235,7 @@ export function ClientContactPanel({
                 />
               </label>
               <label className="report-field" htmlFor="contact-telephone">
-                <span className="small-caps">Téléphone</span>
+                <span className="small-caps">{t("contact.telephone")}</span>
                 <input
                   id="contact-telephone"
                   type="tel"
@@ -242,7 +244,7 @@ export function ClientContactPanel({
                 />
               </label>
               <label className="report-field" htmlFor="contact-whatsapp">
-                <span className="small-caps">WhatsApp</span>
+                <span className="small-caps">{t("contact.whatsapp")}</span>
                 <input
                   id="contact-whatsapp"
                   type="tel"
@@ -251,7 +253,7 @@ export function ClientContactPanel({
                 />
               </label>
               <label className="report-field contact-fields--wide" htmlFor="contact-adresse">
-                <span className="small-caps">Adresse</span>
+                <span className="small-caps">{t("contact.adresse")}</span>
                 <textarea
                   id="contact-adresse"
                   rows={2}
@@ -260,7 +262,7 @@ export function ClientContactPanel({
                 />
               </label>
               <label className="report-field contact-fields--wide" htmlFor="contact-notes">
-                <span className="small-caps">Notes</span>
+                <span className="small-caps">{t("contact.notes")}</span>
                 <textarea
                   id="contact-notes"
                   rows={3}
@@ -279,19 +281,19 @@ export function ClientContactPanel({
               onClick={enregistrer}
               disabled={saving}
             >
-              {saving ? "Enregistrement…" : "Enregistrer"}
+              {saving ? t("contact.enregistrement") : t("contact.enregistrer")}
             </button>
             <div role="status" aria-live="polite">
               {saveNotice === "ok" && (
                 <span className="contact-notice contact-notice--ok">
-                  Coordonnées enregistrées.
+                  {t("contact.enregistre-ok")}
                 </span>
               )}
             </div>
             <div role="alert">
               {saveNotice === "erreur" && (
                 <span className="contact-notice contact-notice--err">
-                  Échec de l'enregistrement : {saveErrMsg}
+                  {t("contact.enregistre-erreur", { msg: saveErrMsg })}
                 </span>
               )}
             </div>

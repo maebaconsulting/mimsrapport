@@ -7,12 +7,14 @@ import { useState } from "react";
 import { ClientsTable } from "./ClientsTable";
 import { ClientContactPanel } from "./ClientContactPanel";
 import { ProvenanceBanner } from "../ui/ProvenanceBanner";
+import { useT } from "../i18n";
 
 export function ClientsView({
   onGenerateReport,
 }: {
   onGenerateReport?: (clientId: string) => void;
 }) {
+  const t = useT();
   const [fiche, setFiche] = useState<{ id: string; nom: string } | null>(null);
   // Incrémenté après enregistrement d'un contact pour rafraîchir l'indicateur.
   const [reloadKey, setReloadKey] = useState(0);
@@ -20,11 +22,8 @@ export function ClientsView({
   return (
     <>
       <header className="app-header">
-        <h1 className="app-header__title">Clients</h1>
-        <p className="app-header__subtitle">
-          Données consolidées issues du dernier import · comptes, positions et
-          encours par client
-        </p>
+        <h1 className="app-header__title">{t("clients.titre")}</h1>
+        <p className="app-header__subtitle">{t("clients.sous-titre")}</p>
       </header>
 
       <section className="app-content">

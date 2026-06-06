@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getPocketBase } from "../lib/pocketbase";
 import { withRetry } from "../lib/retry";
+import { useT, useLocale, type TFunc, type TKey } from "../i18n";
 import "./import.css";
 
 interface ImportRec {
@@ -24,10 +25,10 @@ type State =
   | { kind: "pret"; rows: ImportRec[] }
   | { kind: "erreur"; message: string };
 
-function fmtDateTime(iso: string): string {
+function fmtDateTime(iso: string, locale: string): string {
   if (!iso) return "-";
   try {
-    return new Date(iso).toLocaleString("fr-FR", {
+    return new Date(iso).toLocaleString(locale, {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -39,25 +40,27 @@ function fmtDateTime(iso: string): string {
   }
 }
 
-function fmtMontant(n: number): string {
+function fmtMontant(n: number, locale: string): string {
   if (!n) return "-";
   if (n >= 1e9) return `${(n / 1e9).toFixed(1).replace(".", ",")} Md`;
   if (n >= 1e6) return `${(n / 1e6).toFixed(0)} M`;
-  return n.toLocaleString("fr-FR");
+  return n.toLocaleString(locale);
 }
 
-function statutBadge(statut: ImportRec["statut"]) {
-  const map: Record<ImportRec["statut"], { cls: string; texte: string }> = {
-    REUSSI: { cls: "histo-pill--ok", texte: "Réussi" },
-    ECHOUE: { cls: "histo-pill--echec", texte: "Échoué" },
-    ANNULE: { cls: "histo-pill--neutre", texte: "Annulé" },
-    EN_COURS: { cls: "histo-pill--cours", texte: "En cours" },
+function statutBadge(statut: ImportRec["statut"], t: TFunc) {
+  const map: Record<ImportRec["statut"], { cls: string; cle: TKey }> = {
+    REUSSI: { cls: "histo-pill--ok", cle: "import.status-success" },
+    ECHOUE: { cls: "histo-pill--echec", cle: "import.status-failed" },
+    ANNULE: { cls: "histo-pill--neutre", cle: "import.status-cancelled" },
+    EN_COURS: { cls: "histo-pill--cours", cle: "import.status-running" },
   };
-  const { cls, texte } = map[statut] ?? map.EN_COURS;
-  return <span className={`histo-pill ${cls}`}>{texte}</span>;
+  const { cls, cle } = map[statut] ?? map.EN_COURS;
+  return <span className={`histo-pill ${cls}`}>{t(cle)}</span>;
 }
 
 export function ImportHistory({ reloadKey = 0 }: { reloadKey?: number }) {
+  const t = useT();
+  const locale = useLocale();
   const [state, setState] = useState<State>({ kind: "chargement" });
 
   const charger = useCallback(async () => {
@@ -80,29 +83,27 @@ export function ImportHistory({ reloadKey = 0 }: { reloadKey?: number }) {
   return (
     <section className="import-history">
       <div className="import-history__head">
-        <span className="small-caps">Historique des imports</span>
+        <span className="small-caps">{t("import.history-title")}</span>
         {state.kind === "pret" && (
           <span className="import-history__count">{state.rows.length}</span>
         )}
       </div>
 
       {state.kind === "chargement" && (
-        <p className="import-history__empty">Chargement…</p>
+        <p className="import-history__empty">{t("import.loading")}</p>
       )}
 
       {state.kind === "erreur" && (
         <p className="import-history__empty">
-          Serveur de données momentanément injoignable.{" "}
+          {t("import.server-unreachable")}{" "}
           <button className="import-history__retry" onClick={() => void charger()}>
-            Réessayer
+            {t("import.retry")}
           </button>
         </p>
       )}
 
       {state.kind === "pret" && state.rows.length === 0 && (
-        <p className="import-history__empty">
-          Aucun import enregistré pour l'instant.
-        </p>
+        <p className="import-history__empty">{t("import.history-empty")}</p>
       )}
 
       {state.kind === "pret" && state.rows.length > 0 && (
@@ -113,22 +114,30 @@ export function ImportHistory({ reloadKey = 0 }: { reloadKey?: number }) {
                 <span className="import-history__file" title={r.file_name}>
                   {r.file_name}
                 </span>
-                {statutBadge(r.statut)}
+                {statutBadge(r.statut, t)}
               </div>
               <div className="import-history__meta">
-                <span>{fmtDateTime(r.completed_at || r.created)}</span>
+                <span>{fmtDateTime(r.completed_at || r.created, locale)}</span>
                 <span aria-hidden="true">·</span>
-                <span>{(r.nb_operations || 0).toLocaleString("fr-FR")} op.</span>
+                <span>
+                  {t("import.operations-count", {
+                    n: (r.nb_operations || 0).toLocaleString(locale),
+                  })}
+                </span>
                 {r.montant_total_xaf > 0 && (
                   <>
                     <span aria-hidden="true">·</span>
-                    <span>{fmtMontant(r.montant_total_xaf)} XAF</span>
+                    <span>{fmtMontant(r.montant_total_xaf, locale)} XAF</span>
                   </>
                 )}
                 {r.duration_ms > 0 && (
                   <>
                     <span aria-hidden="true">·</span>
-                    <span>{(r.duration_ms / 1000).toFixed(1)} s</span>
+                    <span>
+                      {t("import.duration-seconds", {
+                        s: (r.duration_ms / 1000).toFixed(1),
+                      })}
+                    </span>
                   </>
                 )}
               </div>

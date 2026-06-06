@@ -157,7 +157,7 @@ function App() {
     return (
       <div className="license-gate">
         <div className="license-card">
-          <p className="license-card__text">Vérification de la licence…</p>
+          <p className="license-card__text">{t("license.verifying")}</p>
         </div>
       </div>
     );
@@ -246,9 +246,9 @@ function App() {
         {vue === "import" && (
           <>
             <header className="app-header">
-              <h1 className="app-header__title">Import des données</h1>
+              <h1 className="app-header__title">{t("import.page-title")}</h1>
               <p className="app-header__subtitle">
-                Chargement du fichier d'export et enregistrement des entités
+                {t("import.page-subtitle")}
               </p>
             </header>
             <section className="app-content">

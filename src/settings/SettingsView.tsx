@@ -14,6 +14,7 @@ import {
   type MentionsFamily,
 } from "../lib/parametres-sdb";
 import { LoadingState, ErrorState } from "../ui/states";
+import { useT, type TKey } from "../i18n";
 import { setUnsavedGuard } from "../lib/unsaved-guard";
 import "./settings.css";
 
@@ -21,7 +22,8 @@ type FieldKind = "text" | "number" | "date";
 
 interface FieldDef {
   key: keyof SdbConfig;
-  label: string;
+  /** Clé i18n du libellé du champ (préfixe `settings.field-`). */
+  labelKey: TKey;
   kind?: FieldKind;
   required?: boolean;
 }
@@ -38,76 +40,77 @@ const REQUIRED_FIELDS: (keyof SdbConfig)[] = [
 const RE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RE_URL = /^https?:\/\/.+/i;
 
-type FieldErrors = Partial<Record<keyof SdbConfig, string>>;
+/** Carte champ → clé i18n du message d'erreur (vide si tout est bon). */
+type FieldErrors = Partial<Record<keyof SdbConfig, TKey>>;
 
-/** Valide le formulaire. Renvoie une carte champ → message (vide si tout est bon). */
+/** Valide le formulaire. Renvoie une carte champ → clé i18n (vide si tout est bon). */
 function validateForm(form: Record<keyof SdbConfig, string>): FieldErrors {
   const errs: FieldErrors = {};
   for (const k of REQUIRED_FIELDS) {
-    if (!form[k]?.trim()) errs[k] = "Ce champ est obligatoire.";
+    if (!form[k]?.trim()) errs[k] = "settings.error-required";
   }
   const email = form.email_contact?.trim();
   if (email && !RE_EMAIL.test(email)) {
-    errs.email_contact = "Adresse email invalide (ex. contact@societe.cm).";
+    errs.email_contact = "settings.error-email";
   }
   const url = form.site_web?.trim();
   if (url && !RE_URL.test(url)) {
-    errs.site_web = "URL invalide (commencez par http:// ou https://).";
+    errs.site_web = "settings.error-url";
   }
   return errs;
 }
 
 interface Section {
-  titre: string;
+  titreKey: TKey;
   champs: FieldDef[];
 }
 
 /** Sections de champs courts, rendues en panneaux avec grille de champs. */
 const FIELD_SECTIONS: Section[] = [
   {
-    titre: "Identité",
+    titreKey: "settings.section-identite",
     champs: [
-      { key: "raison_sociale", label: "Raison sociale", required: true },
-      { key: "code", label: "Code" },
-      { key: "forme_juridique", label: "Forme juridique" },
-      { key: "capital_social", label: "Capital social", kind: "number" },
-      { key: "devise_capital", label: "Devise du capital" },
+      { key: "raison_sociale", labelKey: "settings.field-raison-sociale", required: true },
+      { key: "code", labelKey: "settings.field-code" },
+      { key: "forme_juridique", labelKey: "settings.field-forme-juridique" },
+      { key: "capital_social", labelKey: "settings.field-capital-social", kind: "number" },
+      { key: "devise_capital", labelKey: "settings.field-devise-capital" },
     ],
   },
   {
-    titre: "Identifiants légaux",
+    titreKey: "settings.section-identifiants",
     champs: [
-      { key: "agrement_cosumaf", label: "Agrément COSUMAF", required: true },
-      { key: "date_agrement", label: "Date d'agrément", kind: "date" },
-      { key: "rccm", label: "RCCM", required: true },
-      { key: "niu", label: "NIU", required: true },
-      { key: "code_member_bvmac", label: "Code membre BVMAC" },
-      { key: "code_dcr", label: "Code DCR" },
+      { key: "agrement_cosumaf", labelKey: "settings.field-agrement-cosumaf", required: true },
+      { key: "date_agrement", labelKey: "settings.field-date-agrement", kind: "date" },
+      { key: "rccm", labelKey: "settings.field-rccm", required: true },
+      { key: "niu", labelKey: "settings.field-niu", required: true },
+      { key: "code_member_bvmac", labelKey: "settings.field-code-membre-bvmac" },
+      { key: "code_dcr", labelKey: "settings.field-code-dcr" },
     ],
   },
   {
-    titre: "Adresse",
+    titreKey: "settings.section-adresse",
     champs: [
-      { key: "bp", label: "Boîte postale" },
-      { key: "adresse_rue", label: "Rue" },
-      { key: "ville", label: "Ville" },
-      { key: "pays", label: "Pays" },
+      { key: "bp", labelKey: "settings.field-bp" },
+      { key: "adresse_rue", labelKey: "settings.field-rue" },
+      { key: "ville", labelKey: "settings.field-ville" },
+      { key: "pays", labelKey: "settings.field-pays" },
     ],
   },
   {
-    titre: "Contacts",
+    titreKey: "settings.section-contacts",
     champs: [
-      { key: "telephone_principal", label: "Téléphone principal" },
-      { key: "telephone_secondaire", label: "Téléphone secondaire" },
-      { key: "email_contact", label: "Email de contact", required: true },
-      { key: "site_web", label: "Site web" },
+      { key: "telephone_principal", labelKey: "settings.field-telephone-principal" },
+      { key: "telephone_secondaire", labelKey: "settings.field-telephone-secondaire" },
+      { key: "email_contact", labelKey: "settings.field-email-contact", required: true },
+      { key: "site_web", labelKey: "settings.field-site-web" },
     ],
   },
   {
-    titre: "Période d'effet",
+    titreKey: "settings.section-periode",
     champs: [
-      { key: "date_effet_debut", label: "Début d'effet", kind: "date" },
-      { key: "date_effet_fin", label: "Fin d'effet (vide = courant)", kind: "date" },
+      { key: "date_effet_debut", labelKey: "settings.field-date-debut", kind: "date" },
+      { key: "date_effet_fin", labelKey: "settings.field-date-fin", kind: "date" },
     ],
   },
 ];
@@ -115,12 +118,12 @@ const FIELD_SECTIONS: Section[] = [
 /** Modèles de mentions (textarea + aperçu interpolé), par famille de document. */
 const MENTIONS_FIELDS: Array<{
   key: keyof SdbConfig;
-  label: string;
+  labelKey: TKey;
   family: MentionsFamily;
 }> = [
-  { key: "mentions_releve", label: "Relevés et attestations", family: "releve" },
-  { key: "mentions_declaration", label: "Déclarations réglementaires", family: "declaration" },
-  { key: "mentions_facture", label: "Factures", family: "facture" },
+  { key: "mentions_releve", labelKey: "settings.mentions-releve", family: "releve" },
+  { key: "mentions_declaration", labelKey: "settings.mentions-declaration", family: "declaration" },
+  { key: "mentions_facture", labelKey: "settings.mentions-facture", family: "facture" },
 ];
 
 type FormState = Record<keyof SdbConfig, string>;
@@ -151,6 +154,7 @@ type Notice =
   | { kind: "erreur"; message: string };
 
 export function SettingsView() {
+  const t = useT();
   const [form, setForm] = useState<FormState>(configToForm(DEFAULT_SDB_CONFIG));
   const [recordId, setRecordId] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -262,8 +266,7 @@ export function SettingsView() {
       setErrors(errs);
       setNotice({
         kind: "erreur",
-        message:
-          "Certains champs obligatoires sont manquants ou invalides. Corrigez-les avant d'enregistrer.",
+        message: t("settings.notice-validation"),
       });
       // Place le focus sur le premier champ en erreur.
       const premier = Object.keys(errs)[0];
@@ -299,12 +302,13 @@ export function SettingsView() {
 
   function renderField(champ: FieldDef) {
     const id = `field-${String(champ.key)}`;
-    const erreur = errors[champ.key];
+    const erreurKey = errors[champ.key];
+    const erreur = erreurKey ? t(erreurKey) : undefined;
     const errId = erreur ? `${id}-err` : undefined;
     return (
       <label className="report-field" key={String(champ.key)} htmlFor={id}>
         <span className="small-caps">
-          {champ.label}
+          {t(champ.labelKey)}
           {champ.required && (
             <span className="report-field__required" aria-hidden="true">
               {" "}
@@ -341,32 +345,29 @@ export function SettingsView() {
   return (
     <>
       <header className="app-header">
-        <h1 className="app-header__title">Paramètres de la société de bourse</h1>
-        <p className="app-header__subtitle">
-          Identité, agrément et mentions légales repris dans les en-têtes et pieds
-          de page de tous les rapports
-        </p>
+        <h1 className="app-header__title">{t("settings.title")}</h1>
+        <p className="app-header__subtitle">{t("settings.subtitle")}</p>
       </header>
 
       <section className="app-content">
         {loadError ? (
           <ErrorState
-            message="Impossible de charger la configuration. Vérifiez que le serveur de données local est démarré, puis réessayez."
+            message={t("settings.load-error")}
             detail={loadError}
             onRetry={() => setReloadKey((k) => k + 1)}
           />
         ) : notice.kind === "chargement" ? (
           <LoadingState
             variant="card"
-            label="Chargement de la configuration en cours…"
+            label={t("settings.loading")}
           />
         ) : (
           <div className="settings-view">
             <div className="settings-grid">
               {FIELD_SECTIONS.map((section) => (
-                <div className="settings-panel" key={section.titre}>
+                <div className="settings-panel" key={section.titreKey}>
                   <div className="settings-panel__head">
-                    <span className="small-caps">{section.titre}</span>
+                    <span className="small-caps">{t(section.titreKey)}</span>
                   </div>
                   <div className="settings-fields">
                     {section.champs.map(renderField)}
@@ -376,21 +377,21 @@ export function SettingsView() {
 
               <div className="settings-panel">
                 <div className="settings-panel__head">
-                  <span className="small-caps">Logo</span>
+                  <span className="small-caps">{t("settings.logo-title")}</span>
                 </div>
                 <div className="settings-logo">
                   <div className="settings-logo__preview">
                     {logoApercu ? (
-                      <img src={logoApercu} alt="Aperçu du logo" />
+                      <img src={logoApercu} alt={t("settings.logo-alt")} />
                     ) : (
                       <span className="settings-logo__placeholder">
-                        Aucun logo
+                        {t("settings.logo-empty")}
                       </span>
                     )}
                   </div>
                   <label className="report-field settings-logo__input">
                     <span className="small-caps">
-                      Image (PNG, JPEG ou WebP · 5 Mo max)
+                      {t("settings.logo-input")}
                     </span>
                     <input
                       type="file"
@@ -403,20 +404,20 @@ export function SettingsView() {
 
               <div className="settings-panel settings-panel--wide">
                 <div className="settings-panel__head">
-                  <span className="small-caps">Mentions légales (modèles)</span>
+                  <span className="small-caps">{t("settings.mentions-title")}</span>
                 </div>
                 <p className="settings-hint">
-                  Utilisez des jetons entre accolades, par exemple{" "}
+                  {t("settings.mentions-hint-intro")}{" "}
                   <code>{"{raison_sociale}"}</code>, <code>{"{capital_social}"}</code>,{" "}
                   <code>{"{rccm}"}</code>, <code>{"{niu}"}</code>,{" "}
-                  <code>{"{agrement_cosumaf}"}</code>, <code>{"{ville}"}</code>. Un
-                  segment dont tous les jetons sont vides est automatiquement masqué.
+                  <code>{"{agrement_cosumaf}"}</code>, <code>{"{ville}"}</code>.{" "}
+                  {t("settings.mentions-hint-outro")}
                 </p>
                 <div className="settings-mentions">
                   {MENTIONS_FIELDS.map((m) => (
                     <div className="settings-mention" key={String(m.key)}>
                       <label className="report-field">
-                        <span className="small-caps">{m.label}</span>
+                        <span className="small-caps">{t(m.labelKey)}</span>
                         <textarea
                           rows={3}
                           value={form[m.key]}
@@ -424,7 +425,7 @@ export function SettingsView() {
                         />
                       </label>
                       <div className="settings-preview">
-                        <span className="small-caps">Aperçu en pied de page</span>
+                        <span className="small-caps">{t("settings.preview-footer")}</span>
                         {apercuMentions[m.family].length > 0 ? (
                           apercuMentions[m.family].map((ligne, i) => (
                             <p key={i} className="settings-preview__line">
@@ -433,7 +434,7 @@ export function SettingsView() {
                           ))
                         ) : (
                           <p className="settings-preview__vide">
-                            Aucune ligne (jetons vides).
+                            {t("settings.preview-empty")}
                           </p>
                         )}
                       </div>
@@ -450,18 +451,18 @@ export function SettingsView() {
                 disabled={notice.kind === "enregistrement"}
               >
                 {notice.kind === "enregistrement"
-                  ? "Enregistrement…"
-                  : "Enregistrer la configuration"}
+                  ? t("settings.saving")
+                  : t("settings.save")}
               </button>
               {dirty && notice.kind !== "enregistrement" && (
                 <span className="settings-actions__dirty">
-                  Modifications non enregistrées
+                  {t("settings.dirty")}
                 </span>
               )}
               <div role="status" aria-live="polite">
                 {notice.kind === "ok" && (
                   <span className="settings-actions__notice settings-actions__notice--ok">
-                    Configuration enregistrée. Les prochains rapports l'utiliseront.
+                    {t("settings.saved")}
                   </span>
                 )}
               </div>

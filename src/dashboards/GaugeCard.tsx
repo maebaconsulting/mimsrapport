@@ -5,6 +5,7 @@
 // centrale. Couleurs depuis les tokens --mw-*. Accessible (role="img"+aria-label).
 
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
+import { useT, type TKey } from "../i18n";
 
 type Zone = "success" | "warning" | "danger";
 
@@ -26,10 +27,10 @@ export interface GaugeCardProps {
   tone?: "white" | "sage" | "yellow" | "lilac" | "peach";
 }
 
-const LIBELLE_ZONE: Record<Zone, string> = {
-  success: "Bon",
-  warning: "À surveiller",
-  danger: "Alerte",
+const ZONE_KEY: Record<Zone, TKey> = {
+  success: "dashboards.gauge-zone-bon",
+  warning: "dashboards.gauge-zone-a-surveiller",
+  danger: "dashboards.gauge-zone-alerte",
 };
 
 function zoneDe(
@@ -59,6 +60,8 @@ export function GaugeCard({
   formatValeur,
   tone = "white",
 }: GaugeCardProps) {
+  const t = useT();
+  const libelleZone = (z: Zone) => t(ZONE_KEY[z]);
   const span = max - min || 1;
   const frac = Math.max(0, Math.min(1, (valeur - min) / span));
   const zone = zoneDe(valeur, seuils, sensInverse);
@@ -100,9 +103,9 @@ export function GaugeCard({
       : null;
 
   const aria =
-    `${label} : ${fmt(valeur)}` +
+    `${label} : ${fmt(valeur)}` +
     (reference ? `, ${reference.libelle} ${reference.valeur}${unite ? " " + unite : ""}` : "") +
-    `, zone ${LIBELLE_ZONE[zone]}`;
+    `, ${t("dashboards.gauge-aria-zone", { zone: libelleZone(zone) })}`;
 
   return (
     <div className={`gauge-card kpi-card kpi-card--${tone}`} role="img" aria-label={aria}>
@@ -167,7 +170,7 @@ export function GaugeCard({
         <span className="gauge-card__value">{fmt(valeur)}</span>
       </div>
       <span className={`gauge-card__state gauge-card__state--${zone}`}>
-        {LIBELLE_ZONE[zone]}
+        {libelleZone(zone)}
         {reference ? ` · ${reference.libelle} ${reference.valeur}${unite ? " " + unite : ""}` : ""}
       </span>
     </div>

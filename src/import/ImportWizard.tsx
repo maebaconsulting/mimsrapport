@@ -11,6 +11,7 @@ import { MappingStep } from "./MappingStep";
 import { ClientsTable } from "../clients/ClientsTable";
 import { ImportHistory } from "./ImportHistory";
 import { ErrorState } from "../ui/states";
+import { useT, useLocale, type TFunc } from "../i18n";
 import "./import.css";
 
 type Phase =
@@ -35,33 +36,37 @@ type Phase =
   | { kind: "reussi"; summary: ImportSummary }
   | { kind: "erreur"; message: string };
 
-function formatXAF(n: number): string {
-  return n.toLocaleString("fr-FR") + " XAF";
+function formatXAF(n: number, locale: string): string {
+  return n.toLocaleString(locale) + " XAF";
 }
 
 /** Tuiles du récapitulatif d'import (grille horizontale). */
-function statTiles(s: ImportSummary): Array<{ label: string; value: string; sub?: string }> {
+function statTiles(
+  s: ImportSummary,
+  t: TFunc,
+  locale: string,
+): Array<{ label: string; value: string; sub?: string }> {
   const c = s.counts;
   return [
-    { label: "Opérations brutes", value: c.operations.toLocaleString("fr-FR") },
+    { label: t("import.tile-operations"), value: c.operations.toLocaleString(locale) },
     {
-      label: "Clients",
-      value: c.clients.toLocaleString("fr-FR"),
-      sub: `${c.clientsPP} pers. physiques · ${c.clientsPM} pers. morales`,
+      label: t("import.tile-clients"),
+      value: c.clients.toLocaleString(locale),
+      sub: t("import.tile-clients-sub", { pp: c.clientsPP, pm: c.clientsPM }),
     },
-    { label: "Portefeuilles", value: c.portefeuilles.toLocaleString("fr-FR") },
-    { label: "Émetteurs", value: c.emetteurs.toLocaleString("fr-FR") },
-    { label: "Instruments", value: c.instruments.toLocaleString("fr-FR") },
-    { label: "Mouvements de titres", value: c.mouvements.toLocaleString("fr-FR") },
-    { label: "Positions", value: c.positions.toLocaleString("fr-FR") },
+    { label: t("import.tile-portfolios"), value: c.portefeuilles.toLocaleString(locale) },
+    { label: t("import.tile-issuers"), value: c.emetteurs.toLocaleString(locale) },
+    { label: t("import.tile-instruments"), value: c.instruments.toLocaleString(locale) },
+    { label: t("import.tile-movements"), value: c.mouvements.toLocaleString(locale) },
+    { label: t("import.tile-positions"), value: c.positions.toLocaleString(locale) },
     {
-      label: "Nouveaux clients",
-      value: s.nbNewClients.toLocaleString("fr-FR"),
-      sub: s.nbNewClients > 0 ? "depuis le dernier import" : "aucun",
+      label: t("import.tile-new-clients"),
+      value: s.nbNewClients.toLocaleString(locale),
+      sub: s.nbNewClients > 0 ? t("import.tile-new-clients-since") : t("import.tile-new-clients-none"),
     },
     {
-      label: "Montant brut total",
-      value: formatXAF(Math.round(s.montantTotalXaf)),
+      label: t("import.tile-total-amount"),
+      value: formatXAF(Math.round(s.montantTotalXaf), locale),
     },
   ];
 }
@@ -74,6 +79,8 @@ export function ImportWizard({
   /** Passerelles d'enchaînement après un import réussi. */
   onNavigate?: (c: "clients" | "rapports" | "tableaux") => void;
 }) {
+  const t = useT();
+  const locale = useLocale();
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const [historyKey, setHistoryKey] = useState(0);
   // Confirmation à deux temps avant le remplacement (action irréversible).
@@ -88,7 +95,7 @@ export function ImportWizard({
     mapping?: ColumnMapping,
   ) {
     setConfirmRemplace(false);
-    setPhase({ kind: "encours", step: "Préparation…", fileName });
+    setPhase({ kind: "encours", step: t("import.step-preparing"), fileName });
     try {
       const pb = await getPocketBase();
       const result: ImportResult = await runImport(pb, {
@@ -120,7 +127,7 @@ export function ImportWizard({
   // Détermine la correspondance de colonnes avant l'import : mapping mémorisé,
   // sinon auto-détection ; si la structure est inconnue, ouvre l'étape de mapping.
   async function preparerImport(fileName: string, data: Uint8Array) {
-    setPhase({ kind: "encours", step: "Analyse de la structure…", fileName });
+    setPhase({ kind: "encours", step: t("import.step-analyzing"), fileName });
     let wb;
     try {
       wb = readManarWorkbook(data);
@@ -171,7 +178,7 @@ export function ImportWizard({
     if (!/\.xlsx?$/i.test(file.name)) {
       setPhase({
         kind: "erreur",
-        message: `Format non pris en charge : « ${file.name} ». Déposez un fichier .xls ou .xlsx.`,
+        message: t("import.unsupported-format", { nom: file.name }),
       });
       return;
     }
@@ -185,11 +192,8 @@ export function ImportWizard({
     <>
       <div className="import-top">
         <div className="card import-card">
-          <span className="small-caps">Assistant d'import</span>
-          <p className="card__lead">
-            Sélectionnez le fichier d'export (.xls ou .xlsx). L'import enregistre les clients,
-            portefeuilles, instruments, émetteurs, positions et mouvements.
-          </p>
+          <span className="small-caps">{t("import.wizard-title")}</span>
+          <p className="card__lead">{t("import.wizard-lead")}</p>
 
           {(phase.kind === "idle" || phase.kind === "encours") && (
             <button
@@ -218,13 +222,13 @@ export function ImportWizard({
               </span>
               <span className="import-dropzone__title">
                 {busy
-                  ? "Import en cours…"
+                  ? t("import.dropzone-busy")
                   : dragSurvol
-                    ? "Déposez le fichier ici"
-                    : "Choisir un fichier d'export"}
+                    ? t("import.dropzone-drop-here")
+                    : t("import.dropzone-choose")}
               </span>
               <span className="import-dropzone__hint">
-                Glissez-déposez un fichier ou cliquez · .xls, .xlsx
+                {t("import.dropzone-hint")}
               </span>
             </button>
           )}
@@ -259,18 +263,17 @@ export function ImportWizard({
           {phase.kind === "deja" && !confirmRemplace && (
             <div className="import-notice import-notice--warn" role="status">
               <p>
-                Ce fichier a déjà été importé avec succès (« {phase.existingFileName}{" "}
-                »). Vous pouvez annuler ou remplacer l'import précédent.
+                {t("import.already-imported", { fichier: phase.existingFileName })}
               </p>
               <div className="import-notice__actions">
                 <button
                   className="btn btn--danger"
                   onClick={() => setConfirmRemplace(true)}
                 >
-                  Remplacer l'import précédent
+                  {t("import.replace-previous")}
                 </button>
                 <button className="btn" onClick={() => setPhase({ kind: "idle" })}>
-                  Annuler
+                  {t("import.cancel")}
                 </button>
               </div>
             </div>
@@ -278,11 +281,7 @@ export function ImportWizard({
 
           {phase.kind === "deja" && confirmRemplace && (
             <div className="import-notice import-notice--danger" role="alert">
-              <p>
-                Confirmer le remplacement ? Les données de l'import précédent
-                seront définitivement supprimées puis recréées à partir de ce
-                fichier. Cette action est irréversible.
-              </p>
+              <p>{t("import.confirm-replace-warning")}</p>
               <div className="import-notice__actions">
                 <button
                   className="btn btn--danger"
@@ -290,13 +289,13 @@ export function ImportWizard({
                     doImport(phase.fileName, phase.data, true, phase.mapping)
                   }
                 >
-                  Oui, remplacer définitivement
+                  {t("import.confirm-replace-yes")}
                 </button>
                 <button
                   className="btn"
                   onClick={() => setConfirmRemplace(false)}
                 >
-                  Revenir
+                  {t("import.go-back")}
                 </button>
               </div>
             </div>
@@ -304,10 +303,10 @@ export function ImportWizard({
 
           {phase.kind === "erreur" && (
             <ErrorState
-              message="L'import du fichier d'export a échoué. Vérifiez le fichier puis recommencez."
+              message={t("import.error-failed")}
               detail={phase.message}
               onRetry={() => setPhase({ kind: "idle" })}
-              retryLabel="Recommencer"
+              retryLabel={t("import.retry-label")}
             />
           )}
 
@@ -318,8 +317,9 @@ export function ImportWizard({
               aria-live="polite"
             >
               <p>
-                Import réussi en {(phase.summary.durationMs / 1000).toFixed(1)} s.
-                Les entités ci-dessous ont été enregistrées dans la base locale.
+                {t("import.success-message", {
+                  s: (phase.summary.durationMs / 1000).toFixed(1),
+                })}
               </p>
               <div className="import-notice__actions" style={{ marginTop: 4 }}>
                 {onNavigate && (
@@ -328,15 +328,15 @@ export function ImportWizard({
                       className="btn btn--primary"
                       onClick={() => onNavigate("tableaux")}
                     >
-                      Voir les tableaux de bord
+                      {t("import.view-dashboards")}
                     </button>
                     <button className="btn" onClick={() => onNavigate("rapports")}>
-                      Générer un rapport
+                      {t("import.generate-report")}
                     </button>
                   </>
                 )}
                 <button className="btn" onClick={() => setPhase({ kind: "idle" })}>
-                  Nouvel import
+                  {t("import.new-import")}
                 </button>
               </div>
             </div>
@@ -348,20 +348,20 @@ export function ImportWizard({
 
       {phase.kind === "reussi" && (
         <section className="import-stats">
-          <span className="small-caps">Récapitulatif de l'import</span>
+          <span className="small-caps">{t("import.recap-title")}</span>
           <div className="stat-grid">
-            {statTiles(phase.summary).map((t) => (
-              <div key={t.label} className="stat-tile">
-                <span className="small-caps stat-tile__label">{t.label}</span>
-                <span className="stat-tile__value">{t.value}</span>
-                {t.sub && <span className="stat-tile__sub">{t.sub}</span>}
+            {statTiles(phase.summary, t, locale).map((tile) => (
+              <div key={tile.label} className="stat-tile">
+                <span className="small-caps stat-tile__label">{tile.label}</span>
+                <span className="stat-tile__value">{tile.value}</span>
+                {tile.sub && <span className="stat-tile__sub">{tile.sub}</span>}
               </div>
             ))}
           </div>
           {phase.summary.nbNewClients > 0 && (
             <details className="import-warnings">
               <summary>
-                {phase.summary.nbNewClients} nouveau(x) client(s) détecté(s)
+                {t("import.new-clients-detected", { n: phase.summary.nbNewClients })}
               </summary>
               <ul>
                 {phase.summary.newClients.slice(0, 50).map((c) => (
@@ -377,7 +377,9 @@ export function ImportWizard({
           )}
           {phase.summary.warnings.length > 0 && (
             <details className="import-warnings">
-              <summary>{phase.summary.warnings.length} avertissement(s)</summary>
+              <summary>
+                {t("import.warnings-count", { n: phase.summary.warnings.length })}
+              </summary>
               <ul>
                 {phase.summary.warnings.slice(0, 20).map((w, i) => (
                   <li key={i}>{w}</li>
@@ -390,7 +392,7 @@ export function ImportWizard({
 
       {phase.kind === "reussi" && (
         <section className="import-data">
-          <span className="small-caps">Clients importés</span>
+          <span className="small-caps">{t("import.imported-clients")}</span>
           <ClientsTable showKpis={false} />
         </section>
       )}

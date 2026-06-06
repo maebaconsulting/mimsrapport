@@ -6,12 +6,13 @@
 import { useEffect, useState } from "react";
 import { getPocketBase } from "../lib/pocketbase";
 import { loadProvenance, type Provenance } from "../lib/provenance";
+import { useT, useLocale } from "../i18n";
 import "./provenance.css";
 
-function fmtDate(iso: string): string {
+function fmtDate(iso: string, locale: string): string {
   if (!iso) return "";
   try {
-    return new Date(iso).toLocaleString("fr-FR", {
+    return new Date(iso).toLocaleString(locale, {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -24,6 +25,8 @@ function fmtDate(iso: string): string {
 }
 
 export function ProvenanceBanner({ reloadKey = 0 }: { reloadKey?: number }) {
+  const t = useT();
+  const locale = useLocale();
   const [prov, setProv] = useState<Provenance | null>(null);
 
   useEffect(() => {
@@ -61,14 +64,14 @@ export function ProvenanceBanner({ reloadKey = 0 }: { reloadKey?: number }) {
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
         <path d="M14 2v6h6" />
       </svg>
-      <span className="small-caps">Source</span>
+      <span className="small-caps">{t("provenance.source")}</span>
       <span className="provenance__file" title={prov.fileName}>
         {prov.fileName}
       </span>
       {prov.importedAt && (
         <>
           <span aria-hidden="true">·</span>
-          <span>importé le {fmtDate(prov.importedAt)}</span>
+          <span>{t("provenance.imported-on", { date: fmtDate(prov.importedAt, locale) })}</span>
         </>
       )}
     </p>

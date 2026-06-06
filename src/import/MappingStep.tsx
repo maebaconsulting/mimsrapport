@@ -5,6 +5,32 @@
 
 import { useMemo, useState } from "react";
 import { MAPPABLE_FIELDS, type ColumnMapping } from "./manar-fields";
+import { useT, type TKey } from "../i18n";
+
+// Correspondance id de champ logique → clé i18n du libellé. Les libellés FR
+// restent dans manar-fields.ts (donnée consommée par les tests) ; ici on n'expose
+// que la clé de traduction pour l'affichage.
+const FIELD_LABEL_KEY: Record<string, TKey> = {
+  manar_op_id: "mapping.field-manar_op_id",
+  donneur_ordre: "mapping.field-donneur_ordre",
+  isin: "mapping.field-isin",
+  emetteur_code: "mapping.field-emetteur_code",
+  poste_code: "mapping.field-poste_code",
+  libelle_instrument: "mapping.field-libelle_instrument",
+  statut: "mapping.field-statut",
+  quantite: "mapping.field-quantite",
+  prix_xaf: "mapping.field-prix_xaf",
+  valeur_nominale_xaf: "mapping.field-valeur_nominale_xaf",
+  montant_brut_xaf: "mapping.field-montant_brut_xaf",
+  courus_xaf: "mapping.field-courus_xaf",
+  taux_interet: "mapping.field-taux_interet",
+  date_operation: "mapping.field-date_operation",
+  date_valeur: "mapping.field-date_valeur",
+  date_saisie: "mapping.field-date_saisie",
+  date_validation: "mapping.field-date_validation",
+  operateur_saisie: "mapping.field-operateur_saisie",
+  operateur_validation: "mapping.field-operateur_validation",
+};
 
 export function MappingStep({
   headers,
@@ -19,6 +45,7 @@ export function MappingStep({
   onConfirm: (mapping: ColumnMapping, remember: boolean) => void;
   onCancel: () => void;
 }) {
+  const t = useT();
   const [mapping, setMapping] = useState<ColumnMapping>({ ...initialMapping });
   const [remember, setRemember] = useState(true);
 
@@ -34,14 +61,14 @@ export function MappingStep({
 
   // Une colonne obligatoire est invalide si non mappée ou vide sur l'échantillon.
   const errors = useMemo(() => {
-    const e: Record<string, string> = {};
+    const e: Record<string, TKey> = {};
     for (const f of MAPPABLE_FIELDS) {
       if (!f.required) continue;
       const idx = mapping[f.key];
       if (idx === null || idx === undefined) {
-        e[f.key] = "À relier à une colonne.";
+        e[f.key] = "mapping.error-not-mapped";
       } else if (apercu(idx) === "") {
-        e[f.key] = "La colonne choisie semble vide.";
+        e[f.key] = "mapping.error-empty-column";
       }
     }
     return e;
@@ -54,10 +81,7 @@ export function MappingStep({
   return (
     <div className="mapping-step">
       <div className="import-notice import-notice--warn" role="status">
-        <p>
-          La structure de ce fichier n'est pas reconnue. Reliez chaque champ
-          attendu à la colonne correspondante du fichier, puis lancez l'import.
-        </p>
+        <p>{t("mapping.unrecognized-structure")}</p>
       </div>
 
       <div className="mapping-grid">
@@ -68,7 +92,7 @@ export function MappingStep({
           return (
             <div className="mapping-row" key={f.key}>
               <label className="mapping-row__field" htmlFor={selectId}>
-                {f.label}
+                {t(FIELD_LABEL_KEY[f.key])}
                 {f.required && (
                   <span className="report-field__required" aria-hidden="true">
                     {" "}
@@ -89,18 +113,21 @@ export function MappingStep({
                   }));
                 }}
               >
-                <option value="">— Non mappé —</option>
+                <option value="">{t("mapping.option-unmapped")}</option>
                 {headers.map((h, i) => (
                   <option key={i} value={i}>
-                    {`Col ${i + 1} · ${h || "(sans titre)"}`}
+                    {t("mapping.option-column", {
+                      n: i + 1,
+                      titre: h || t("mapping.column-untitled"),
+                    })}
                   </option>
                 ))}
               </select>
               <span className="mapping-row__preview">
                 {erreur ? (
-                  <span className="report-field__error">{erreur}</span>
+                  <span className="report-field__error">{t(erreur)}</span>
                 ) : (
-                  apercu(idx) && <>Aperçu : {apercu(idx)}</>
+                  apercu(idx) && <>{t("mapping.preview", { valeurs: apercu(idx) })}</>
                 )}
               </span>
             </div>
@@ -115,7 +142,7 @@ export function MappingStep({
             checked={remember}
             onChange={(e) => setRemember(e.target.checked)}
           />
-          Mémoriser cette correspondance pour ce format de fichier
+          {t("mapping.remember")}
         </label>
         <div className="import-notice__actions">
           <button
@@ -123,10 +150,10 @@ export function MappingStep({
             disabled={!valide}
             onClick={() => onConfirm(mapping, remember)}
           >
-            Importer avec cette correspondance
+            {t("mapping.confirm")}
           </button>
           <button className="btn" onClick={onCancel}>
-            Annuler
+            {t("mapping.cancel")}
           </button>
         </div>
       </div>

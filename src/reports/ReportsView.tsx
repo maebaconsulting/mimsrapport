@@ -24,6 +24,7 @@ import {
   generateLettreRelanceDesherence,
 } from "./services/desherence";
 import { ErrorState } from "../ui/states";
+import { useT, useLocale, type TKey } from "../i18n";
 
 type ReportType =
   | "attestation"
@@ -39,19 +40,19 @@ type ReportScope = "client" | "societe";
 
 interface ReportDef {
   id: ReportType;
-  label: string;
+  labelKey: TKey;
   scope: ReportScope;
-  groupe: string;
+  groupeKey: TKey;
 }
 
 const REPORT_TYPES: ReportDef[] = [
-  { id: "attestation", label: "Attestation de portefeuille", scope: "client", groupe: "Documents client" },
-  { id: "releve", label: "Relevé de compte-titres", scope: "client", groupe: "Documents client" },
-  { id: "confirmation_ouverture", label: "Confirmation d'ouverture de compte", scope: "client", groupe: "Documents client" },
-  { id: "lettre_desherence", label: "Lettre de relance déshérence", scope: "client", groupe: "Documents client" },
-  { id: "cosumaf_transactions", label: "COSUMAF · Transactions boursières (obligation réglementaire 12)", scope: "societe", groupe: "États réglementaires (société)" },
-  { id: "cosumaf_avoirs", label: "COSUMAF · Situation des avoirs (obligation réglementaire 15)", scope: "societe", groupe: "États réglementaires (société)" },
-  { id: "etat_desherence", label: "État des clients en déshérence", scope: "societe", groupe: "États réglementaires (société)" },
+  { id: "attestation", labelKey: "reports.type-attestation", scope: "client", groupeKey: "reports.group-client-documents" },
+  { id: "releve", labelKey: "reports.type-releve", scope: "client", groupeKey: "reports.group-client-documents" },
+  { id: "confirmation_ouverture", labelKey: "reports.type-confirmation-ouverture", scope: "client", groupeKey: "reports.group-client-documents" },
+  { id: "lettre_desherence", labelKey: "reports.type-lettre-desherence", scope: "client", groupeKey: "reports.group-client-documents" },
+  { id: "cosumaf_transactions", labelKey: "reports.type-cosumaf-transactions", scope: "societe", groupeKey: "reports.group-regulatory-company" },
+  { id: "cosumaf_avoirs", labelKey: "reports.type-cosumaf-avoirs", scope: "societe", groupeKey: "reports.group-regulatory-company" },
+  { id: "etat_desherence", labelKey: "reports.type-etat-desherence", scope: "societe", groupeKey: "reports.group-regulatory-company" },
 ];
 
 function scopeOf(id: ReportType): ReportScope {
@@ -75,6 +76,7 @@ function SearchableSelect({
   onChange: (id: string) => void;
   placeholder?: string;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -157,7 +159,7 @@ function SearchableSelect({
       {open && (
         <ul className="combobox__list" role="listbox" id={listId}>
           {filtered.length === 0 ? (
-            <li className="combobox__empty">Aucun résultat</li>
+            <li className="combobox__empty">{t("reports.no-result")}</li>
           ) : (
             filtered.map((o, i) => (
               <li
@@ -228,6 +230,8 @@ export function ReportsView({
   /** Client à pré-sélectionner (passerelle « Générer un rapport » depuis Clients). */
   initialClientId?: string | null;
 } = {}) {
+  const t = useT();
+  const locale = useLocale();
   const [clients, setClients] = useState<ClientChoice[] | null>(null);
   const [clientId, setClientId] = useState<string>("");
   const [reportType, setReportType] = useState<ReportType>("attestation");
@@ -361,8 +365,8 @@ export function ReportsView({
       // Aperçu avant tout enregistrement : on n'écrit rien sur disque ici.
       if (preview) URL.revokeObjectURL(preview.url);
       const url = URL.createObjectURL(out.blob);
-      const label =
-        REPORT_TYPES.find((r) => r.id === reportType)?.label ?? "Rapport";
+      const labelKey = REPORT_TYPES.find((r) => r.id === reportType)?.labelKey;
+      const label = labelKey ? t(labelKey) : t("reports.fallback-label");
       setPreview({
         url,
         bytes: out.bytes,
@@ -371,9 +375,9 @@ export function ReportsView({
         label,
         scopeLabel:
           scope === "societe"
-            ? "État réglementaire · société"
-            : "Document client",
-        generatedAt: new Date().toLocaleString("fr-FR"),
+            ? t("reports.scope-regulatory-company")
+            : t("reports.scope-client-document"),
+        generatedAt: new Date().toLocaleString(locale),
         sizeKo: Math.max(1, Math.round(out.bytes.length / 1024)),
       });
       setGen({ kind: "idle" });
@@ -409,19 +413,19 @@ export function ReportsView({
   return (
     <>
       <header className="app-header">
-        <h1 className="app-header__title">Rapports</h1>
+        <h1 className="app-header__title">{t("reports.header-title")}</h1>
         <p className="app-header__subtitle">
-          Production des rapports réglementaires et non réglementaires
+          {t("reports.header-subtitle")}
         </p>
       </header>
 
       <section className="app-content">
         <div className="reports-controls card">
-          <span className="small-caps">Production de rapports</span>
+          <span className="small-caps">{t("reports.production-title")}</span>
 
           {loadError && (
             <ErrorState
-              message="Impossible de charger la liste des clients. Vérifiez que le serveur de données local est démarré, puis réessayez."
+              message={t("reports.load-error")}
               detail={loadError}
               onRetry={() => {
                 setLoadError(null);
@@ -433,16 +437,16 @@ export function ReportsView({
           {clients !== null && (
             <div className="reports-form-row">
               <label className="report-field">
-                <span className="small-caps">Type de rapport</span>
+                <span className="small-caps">{t("reports.field-report-type")}</span>
                 <select
                   value={reportType}
                   onChange={(e) => setReportType(e.target.value as ReportType)}
                 >
-                  {[...new Set(REPORT_TYPES.map((r) => r.groupe))].map((g) => (
-                    <optgroup key={g} label={g}>
-                      {REPORT_TYPES.filter((r) => r.groupe === g).map((r) => (
+                  {[...new Set(REPORT_TYPES.map((r) => r.groupeKey))].map((g) => (
+                    <optgroup key={g} label={t(g)}>
+                      {REPORT_TYPES.filter((r) => r.groupeKey === g).map((r) => (
                         <option key={r.id} value={r.id}>
-                          {r.label}
+                          {t(r.labelKey)}
                         </option>
                       ))}
                     </optgroup>
@@ -453,22 +457,29 @@ export function ReportsView({
               {scopeOf(reportType) === "client" &&
                 (clients.length > 0 ? (
                   <label className="report-field reports-field--client">
-                    <span className="small-caps">Client</span>
+                    <span className="small-caps">{t("reports.field-client")}</span>
                     <SearchableSelect
                       value={clientId}
                       onChange={setClientId}
-                      placeholder="Rechercher un client…"
+                      placeholder={t("reports.client-search-placeholder")}
                       options={clients.map((c) => ({
                         id: c.id,
-                        label: `${c.nom_complet} · ${c.code} (${c.nb_positions} position${c.nb_positions > 1 ? "s" : ""})`,
+                        label: `${c.nom_complet} · ${c.code} (${
+                          c.nb_positions > 1
+                            ? t("reports.positions-plural", {
+                                count: String(c.nb_positions),
+                              })
+                            : t("reports.positions-singular", {
+                                count: String(c.nb_positions),
+                              })
+                        })`,
                       }))}
                     />
                   </label>
                 ) : (
                   <div className="import-notice import-notice--warn reports-warn">
                     <p>
-                      Aucun client avec position. Importez d'abord un fichier
-                      d'export pour les documents par client.
+                      {t("reports.no-client-with-position")}
                     </p>
                   </div>
                 ))}
@@ -476,8 +487,8 @@ export function ReportsView({
               <label className="report-field">
                 <span className="small-caps">
                   {scopeOf(reportType) === "societe"
-                    ? "Mois d'arrêté"
-                    : "Date d'arrêté"}
+                    ? t("reports.field-cutoff-month")
+                    : t("reports.field-cutoff-date")}
                 </span>
                 {scopeOf(reportType) === "societe" ? (
                   <input
@@ -504,22 +515,22 @@ export function ReportsView({
                 }
               >
                 {gen.kind === "generation"
-                  ? "Génération…"
-                  : "Générer l'aperçu"}
+                  ? t("reports.generating")
+                  : t("reports.generate-preview")}
               </button>
             </div>
           )}
 
           {gen.kind === "erreur" && (
             <ErrorState
-              message="La génération du rapport a échoué. Réessayez ; si le problème persiste, vérifiez les données importées."
+              message={t("reports.generation-error")}
               detail={gen.message}
               onRetry={generer}
             />
           )}
 
           <div className="sr-only" role="status" aria-live="polite">
-            {gen.kind === "generation" ? "Génération du rapport en cours…" : ""}
+            {gen.kind === "generation" ? t("reports.generation-in-progress") : ""}
           </div>
         </div>
 
@@ -527,76 +538,76 @@ export function ReportsView({
           <div className="reports-preview">
             <div className="reports-doc">
               <div className="reports-doc__head">
-                <span className="small-caps">Aperçu du document</span>
+                <span className="small-caps">{t("reports.document-preview")}</span>
                 <p className="reports-doc__title">{preview.label}</p>
               </div>
               <iframe
                 className="reports-doc__frame"
                 src={preview.url}
-                title={`Aperçu ${preview.label}`}
+                title={t("reports.preview-frame-title", { label: preview.label })}
               />
             </div>
 
             <aside className="reports-rail">
               <div className="reports-rail__actions">
                 <button className="btn btn--primary" onClick={imprimer}>
-                  Imprimer
+                  {t("reports.print")}
                 </button>
                 <button className="btn" onClick={telecharger}>
-                  Télécharger
+                  {t("reports.download")}
                 </button>
                 <button className="btn" onClick={fermerApercu}>
-                  Fermer l'aperçu
+                  {t("reports.close-preview")}
                 </button>
               </div>
 
               <div role="status" aria-live="polite">
                 {save.kind === "ok" && (
                   <div className="preview-rail__notice preview-rail__notice--ok">
-                    Enregistré · {save.filename}
+                    {t("reports.saved-notice", { filename: save.filename })}
                   </div>
                 )}
                 {save.kind === "annule" && (
                   <div className="preview-rail__notice">
-                    Enregistrement annulé.
+                    {t("reports.save-cancelled")}
                   </div>
                 )}
               </div>
 
               <section className="preview-rail__block">
-                <span className="small-caps">Informations clés</span>
+                <span className="small-caps">{t("reports.key-info")}</span>
                 <dl className="preview-meta">
                   <div className="preview-meta__row">
-                    <dt>Périmètre</dt>
+                    <dt>{t("reports.meta-scope")}</dt>
                     <dd>{preview.scopeLabel}</dd>
                   </div>
                   <div className="preview-meta__row">
-                    <dt>Fichier</dt>
+                    <dt>{t("reports.meta-file")}</dt>
                     <dd className="preview-meta__mono">{preview.filename}</dd>
                   </div>
                   <div className="preview-meta__row">
-                    <dt>Taille</dt>
-                    <dd>{preview.sizeKo} ko</dd>
+                    <dt>{t("reports.meta-size")}</dt>
+                    <dd>{t("reports.meta-size-value", { size: String(preview.sizeKo) })}</dd>
                   </div>
                   <div className="preview-meta__row">
-                    <dt>Généré le</dt>
+                    <dt>{t("reports.meta-generated-on")}</dt>
                     <dd>{preview.generatedAt}</dd>
                   </div>
                 </dl>
               </section>
 
               <section className="preview-rail__block">
-                <span className="small-caps">Empreinte SHA-256</span>
+                <span className="small-caps">{t("reports.sha256-fingerprint")}</span>
                 <code className="preview-hash">{preview.hash}</code>
               </section>
 
               <section className="preview-rail__block">
-                <span className="small-caps">Production</span>
+                <span className="small-caps">{t("reports.production-steps-title")}</span>
                 <ul className="preview-steps">
-                  <li>Données lues depuis la base locale</li>
-                  <li>Rendu PDF · gabarit conforme au modèle réglementaire</li>
-                  <li>Empreinte SHA-256 calculée</li>
-                  <li>Aperçu prêt</li>
+                  <li>{t("reports.step-data-read")}</li>
+                  <li>{t("reports.step-pdf-render")}</li>
+                  <li>{t("reports.step-sha256-computed")}</li>
+                  <li>{t("reports.step-preview-ready")}</li>
                 </ul>
               </section>
             </aside>
@@ -613,8 +624,7 @@ export function ReportsView({
               </svg>
             </div>
             <p className="reports-empty__text">
-              Choisissez un rapport puis cliquez « Générer l'aperçu » : le
-              document s'affichera ici, prêt à imprimer ou télécharger.
+              {t("reports.empty-hint")}
             </p>
           </div>
         )}

@@ -17,6 +17,7 @@ import {
   YAxis,
 } from "recharts";
 import { getPocketBase } from "../lib/pocketbase";
+import { useT, useLocale } from "../i18n";
 import { loadDashboardData } from "./data";
 import { computeDashboards, type Dashboards } from "./aggregator";
 import { KpiCard } from "./KpiCard";
@@ -35,17 +36,17 @@ const CHART_COLORS = [
   "var(--chart-accent)",
 ];
 
-function fmtXAF(n: number): string {
-  return `${Math.round(n).toLocaleString("fr-FR")} XAF`;
+function fmtXAF(n: number, locale: string): string {
+  return `${Math.round(n).toLocaleString(locale)} XAF`;
 }
 /** Montant compact pour les cartes KPI (milliards/millions). */
-function fmtXAFCompact(n: number): string {
+function fmtXAFCompact(n: number, locale: string): string {
   const abs = Math.abs(n);
   if (abs >= 1e9)
-    return `${(n / 1e9).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} Md XAF`;
+    return `${(n / 1e9).toLocaleString(locale, { maximumFractionDigits: 2 })} Md XAF`;
   if (abs >= 1e6)
-    return `${(n / 1e6).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} M XAF`;
-  return fmtXAF(n);
+    return `${(n / 1e6).toLocaleString(locale, { maximumFractionDigits: 1 })} M XAF`;
+  return fmtXAF(n, locale);
 }
 function fmtPct(n: number): string {
   return `${n.toFixed(1)} %`;
@@ -68,6 +69,7 @@ function ChartTooltip({
   payload?: Array<{ name?: string; value?: number | string; color?: string }>;
   label?: string | number;
 }) {
+  const locale = useLocale();
   if (!active || !payload || payload.length === 0) return null;
   return (
     <div className="chart-tooltip">
@@ -85,7 +87,7 @@ function ChartTooltip({
           {p.name ? (
             <span className="chart-tooltip__name">{p.name}</span>
           ) : null}
-          <span className="chart-tooltip__value">{fmtXAF(Number(p.value))}</span>
+          <span className="chart-tooltip__value">{fmtXAF(Number(p.value), locale)}</span>
         </div>
       ))}
     </div>
@@ -99,6 +101,7 @@ type State =
   | { kind: "erreur"; message: string };
 
 export function DashboardsView() {
+  const t = useT();
   const [state, setState] = useState<State>({ kind: "chargement" });
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -129,25 +132,25 @@ export function DashboardsView() {
   return (
     <>
       <header className="app-header">
-        <h1 className="app-header__title">Tableaux de bord</h1>
+        <h1 className="app-header__title">{t("dashboards.titre")}</h1>
         <p className="app-header__subtitle">
-          Pilotage des encours, concentration, allocation et flux
+          {t("dashboards.sous-titre")}
         </p>
       </header>
 
       <section className="app-content">
         <ProvenanceBanner />
         {state.kind === "chargement" && (
-          <LoadingState variant="panels" label="Calcul des indicateurs en cours…" />
+          <LoadingState variant="panels" label={t("dashboards.chargement")} />
         )}
         {state.kind === "vide" && (
           <div className="import-notice import-notice--warn">
-            <p>Aucune position. Importez d'abord un fichier d'export.</p>
+            <p>{t("dashboards.vide")}</p>
           </div>
         )}
         {state.kind === "erreur" && (
           <ErrorState
-            message="Impossible de calculer les indicateurs. Vérifiez que le serveur de données local est démarré, puis réessayez."
+            message={t("dashboards.erreur")}
             detail={state.message}
             onRetry={charger}
           />
@@ -159,32 +162,37 @@ export function DashboardsView() {
 }
 
 function DashboardsContent({ d }: { d: Dashboards }) {
+  const t = useT();
+  const locale = useLocale();
   return (
     <div className="dash-grid">
       {/* 1. Encours global + indicateurs clés */}
       <div className="kpi-row">
         <KpiCard
-          label="Encours global"
-          value={fmtXAFCompact(d.encours.valorisationTotale)}
-          sub={`${d.encours.nbPositions} positions · ${fmtXAF(d.encours.valorisationTotale)}`}
+          label={t("dashboards.kpi-encours-global")}
+          value={fmtXAFCompact(d.encours.valorisationTotale, locale)}
+          sub={t("dashboards.kpi-encours-global-sub", {
+            nb: String(d.encours.nbPositions),
+            montant: fmtXAF(d.encours.valorisationTotale, locale),
+          })}
           tone="sage"
           spark={d.sparkEncours}
         />
         <KpiCard
-          label="Comptes-titres"
+          label={t("dashboards.kpi-comptes-titres")}
           value={String(d.encours.nbComptes)}
-          sub="Portefeuilles-titres distincts"
+          sub={t("dashboards.kpi-comptes-titres-sub")}
           tone="lilac"
         />
         <KpiCard
-          label="Concentration max émetteur"
+          label={t("dashboards.kpi-concentration-max-emetteur")}
           value={fmtPct(d.concentrationEmetteur.concentrationMax)}
-          sub={`limite COSUMAF 30 %`}
+          sub={t("dashboards.kpi-limite-cosumaf")}
           variant={d.concentrationEmetteur.alerte ? "danger" : "success"}
           tone={d.concentrationEmetteur.alerte ? "peach" : "yellow"}
         />
         <KpiCard
-          label="Taux moyen pondéré obligataire"
+          label={t("dashboards.kpi-taux-moyen-pondere")}
           value={fmtPct(d.tauxMoyenPondereObligataire)}
           tone="yellow"
         />
@@ -193,47 +201,51 @@ function DashboardsContent({ d }: { d: Dashboards }) {
       {/* 2. Indicateurs financiers complémentaires */}
       <div className="kpi-row">
         <KpiCard
-          label="Plus/moins-value latente"
-          value={fmtXAFCompact(d.pnl.plusValueLatente)}
-          sub={`${fmtPct(d.pnl.perfPct)} vs coût de revient`}
+          label={t("dashboards.kpi-pnl-latente")}
+          value={fmtXAFCompact(d.pnl.plusValueLatente, locale)}
+          sub={t("dashboards.kpi-pnl-latente-sub", { pct: fmtPct(d.pnl.perfPct) })}
           variant={d.pnl.plusValueLatente >= 0 ? "success" : "danger"}
           tone="sage"
         />
         <KpiCard
-          label="Encours moyen / médian"
-          value={fmtXAFCompact(d.encoursParCompte.moyen)}
-          sub={`médian ${fmtXAFCompact(d.encoursParCompte.median)}`}
+          label={t("dashboards.kpi-encours-moyen-median")}
+          value={fmtXAFCompact(d.encoursParCompte.moyen, locale)}
+          sub={t("dashboards.kpi-encours-moyen-median-sub", {
+            median: fmtXAFCompact(d.encoursParCompte.median, locale),
+          })}
           tone="lilac"
         />
         <KpiCard
-          label="Maturité moyenne obligataire"
-          value={`${d.maturiteMoyenne.toLocaleString("fr-FR")} ans`}
-          sub={`échéant < 12 mois : ${fmtPct(d.murEcheances.pct12m)}`}
+          label={t("dashboards.kpi-maturite-moyenne")}
+          value={t("dashboards.kpi-maturite-moyenne-value", {
+            ans: d.maturiteMoyenne.toLocaleString(locale),
+          })}
+          sub={t("dashboards.kpi-maturite-moyenne-sub", { pct: fmtPct(d.murEcheances.pct12m) })}
           tone="yellow"
         />
         <KpiCard
-          label="Collecte nette (période)"
-          value={fmtXAFCompact(d.activite.collecteNette)}
-          sub={`rotation ${fmtPct(d.activite.turnover)}`}
+          label={t("dashboards.kpi-collecte-nette")}
+          value={fmtXAFCompact(d.activite.collecteNette, locale)}
+          sub={t("dashboards.kpi-collecte-nette-sub", { pct: fmtPct(d.activite.turnover) })}
           variant={d.activite.collecteNette >= 0 ? "success" : "danger"}
           tone="peach"
         />
       </div>
 
       {/* 3. Jauges de ratio (risque & conformité) */}
-      <span className="dash-section-title small-caps">Risque et conformité</span>
+      <span className="dash-section-title small-caps">{t("dashboards.section-risque-conformite")}</span>
       <div className="dash-gauges">
         <GaugeCard
-          label="Concentration max émetteur"
+          label={t("dashboards.gauge-concentration-max-emetteur")}
           valeur={d.concentrationEmetteur.concentrationMax}
           max={100}
           seuils={{ attention: 20, critique: 30 }}
           unite="%"
-          reference={{ valeur: 30, libelle: "limite COSUMAF" }}
+          reference={{ valeur: 30, libelle: t("dashboards.reference-limite-cosumaf") }}
           formatValeur={(n) => fmtPct(n)}
         />
         <GaugeCard
-          label="Concentration 1er client"
+          label={t("dashboards.gauge-concentration-premier-client")}
           valeur={d.concentrationClientStats.top1}
           max={100}
           seuils={{ attention: 15, critique: 25 }}
@@ -241,7 +253,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
           formatValeur={(n) => fmtPct(n)}
         />
         <GaugeCard
-          label="Mur d'échéances < 12 mois"
+          label={t("dashboards.gauge-mur-echeances")}
           valeur={d.murEcheances.pct12m}
           max={100}
           seuils={{ attention: 15, critique: 30 }}
@@ -249,7 +261,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
           formatValeur={(n) => fmtPct(n)}
         />
         <GaugeCard
-          label="Score de diversification"
+          label={t("dashboards.gauge-score-diversification")}
           valeur={d.concentrationEmetteur.score}
           max={100}
           seuils={{ attention: 30, critique: 60 }}
@@ -262,19 +274,19 @@ function DashboardsContent({ d }: { d: Dashboards }) {
         d.qualite.obligSansEcheance > 0 ||
         d.qualite.positionsValoNulle > 0) && (
         <p className="dash-quality small-caps">
-          Qualité des données : intégrité émetteur {fmtPct(d.qualite.integriteEmetteurPct)}
+          {t("dashboards.qualite-donnees", { pct: fmtPct(d.qualite.integriteEmetteurPct) })}
           {d.qualite.positionsSansEmetteur > 0 &&
-            ` · ${d.qualite.positionsSansEmetteur} position(s) sans émetteur`}
+            ` · ${t("dashboards.qualite-sans-emetteur", { nb: String(d.qualite.positionsSansEmetteur) })}`}
           {d.qualite.obligSansEcheance > 0 &&
-            ` · ${d.qualite.obligSansEcheance} obligation(s) sans échéance`}
+            ` · ${t("dashboards.qualite-sans-echeance", { nb: String(d.qualite.obligSansEcheance) })}`}
           {d.qualite.positionsValoNulle > 0 &&
-            ` · ${d.qualite.positionsValoNulle} position(s) à valorisation nulle`}
+            ` · ${t("dashboards.qualite-valo-nulle", { nb: String(d.qualite.positionsValoNulle) })}`}
         </p>
       )}
 
       <div className="dash-panels">
         {/* 1. Évolution de l'encours reconstitué (pleine largeur) */}
-        <Panel titre="Évolution de l'encours (reconstitué)" pleineLargeur>
+        <Panel titre={t("dashboards.panel-evolution-encours")} pleineLargeur>
           {d.evolutionEncours.length === 0 ? (
             <Vide />
           ) : (
@@ -297,7 +309,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
                 <Area
                   type="monotone"
                   dataKey="cumule"
-                  name="Encours"
+                  name={t("dashboards.serie-encours")}
                   stroke="var(--chart-1)"
                   strokeWidth={2}
                   fill="url(#grad-encours)"
@@ -310,7 +322,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
         </Panel>
 
         {/* 2. Répartition par classe d'actifs */}
-        <Panel titre="Répartition par classe d'actifs">
+        <Panel titre={t("dashboards.panel-repartition-classe")}>
           <DonutChart
             data={d.repartitionClasse.map((c) => ({
               name: c.libelle,
@@ -328,11 +340,16 @@ function DashboardsContent({ d }: { d: Dashboards }) {
 
         {/* 3. Concentration par émetteur */}
         <Panel
-          titre="Concentration par émetteur"
+          titre={t("dashboards.panel-concentration-emetteur")}
           badge={
             d.concentrationEmetteur.alerte
-              ? { texte: "Alerte > 30 %", variant: "danger" }
-              : { texte: `Score ${d.concentrationEmetteur.score}/100`, variant: "success" }
+              ? { texte: t("dashboards.badge-alerte-30"), variant: "danger" }
+              : {
+                  texte: t("dashboards.badge-score", {
+                    score: String(d.concentrationEmetteur.score),
+                  }),
+                  variant: "success",
+                }
           }
         >
           <HBarChart
@@ -345,7 +362,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
         </Panel>
 
         {/* 4. Concentration par client */}
-        <Panel titre="Concentration par client (top 8)">
+        <Panel titre={t("dashboards.panel-concentration-client")}>
           <HBarChart
             data={d.concentrationClient.slice(0, 8).map((c) => ({
               name: c.libelle,
@@ -356,7 +373,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
         </Panel>
 
         {/* 4b. Treemap d'exposition par émetteur */}
-        <Panel titre="Exposition par émetteur (treemap)">
+        <Panel titre={t("dashboards.panel-treemap-exposition")}>
           {d.concentrationEmetteur.items.length === 0 ? (
             <Vide />
           ) : (
@@ -381,7 +398,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
         </Panel>
 
         {/* 4c. Flux net mensuel (barres divergentes) */}
-        <Panel titre="Flux net mensuel (collecte)">
+        <Panel titre={t("dashboards.panel-flux-net-mensuel")}>
           {d.fluxNetMensuel.length === 0 ? (
             <Vide />
           ) : (
@@ -396,7 +413,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
                 <YAxis tickFormatter={(v) => fmtAxis(Number(v))} tick={{ fontSize: 11 }} />
                 <Tooltip content={<ChartTooltip />} />
                 <ReferenceLine y={0} stroke="var(--mw-border-strong)" />
-                <Bar dataKey="net" name="Flux net" radius={[3, 3, 0, 0]}>
+                <Bar dataKey="net" name={t("dashboards.serie-flux-net")} radius={[3, 3, 0, 0]}>
                   {d.fluxNetMensuel.map((m) => (
                     <Cell
                       key={m.periode}
@@ -410,7 +427,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
         </Panel>
 
         {/* 5. Échéancier obligataire · mur de liquidité (couleur par horizon) */}
-        <Panel titre="Échéancier obligataire (mur de liquidité)">
+        <Panel titre={t("dashboards.panel-echeancier-obligataire")}>
           {d.echeancier.length === 0 ? (
             <Vide />
           ) : (
@@ -424,7 +441,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
                 <XAxis dataKey="annee" tick={{ fontSize: 11 }} />
                 <YAxis tickFormatter={(v) => fmtAxis(Number(v))} tick={{ fontSize: 11 }} />
                 <Tooltip content={<ChartTooltip />} />
-                <Bar dataKey="montant" name="Échéance" radius={[4, 4, 0, 0]}>
+                <Bar dataKey="montant" name={t("dashboards.serie-echeance")} radius={[4, 4, 0, 0]}>
                   {d.echeancier.map((e) => {
                     const an = Number(e.annee);
                     const ecart = an - new Date().getFullYear();
@@ -443,7 +460,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
         </Panel>
 
         {/* 6. Flux d'activité */}
-        <Panel titre="Flux d'activité (achat / vente)">
+        <Panel titre={t("dashboards.panel-flux-activite")}>
           {d.fluxActivite.length === 0 ? (
             <Vide />
           ) : (
@@ -470,7 +487,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
                 <Area
                   type="monotone"
                   dataKey="achat"
-                  name="Achat"
+                  name={t("dashboards.serie-achat")}
                   stackId="flux"
                   stroke="var(--chart-4)"
                   strokeWidth={2}
@@ -480,7 +497,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
                 <Area
                   type="monotone"
                   dataKey="vente"
-                  name="Vente"
+                  name={t("dashboards.serie-vente")}
                   stackId="flux"
                   stroke="var(--chart-5)"
                   strokeWidth={2}
@@ -493,23 +510,27 @@ function DashboardsContent({ d }: { d: Dashboards }) {
         </Panel>
 
         {/* 7. Répartition par type de client */}
-        <Panel titre="Répartition par type de client">
+        <Panel titre={t("dashboards.panel-repartition-type-client")}>
           <DonutChart
             data={[
-              { name: "Personnes physiques", value: d.repartitionTypeClient.pp.valorisation },
-              { name: "Personnes morales", value: d.repartitionTypeClient.pm.valorisation },
+              { name: t("dashboards.serie-personnes-physiques"), value: d.repartitionTypeClient.pp.valorisation },
+              { name: t("dashboards.serie-personnes-morales"), value: d.repartitionTypeClient.pm.valorisation },
             ]}
           />
           <Legend
             items={[
               {
-                libelle: `PP · ${d.repartitionTypeClient.pp.comptes} comptes`,
-                valeur: fmtXAFCompact(d.repartitionTypeClient.pp.valorisation),
+                libelle: t("dashboards.legende-pp", {
+                  comptes: String(d.repartitionTypeClient.pp.comptes),
+                }),
+                valeur: fmtXAFCompact(d.repartitionTypeClient.pp.valorisation, locale),
                 color: CHART_COLORS[0],
               },
               {
-                libelle: `PM · ${d.repartitionTypeClient.pm.comptes} comptes`,
-                valeur: fmtXAFCompact(d.repartitionTypeClient.pm.valorisation),
+                libelle: t("dashboards.legende-pm", {
+                  comptes: String(d.repartitionTypeClient.pm.comptes),
+                }),
+                valeur: fmtXAFCompact(d.repartitionTypeClient.pm.valorisation, locale),
                 color: CHART_COLORS[1],
               },
             ]}
@@ -517,23 +538,23 @@ function DashboardsContent({ d }: { d: Dashboards }) {
         </Panel>
 
         {/* 8. Dette souveraine vs privée */}
-        <Panel titre="Souverain et privé">
+        <Panel titre={t("dashboards.panel-souverain-prive")}>
           <DonutChart
             data={[
-              { name: "Souverain", value: d.souverainVsCorporate.souverain },
-              { name: "Privé", value: d.souverainVsCorporate.corporate },
+              { name: t("dashboards.serie-souverain"), value: d.souverainVsCorporate.souverain },
+              { name: t("dashboards.serie-prive"), value: d.souverainVsCorporate.corporate },
             ]}
           />
           <Legend
             items={[
               {
-                libelle: "Souverain",
-                valeur: fmtXAFCompact(d.souverainVsCorporate.souverain),
+                libelle: t("dashboards.serie-souverain"),
+                valeur: fmtXAFCompact(d.souverainVsCorporate.souverain, locale),
                 color: CHART_COLORS[0],
               },
               {
-                libelle: "Privé",
-                valeur: fmtXAFCompact(d.souverainVsCorporate.corporate),
+                libelle: t("dashboards.serie-prive"),
+                valeur: fmtXAFCompact(d.souverainVsCorporate.corporate, locale),
                 color: CHART_COLORS[1],
               },
             ]}
@@ -541,10 +562,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
         </Panel>
       </div>
 
-      <p className="dash-note small-caps">
-        Les vues d'évolution temporelle s'appuient sur la chronologie des
-        mouvements importés ; sur un import unique, elles restent partielles.
-      </p>
+      <p className="dash-note small-caps">{t("dashboards.note-evolution-temporelle")}</p>
     </div>
   );
 }
@@ -576,7 +594,8 @@ function Panel({
 }
 
 function Vide() {
-  return <p className="dash-vide">Aucune donnée disponible.</p>;
+  const t = useT();
+  return <p className="dash-vide">{t("dashboards.aucune-donnee")}</p>;
 }
 
 /** Cellule de treemap : rectangle coloré + libellé si la place le permet. */
@@ -616,9 +635,10 @@ function DonutChart({
   data: Array<{ name: string; value: number }>;
   centerLabel?: string;
 }) {
+  const locale = useLocale();
   const total = data.reduce((s, x) => s + x.value, 0);
   if (total <= 0) return <Vide />;
-  const centre = centerLabel ?? fmtXAFCompact(total);
+  const centre = centerLabel ?? fmtXAFCompact(total, locale);
   return (
     <ResponsiveContainer width="100%" height={180}>
       <PieChart>
@@ -663,6 +683,7 @@ function HBarChart({
 }: {
   data: Array<{ name: string; value: number; part: number }>;
 }) {
+  const locale = useLocale();
   if (data.length === 0) return <Vide />;
   return (
     <ResponsiveContainer width="100%" height={Math.max(160, data.length * 28)}>
@@ -688,7 +709,7 @@ function HBarChart({
                 ) : null}
                 <div className="chart-tooltip__row">
                   <span className="chart-tooltip__value">
-                    {fmtXAF(Number(p.value))} ({fmtPct(Number(p.payload?.part ?? 0))})
+                    {fmtXAF(Number(p.value), locale)} ({fmtPct(Number(p.payload?.part ?? 0))})
                   </span>
                 </div>
               </div>
