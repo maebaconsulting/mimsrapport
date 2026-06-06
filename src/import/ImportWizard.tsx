@@ -5,6 +5,7 @@ import { runImport } from "./import-service";
 import type { ImportResult, ImportSummary } from "./import-service";
 import { ClientsTable } from "../clients/ClientsTable";
 import { ImportHistory } from "./ImportHistory";
+import { ErrorState } from "../ui/states";
 import "./import.css";
 
 type Phase =
@@ -43,12 +44,15 @@ function statTiles(s: ImportSummary): Array<{ label: string; value: string; sub?
 export function ImportWizard({ onImported }: { onImported?: () => void }) {
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const [historyKey, setHistoryKey] = useState(0);
+  // Confirmation à deux temps avant le remplacement (action irréversible).
+  const [confirmRemplace, setConfirmRemplace] = useState(false);
 
   async function doImport(
     fileName: string,
     data: Uint8Array,
     replace: boolean,
   ) {
+    setConfirmRemplace(false);
     setPhase({ kind: "encours", step: "Préparation…", fileName });
     try {
       const pb = await getPocketBase();
@@ -91,7 +95,7 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
           <span className="small-caps">Assistant d'import</span>
           <p className="card__lead">
             Sélectionnez le fichier Manar (« État des instruments saisis sur
-            Manar », format .xls ou .xlsx). L'import matérialise les clients,
+            Manar », format .xls ou .xlsx). L'import enregistre les clients,
             portefeuilles, instruments, émetteurs, positions et mouvements.
           </p>
 
@@ -121,13 +125,13 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
           )}
 
           {phase.kind === "encours" && (
-            <p className="import-progress">
+            <p className="import-progress" role="status" aria-live="polite">
               <span className="import-progress__spinner" /> {phase.step}
             </p>
           )}
 
-          {phase.kind === "deja" && (
-            <div className="import-notice import-notice--warn">
+          {phase.kind === "deja" && !confirmRemplace && (
+            <div className="import-notice import-notice--warn" role="status">
               <p>
                 Ce fichier a déjà été importé avec succès (« {phase.existingFileName}{" "}
                 »). Vous pouvez annuler ou remplacer l'import précédent.
@@ -135,7 +139,7 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
               <div className="import-notice__actions">
                 <button
                   className="btn btn--danger"
-                  onClick={() => doImport(phase.fileName, phase.data, true)}
+                  onClick={() => setConfirmRemplace(true)}
                 >
                   Remplacer l'import précédent
                 </button>
@@ -146,20 +150,48 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
             </div>
           )}
 
-          {phase.kind === "erreur" && (
-            <div className="import-notice import-notice--danger">
-              <p>Échec de l'import : {phase.message}</p>
-              <button className="btn" onClick={() => setPhase({ kind: "idle" })}>
-                Recommencer
-              </button>
+          {phase.kind === "deja" && confirmRemplace && (
+            <div className="import-notice import-notice--danger" role="alert">
+              <p>
+                Confirmer le remplacement ? Les données de l'import précédent
+                seront définitivement supprimées puis recréées à partir de ce
+                fichier. Cette action est irréversible.
+              </p>
+              <div className="import-notice__actions">
+                <button
+                  className="btn btn--danger"
+                  onClick={() => doImport(phase.fileName, phase.data, true)}
+                >
+                  Oui, remplacer définitivement
+                </button>
+                <button
+                  className="btn"
+                  onClick={() => setConfirmRemplace(false)}
+                >
+                  Revenir
+                </button>
+              </div>
             </div>
           )}
 
+          {phase.kind === "erreur" && (
+            <ErrorState
+              message="L'import du fichier Manar a échoué. Vérifiez le fichier puis recommencez."
+              detail={phase.message}
+              onRetry={() => setPhase({ kind: "idle" })}
+              retryLabel="Recommencer"
+            />
+          )}
+
           {phase.kind === "reussi" && (
-            <div className="import-notice import-notice--success">
+            <div
+              className="import-notice import-notice--success"
+              role="status"
+              aria-live="polite"
+            >
               <p>
                 Import réussi en {(phase.summary.durationMs / 1000).toFixed(1)} s.
-                Les entités ci-dessous ont été matérialisées dans la base locale.
+                Les entités ci-dessous ont été enregistrées dans la base locale.
               </p>
               <button
                 className="btn"
