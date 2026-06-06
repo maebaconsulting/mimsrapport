@@ -327,9 +327,13 @@
   box-shadow: var(--mw-ring);
 }
 
+/* État désactivé : fond creusé + bordure + texte atténué (pas seulement
+   l'opacité, qui nuirait au contraste et serait peu perceptible). */
 .btn:disabled {
-  opacity: 0.45;
-  cursor: default;
+  background: var(--mw-surface-sunken);
+  border-color: var(--mw-border);
+  color: var(--mw-fg-subtle);
+  cursor: not-allowed;
 }
 
 .btn--primary {

@@ -32,7 +32,7 @@
   --mw-ink-2: #2a3640; /* bordures sur sombre */
   --mw-fg: #11191f; /* texte principal */
   --mw-fg-muted: #6b7178; /* texte secondaire, libellés */
-  --mw-fg-subtle: #9aa0a6; /* texte tertiaire, placeholders */
+  --mw-fg-subtle: #767c82; /* texte tertiaire, placeholders (WCAG AA sur crème/blanc) */
   --mw-fg-on-ink: #f4f3ec; /* texte sur fond sombre */
   --mw-fg-on-ink-muted: #8a949c; /* texte secondaire sur sombre */
   --mw-border: #e6e4da; /* séparateurs sur crème */
@@ -55,7 +55,7 @@
   --mw-warning-fg: #7a6712;
   --mw-warning-solid: #ffe15a;
   --mw-peach-bg: #fbe0cc;
-  --mw-peach-fg: #9a5526;
+  --mw-peach-fg: #8c4d22; /* abaissé pour atteindre 4,5:1 sur fond pêche */
   --mw-peach-solid: #f0b488;
   --mw-danger-bg: #f6d5ce;
   --mw-danger-fg: #8f3d29;

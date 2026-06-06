@@ -241,8 +241,10 @@
   box-shadow: var(--mw-ring);
 }
 .data-pager__btn:disabled {
-  opacity: 0.4;
-  cursor: default;
+  background: var(--mw-surface-sunken);
+  border-color: var(--mw-border);
+  color: var(--mw-fg-subtle);
+  cursor: not-allowed;
 }
 
 /* Pastilles de statut (mêmes pastels que les notices) */

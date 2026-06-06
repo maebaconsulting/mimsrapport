@@ -197,16 +197,21 @@ export function ClientsTable({ showKpis = true, reloadKey = 0 }: ClientsTablePro
       <div className="data-card">
         <div className="data-scroll">
           <table className="data-table">
+            <caption className="sr-only">
+              Liste des clients consolidés issus de l'import Manar : code, nom,
+              type, compte-titres, nombre de positions, encours, statut et date
+              d'ouverture.
+            </caption>
             <thead>
               <tr>
-                <th>Code</th>
-                <th>Nom</th>
-                <th>Type</th>
-                <th>Compte-titres</th>
-                <th className="num">Positions</th>
-                <th className="num">Encours</th>
-                <th>Statut</th>
-                <th>Ouverture</th>
+                <th scope="col">Code</th>
+                <th scope="col">Nom</th>
+                <th scope="col">Type</th>
+                <th scope="col">Compte-titres</th>
+                <th scope="col" className="num">Positions</th>
+                <th scope="col" className="num">Encours</th>
+                <th scope="col">Statut</th>
+                <th scope="col">Ouverture</th>
               </tr>
             </thead>
             <tbody>

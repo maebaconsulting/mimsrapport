@@ -5,6 +5,7 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { getPocketBase } from "../lib/pocketbase";
 import { saveBytes } from "../lib/fileio";
 import {
@@ -224,6 +225,8 @@ export function ReportsView() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [printing, setPrinting] = useState(false); // modale d'impression ouverte
   const printFrameRef = useRef<HTMLIFrameElement>(null);
+  const printOverlayRef = useRef<HTMLDivElement>(null);
+  const focusAvantModaleRef = useRef<HTMLElement | null>(null);
 
   const charger = useCallback(async () => {
     try {
@@ -246,6 +249,55 @@ export function ReportsView() {
       if (preview) URL.revokeObjectURL(preview.url);
     };
   }, [preview]);
+
+  // Modale d'impression : piège de focus, fermeture par Échap, fond inert,
+  // restitution du focus à la fermeture (a11y des fenêtres modales).
+  useEffect(() => {
+    if (!printing) return;
+    focusAvantModaleRef.current = document.activeElement as HTMLElement | null;
+    const shell = document.querySelector(".app-shell");
+    shell?.setAttribute("inert", "");
+
+    const focusables = (): HTMLElement[] => {
+      const root = printOverlayRef.current;
+      if (!root) return [];
+      return Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], iframe, [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+    };
+
+    // Déplace le focus à l'intérieur de la modale à l'ouverture.
+    window.requestAnimationFrame(() => focusables()[0]?.focus());
+
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setPrinting(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const f = focusables();
+      if (f.length === 0) return;
+      const premier = f[0];
+      const dernier = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === premier) {
+        e.preventDefault();
+        dernier.focus();
+      } else if (!e.shiftKey && document.activeElement === dernier) {
+        e.preventDefault();
+        premier.focus();
+      }
+    }
+
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      shell?.removeAttribute("inert");
+      focusAvantModaleRef.current?.focus();
+    };
+  }, [printing]);
 
   function fermerApercu() {
     if (preview) URL.revokeObjectURL(preview.url);
@@ -540,39 +592,46 @@ export function ReportsView() {
         )}
       </section>
 
-      {/* Modale dédiée à l'impression du document affiché. */}
-      {printing && preview && (
-        <div
-          className="preview-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`Impression · ${preview.label}`}
-        >
-          <div className="preview-modal print-modal">
-            <div className="preview-modal__head">
-              <div>
-                <span className="small-caps">Impression</span>
-                <p className="preview-modal__title">{preview.label}</p>
+      {/* Modale dédiée à l'impression du document affiché (portail hors du
+          <main> pour pouvoir rendre la coquille inerte). */}
+      {printing &&
+        preview &&
+        createPortal(
+          <div
+            className="preview-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Impression · ${preview.label}`}
+            ref={printOverlayRef}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setPrinting(false);
+            }}
+          >
+            <div className="preview-modal print-modal">
+              <div className="preview-modal__head">
+                <div>
+                  <span className="small-caps">Impression</span>
+                  <p className="preview-modal__title">{preview.label}</p>
+                </div>
+                <div className="preview-actions">
+                  <button className="btn btn--primary" onClick={lancerImpression}>
+                    Imprimer
+                  </button>
+                  <button className="btn" onClick={() => setPrinting(false)}>
+                    Fermer
+                  </button>
+                </div>
               </div>
-              <div className="preview-actions">
-                <button className="btn btn--primary" onClick={lancerImpression}>
-                  Imprimer
-                </button>
-                <button className="btn" onClick={() => setPrinting(false)}>
-                  Fermer
-                </button>
-              </div>
+              <iframe
+                ref={printFrameRef}
+                className="preview-frame"
+                src={preview.url}
+                title={`Impression ${preview.label}`}
+              />
             </div>
-            <iframe
-              ref={printFrameRef}
-              className="preview-frame"
-              src={preview.url}
-              title={`Impression ${preview.label}`}
-              onLoad={() => window.setTimeout(lancerImpression, 250)}
-            />
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
