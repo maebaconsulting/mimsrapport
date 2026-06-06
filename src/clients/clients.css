@@ -323,3 +323,28 @@
   box-shadow: var(--mw-ring);
   border-radius: var(--mw-radius-sm);
 }
+
+/* Action « Générer un rapport » par ligne (colonne optionnelle) */
+.data-row-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--mw-info-fg);
+  background: var(--mw-info-bg);
+  border: 1px solid transparent;
+  border-radius: var(--mw-radius-full);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--mw-transition);
+}
+.data-row-action:hover {
+  border-color: var(--mw-info-solid);
+}
+.data-row-action:focus-visible {
+  outline: none;
+  box-shadow: var(--mw-ring);
+}

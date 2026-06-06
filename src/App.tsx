@@ -25,6 +25,8 @@ const NAV: Array<{ id: Vue; label: string; enabled: boolean }> = [
 function App() {
   const [vue, setVue] = useState<Vue>("accueil");
   const [license, setLicense] = useState<LicenseStatus | null>(null);
+  // Client pré-sélectionné pour la vue Rapports (passerelle depuis Clients).
+  const [rapportClientId, setRapportClientId] = useState<string | null>(null);
 
   // Change de vue, en demandant confirmation si la vue courante a des
   // modifications non enregistrées (cf. Paramètres).
@@ -32,6 +34,12 @@ function App() {
     if (cible === vue) return;
     if (!confirmDiscardIfDirty()) return;
     setVue(cible);
+  }
+
+  // Passerelle « Générer un rapport pour ce client » depuis la table clients.
+  function genererRapportPour(clientId: string) {
+    setRapportClientId(clientId);
+    naviguer("rapports");
   }
 
   useEffect(() => {
@@ -91,12 +99,16 @@ function App() {
               </p>
             </header>
             <section className="app-content">
-              <ImportWizard />
+              <ImportWizard onNavigate={naviguer} />
             </section>
           </>
         )}
-        {vue === "clients" && <ClientsView />}
-        {vue === "rapports" && <ReportsView />}
+        {vue === "clients" && (
+          <ClientsView onGenerateReport={genererRapportPour} />
+        )}
+        {vue === "rapports" && (
+          <ReportsView initialClientId={rapportClientId} />
+        )}
         {vue === "tableaux" && <DashboardsView />}
         {vue === "parametres" && <SettingsView />}
       </main>

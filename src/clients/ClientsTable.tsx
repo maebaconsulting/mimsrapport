@@ -93,9 +93,18 @@ export interface ClientsTableProps {
   showKpis?: boolean;
   /** Incrémenter cette valeur force un rechargement des données. */
   reloadKey?: number;
+  /**
+   * Si fourni, ajoute une colonne d'action « Générer un rapport » par ligne
+   * (pour les clients ayant au moins une position). Reçoit l'id du client.
+   */
+  onGenerateReport?: (clientId: string) => void;
 }
 
-export function ClientsTable({ showKpis = true, reloadKey = 0 }: ClientsTableProps) {
+export function ClientsTable({
+  showKpis = true,
+  reloadKey = 0,
+  onGenerateReport,
+}: ClientsTableProps) {
   const [state, setState] = useState<State>({ kind: "chargement" });
   const [recherche, setRecherche] = useState("");
   const [filtre, setFiltre] = useState<Filtre>("tous");
@@ -296,6 +305,11 @@ export function ClientsTable({ showKpis = true, reloadKey = 0 }: ClientsTablePro
                     </th>
                   );
                 })}
+                {onGenerateReport && (
+                  <th scope="col" className="num">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -317,11 +331,29 @@ export function ClientsTable({ showKpis = true, reloadKey = 0 }: ClientsTablePro
                   <td className="num data-cell-encours">{fmtXAF(r.encours_xaf)}</td>
                   <td>{statutPill(r.statut)}</td>
                   <td className="data-cell-mono">{fmtDate(r.date_ouverture)}</td>
+                  {onGenerateReport && (
+                    <td className="num">
+                      {r.nb_positions > 0 && (
+                        <button
+                          className="data-row-action"
+                          onClick={() => onGenerateReport(r.id)}
+                          aria-label={`Générer un rapport pour ${r.nom_complet}`}
+                          title={`Générer un rapport pour ${r.nom_complet}`}
+                        >
+                          Rapport
+                          <span aria-hidden="true"> →</span>
+                        </button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
               {lignesFiltrees.length === 0 && (
                 <tr>
-                  <td className="data-empty" colSpan={8}>
+                  <td
+                    className="data-empty"
+                    colSpan={COLUMNS.length + (onGenerateReport ? 1 : 0)}
+                  >
                     Aucun client ne correspond à la recherche.
                   </td>
                 </tr>

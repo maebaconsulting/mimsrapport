@@ -6,7 +6,11 @@
 import { ClientsTable } from "./ClientsTable";
 import { ProvenanceBanner } from "../ui/ProvenanceBanner";
 
-export function ClientsView() {
+export function ClientsView({
+  onGenerateReport,
+}: {
+  onGenerateReport?: (clientId: string) => void;
+}) {
   return (
     <>
       <header className="app-header">
@@ -19,7 +23,7 @@ export function ClientsView() {
 
       <section className="app-content">
         <ProvenanceBanner />
-        <ClientsTable showKpis />
+        <ClientsTable showKpis onGenerateReport={onGenerateReport} />
       </section>
     </>
   );

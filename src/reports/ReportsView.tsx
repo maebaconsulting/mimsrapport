@@ -222,7 +222,12 @@ function finDeMois(ym: string): string {
   return `${ym}-${String(dernier).padStart(2, "0")}`;
 }
 
-export function ReportsView() {
+export function ReportsView({
+  initialClientId,
+}: {
+  /** Client à pré-sélectionner (passerelle « Générer un rapport » depuis Clients). */
+  initialClientId?: string | null;
+} = {}) {
   const [clients, setClients] = useState<ClientChoice[] | null>(null);
   const [clientId, setClientId] = useState<string>("");
   const [reportType, setReportType] = useState<ReportType>("attestation");
@@ -241,11 +246,18 @@ export function ReportsView() {
       const pb = await getPocketBase();
       const list = await listClientsWithPositions(pb);
       setClients(list);
-      if (list.length > 0) setClientId(list[0].id);
+      if (list.length > 0) {
+        // Honore le client pré-sélectionné s'il a des positions, sinon le 1er.
+        const voulu =
+          initialClientId && list.some((c) => c.id === initialClientId)
+            ? initialClientId
+            : list[0].id;
+        setClientId(voulu);
+      }
     } catch (err) {
       setLoadError(String(err));
     }
-  }, []);
+  }, [initialClientId]);
 
   useEffect(() => {
     void charger();

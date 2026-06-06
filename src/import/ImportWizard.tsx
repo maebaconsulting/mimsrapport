@@ -41,7 +41,14 @@ function statTiles(s: ImportSummary): Array<{ label: string; value: string; sub?
   ];
 }
 
-export function ImportWizard({ onImported }: { onImported?: () => void }) {
+export function ImportWizard({
+  onImported,
+  onNavigate,
+}: {
+  onImported?: () => void;
+  /** Passerelles d'enchaînement après un import réussi. */
+  onNavigate?: (c: "clients" | "rapports" | "tableaux") => void;
+}) {
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const [historyKey, setHistoryKey] = useState(0);
   // Confirmation à deux temps avant le remplacement (action irréversible).
@@ -193,13 +200,24 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
                 Import réussi en {(phase.summary.durationMs / 1000).toFixed(1)} s.
                 Les entités ci-dessous ont été enregistrées dans la base locale.
               </p>
-              <button
-                className="btn"
-                style={{ marginTop: 4 }}
-                onClick={() => setPhase({ kind: "idle" })}
-              >
-                Nouvel import
-              </button>
+              <div className="import-notice__actions" style={{ marginTop: 4 }}>
+                {onNavigate && (
+                  <>
+                    <button
+                      className="btn btn--primary"
+                      onClick={() => onNavigate("tableaux")}
+                    >
+                      Voir les tableaux de bord
+                    </button>
+                    <button className="btn" onClick={() => onNavigate("rapports")}>
+                      Générer un rapport
+                    </button>
+                  </>
+                )}
+                <button className="btn" onClick={() => setPhase({ kind: "idle" })}>
+                  Nouvel import
+                </button>
+              </div>
             </div>
           )}
         </div>
