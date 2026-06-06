@@ -1,7 +1,7 @@
 {
   "name": "reporting-manar",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "MIMS REPORTING · application desktop de reporting pour société de bourse CEMAC/BVMAC",
   "scripts": {

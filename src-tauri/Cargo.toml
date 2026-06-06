@@ -1,6 +1,6 @@
 [package]
 name = "reporting-manar"
-version = "0.1.0"
+version = "0.1.1"
 description = "MIMS REPORTING · application desktop de reporting pour société de bourse CEMAC/BVMAC"
 authors = ["Maeba Consulting"]
 edition = "2021"
