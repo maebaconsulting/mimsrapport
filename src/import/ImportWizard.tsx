@@ -53,6 +53,8 @@ export function ImportWizard({
   const [historyKey, setHistoryKey] = useState(0);
   // Confirmation à deux temps avant le remplacement (action irréversible).
   const [confirmRemplace, setConfirmRemplace] = useState(false);
+  // Survol d'un fichier au-dessus de la zone de dépôt (retour visuel).
+  const [dragSurvol, setDragSurvol] = useState(false);
 
   async function doImport(
     fileName: string,
@@ -93,6 +95,25 @@ export function ImportWizard({
     await doImport(picked.name, picked.bytes, false);
   }
 
+  // Glisser-déposer réel : dépose d'un .xls/.xlsx sur la zone. Le clic reste le
+  // chemin principal (et le repli là où le dépôt n'est pas disponible).
+  async function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragSurvol(false);
+    if (busy) return;
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    if (!/\.xlsx?$/i.test(file.name)) {
+      setPhase({
+        kind: "erreur",
+        message: `Format non pris en charge : « ${file.name} ». Déposez un fichier .xls ou .xlsx.`,
+      });
+      return;
+    }
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    await doImport(file.name, bytes, false);
+  }
+
   const busy = phase.kind === "encours";
 
   return (
@@ -109,9 +130,18 @@ export function ImportWizard({
           {(phase.kind === "idle" || phase.kind === "encours") && (
             <button
               type="button"
-              className="import-dropzone"
+              className={
+                "import-dropzone" +
+                (dragSurvol ? " import-dropzone--survol" : "")
+              }
               onClick={handlePick}
               disabled={busy}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (!busy) setDragSurvol(true);
+              }}
+              onDragLeave={() => setDragSurvol(false)}
+              onDrop={(e) => void handleDrop(e)}
             >
               <span className="import-dropzone__icon" aria-hidden="true">
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
@@ -123,10 +153,14 @@ export function ImportWizard({
                 </svg>
               </span>
               <span className="import-dropzone__title">
-                {busy ? "Import en cours…" : "Choisir un fichier Manar"}
+                {busy
+                  ? "Import en cours…"
+                  : dragSurvol
+                    ? "Déposez le fichier ici"
+                    : "Choisir un fichier Manar"}
               </span>
               <span className="import-dropzone__hint">
-                Formats acceptés : .xls, .xlsx
+                Glissez-déposez un fichier ou cliquez · .xls, .xlsx
               </span>
             </button>
           )}

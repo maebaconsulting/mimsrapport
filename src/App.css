@@ -195,6 +195,12 @@
   border-color: var(--mw-accent);
   background: #fffdf2;
 }
+/* Survol d'un fichier glissé : zone mise en évidence. */
+.import-dropzone--survol {
+  border-color: var(--mw-ink);
+  border-style: solid;
+  background: var(--mw-accent-soft);
+}
 .import-dropzone:disabled {
   opacity: 0.6;
   cursor: default;

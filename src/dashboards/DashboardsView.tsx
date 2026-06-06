@@ -353,12 +353,12 @@ function DashboardsContent({ d }: { d: Dashboards }) {
             items={[
               {
                 libelle: `PP · ${d.repartitionTypeClient.pp.comptes} comptes`,
-                valeur: fmtXAF(d.repartitionTypeClient.pp.valorisation),
+                valeur: fmtXAFCompact(d.repartitionTypeClient.pp.valorisation),
                 color: CHART_COLORS[0],
               },
               {
                 libelle: `PM · ${d.repartitionTypeClient.pm.comptes} comptes`,
-                valeur: fmtXAF(d.repartitionTypeClient.pm.valorisation),
+                valeur: fmtXAFCompact(d.repartitionTypeClient.pm.valorisation),
                 color: CHART_COLORS[1],
               },
             ]}
@@ -377,12 +377,12 @@ function DashboardsContent({ d }: { d: Dashboards }) {
             items={[
               {
                 libelle: "Souverain",
-                valeur: fmtXAF(d.souverainVsCorporate.souverain),
+                valeur: fmtXAFCompact(d.souverainVsCorporate.souverain),
                 color: CHART_COLORS[0],
               },
               {
                 libelle: "Privé",
-                valeur: fmtXAF(d.souverainVsCorporate.corporate),
+                valeur: fmtXAFCompact(d.souverainVsCorporate.corporate),
                 color: CHART_COLORS[1],
               },
             ]}
