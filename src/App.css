@@ -41,7 +41,7 @@
   place-items: center;
   width: 38px;
   height: 38px;
-  border-radius: var(--mw-radius-md);
+  border-radius: 2px;
   background: var(--mw-accent);
   color: var(--mw-ink);
   font-family: var(--mw-font-display);
@@ -88,7 +88,7 @@
   font-size: 14px;
   font-weight: 500;
   padding: 11px 12px;
-  border-radius: var(--mw-radius-md);
+  border-radius: 2px;
   cursor: default;
   transition: var(--mw-transition);
 }
@@ -140,7 +140,7 @@
   font-size: 13px;
   font-weight: 500;
   padding: 11px 12px;
-  border-radius: var(--mw-radius-md);
+  border-radius: 2px;
   cursor: pointer;
   transition: var(--mw-transition);
 }
@@ -195,6 +195,251 @@
   overflow-y: auto;
   padding: 8px 28px 28px;
   min-width: 0;
+}
+
+/* ---- Barre d'en-tête globale ---- */
+/* Bandeau collant en tête de la zone principale. Marges négatives pour saigner
+   jusqu'aux bords malgré le padding de .app-main ; fond crème opaque pour
+   masquer le contenu qui défile dessous. */
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: -8px -28px 20px;
+  padding: 12px 28px;
+  background: var(--mw-cream);
+  border-bottom: 1px solid var(--mw-border);
+}
+
+.app-topbar__crumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 14px;
+}
+.app-topbar__crumb-root {
+  color: var(--mw-fg-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.app-topbar__crumb-sep {
+  color: var(--mw-fg-subtle);
+}
+.app-topbar__crumb-current {
+  font-family: var(--mw-font-display);
+  font-weight: 700;
+  color: var(--mw-fg);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.app-topbar__menu {
+  position: relative;
+}
+
+/* Déclencheur générique (cloche, langue, avatar) */
+.app-topbar__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--mw-radius-md);
+  color: var(--mw-fg-muted);
+  font-family: var(--mw-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--mw-transition);
+}
+.app-topbar__trigger:hover {
+  background: var(--mw-white);
+  border-color: var(--mw-border);
+  color: var(--mw-fg);
+}
+.app-topbar__trigger[aria-expanded="true"] {
+  background: var(--mw-white);
+  border-color: var(--mw-border-strong);
+  color: var(--mw-fg);
+}
+.app-topbar__trigger:focus-visible {
+  outline: none;
+  box-shadow: var(--mw-ring);
+}
+
+.app-topbar__icon {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.app-topbar__lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.app-topbar__caret {
+  font-size: 9px;
+  color: var(--mw-fg-subtle);
+  transition: var(--mw-transition);
+}
+.app-topbar__caret--up {
+  transform: rotate(180deg);
+}
+
+/* Pastille avatar (initiales) */
+.app-topbar__avatar {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--mw-radius-full);
+  background: var(--mw-accent);
+  color: var(--mw-ink);
+  font-family: var(--mw-font-display);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+.app-topbar__avatar--lg {
+  width: 40px;
+  height: 40px;
+  font-size: 15px;
+}
+
+/* Panneau déroulant */
+.app-topbar__panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 220px;
+  padding: 6px;
+  background: var(--mw-white);
+  border: 1px solid var(--mw-border);
+  border-radius: var(--mw-radius-md);
+  box-shadow: var(--mw-shadow-2);
+}
+.app-topbar__panel--start {
+  right: auto;
+  left: 0;
+}
+
+.app-topbar__menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.app-topbar__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 9px 11px;
+  background: transparent;
+  border: none;
+  border-radius: var(--mw-radius-sm);
+  color: var(--mw-fg);
+  font-family: var(--mw-font-body);
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--mw-transition);
+}
+.app-topbar__menu-item:hover {
+  background: var(--mw-surface-muted);
+}
+.app-topbar__menu-item:focus-visible {
+  outline: none;
+  box-shadow: var(--mw-ring);
+}
+.app-topbar__menu-item--active {
+  background: var(--mw-accent);
+  color: var(--mw-ink);
+  font-weight: 600;
+}
+.app-topbar__menu-item--active:hover {
+  background: var(--mw-accent);
+}
+.app-topbar__menu-code {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  padding: 1px 5px;
+  border-radius: var(--mw-radius-sm);
+  background: var(--mw-surface-sunken);
+  color: var(--mw-fg-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.app-topbar__menu-item--active .app-topbar__menu-code {
+  background: rgba(17, 25, 31, 0.12);
+  color: var(--mw-ink);
+}
+
+/* Panneau notifications (placeholder) */
+.app-topbar__notif {
+  padding: 8px 10px 10px;
+  min-width: 220px;
+}
+.app-topbar__notif-title {
+  margin: 0 0 4px;
+  font-family: var(--mw-font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mw-fg);
+}
+.app-topbar__notif-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--mw-fg-muted);
+}
+
+/* Carte de compte (avatar + nom/rôle + actions) */
+.app-topbar__account {
+  min-width: 240px;
+}
+.app-topbar__account-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px 12px;
+  border-bottom: 1px solid var(--mw-border);
+  margin-bottom: 6px;
+}
+.app-topbar__account-name {
+  margin: 0;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--mw-fg);
+}
+.app-topbar__account-role {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--mw-fg-muted);
 }
 
 .app-header {

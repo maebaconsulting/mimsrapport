@@ -10,6 +10,7 @@ import { HomeView } from "./home/HomeView";
 import { LicenseGate } from "./LicenseGate";
 import { getLicenseStatus, type LicenseStatus } from "./lib/license";
 import { confirmDiscardIfDirty } from "./lib/unsaved-guard";
+import { AppHeaderBar, type Lang } from "./ui/AppHeaderBar";
 
 type Vue = "accueil" | "import" | "clients" | "rapports" | "tableaux" | "parametres";
 
@@ -98,6 +99,9 @@ const NAV: Array<{ id: Vue; label: string; enabled: boolean }> = [
 function App() {
   const [vue, setVue] = useState<Vue>("accueil");
   const [license, setLicense] = useState<LicenseStatus | null>(null);
+  // Langue de l'interface (placeholder local au lot 1 ; câblée au contexte i18n
+  // au lot 2). Persistance gérée ensuite par le provider i18n.
+  const [lang, setLang] = useState<Lang>("fr");
   // Client pré-sélectionné pour la vue Rapports (passerelle depuis Clients).
   const [rapportClientId, setRapportClientId] = useState<string | null>(null);
   // Menu latéral réduit (icônes seules), mémorisé entre sessions.
@@ -208,6 +212,23 @@ function App() {
       </aside>
 
       <main className="app-main">
+        <AppHeaderBar
+          brand="MIMS REPORTING"
+          viewLabel={NAV.find((n) => n.id === vue)?.label ?? ""}
+          lang={lang}
+          onLangChange={setLang}
+          labels={{
+            notificationsLabel: "Notifications",
+            notificationsTitle: "Notifications",
+            notificationsEmpty: "Aucune notification",
+            languageLabel: "Choisir la langue",
+            accountLabel: "Compte",
+            accountName: "Jean Mvondo",
+            accountRole: "Administrateur",
+            signIn: "Se connecter",
+            signOut: "Se déconnecter",
+          }}
+        />
         {vue === "accueil" && <HomeView onNavigate={naviguer} />}
         {vue === "import" && (
           <>
