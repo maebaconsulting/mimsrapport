@@ -10,7 +10,8 @@ import { HomeView } from "./home/HomeView";
 import { LicenseGate } from "./LicenseGate";
 import { getLicenseStatus, type LicenseStatus } from "./lib/license";
 import { confirmDiscardIfDirty } from "./lib/unsaved-guard";
-import { AppHeaderBar, type Lang } from "./ui/AppHeaderBar";
+import { AppHeaderBar } from "./ui/AppHeaderBar";
+import { useT, useLang, type TKey } from "./i18n";
 
 type Vue = "accueil" | "import" | "clients" | "rapports" | "tableaux" | "parametres";
 
@@ -87,21 +88,30 @@ const ICONS: Record<Vue, ReactNode> = {
   ),
 };
 
-const NAV: Array<{ id: Vue; label: string; enabled: boolean }> = [
-  { id: "accueil", label: "Accueil", enabled: true },
-  { id: "import", label: "Import", enabled: true },
-  { id: "clients", label: "Clients", enabled: true },
-  { id: "rapports", label: "Rapports", enabled: true },
-  { id: "tableaux", label: "Tableaux de bord", enabled: true },
-  { id: "parametres", label: "Paramètres", enabled: true },
+const NAV: Array<{ id: Vue; enabled: boolean }> = [
+  { id: "accueil", enabled: true },
+  { id: "import", enabled: true },
+  { id: "clients", enabled: true },
+  { id: "rapports", enabled: true },
+  { id: "tableaux", enabled: true },
+  { id: "parametres", enabled: true },
 ];
 
+/** Clé de traduction du libellé de chaque vue (nav + fil d'Ariane). */
+const NAV_KEY: Record<Vue, TKey> = {
+  accueil: "nav.accueil",
+  import: "nav.import",
+  clients: "nav.clients",
+  rapports: "nav.rapports",
+  tableaux: "nav.tableaux",
+  parametres: "nav.parametres",
+};
+
 function App() {
+  const t = useT();
+  const [lang, setLang] = useLang();
   const [vue, setVue] = useState<Vue>("accueil");
   const [license, setLicense] = useState<LicenseStatus | null>(null);
-  // Langue de l'interface (placeholder local au lot 1 ; câblée au contexte i18n
-  // au lot 2). Persistance gérée ensuite par le provider i18n.
-  const [lang, setLang] = useState<Lang>("fr");
   // Client pré-sélectionné pour la vue Rapports (passerelle depuis Clients).
   const [rapportClientId, setRapportClientId] = useState<string | null>(null);
   // Menu latéral réduit (icônes seules), mémorisé entre sessions.
@@ -166,33 +176,36 @@ function App() {
           <span className="app-brand__name">MIMS REPORTING</span>
         </div>
         <nav className="app-nav">
-          <span className="small-caps app-nav__section">Navigation</span>
-          {NAV.map((item) => (
-            <button
-              key={item.id}
-              className={
-                "app-nav__item" +
-                (vue === item.id ? " app-nav__item--active" : "")
-              }
-              aria-current={vue === item.id ? "page" : undefined}
-              aria-label={item.label}
-              title={collapsed ? item.label : undefined}
-              onClick={() => item.enabled && naviguer(item.id)}
-              disabled={!item.enabled}
-            >
-              <span className="app-nav__icon">{ICONS[item.id]}</span>
-              <span className="app-nav__label">{item.label}</span>
-            </button>
-          ))}
+          <span className="small-caps app-nav__section">{t("nav.section")}</span>
+          {NAV.map((item) => {
+            const label = t(NAV_KEY[item.id]);
+            return (
+              <button
+                key={item.id}
+                className={
+                  "app-nav__item" +
+                  (vue === item.id ? " app-nav__item--active" : "")
+                }
+                aria-current={vue === item.id ? "page" : undefined}
+                aria-label={label}
+                title={collapsed ? label : undefined}
+                onClick={() => item.enabled && naviguer(item.id)}
+                disabled={!item.enabled}
+              >
+                <span className="app-nav__icon">{ICONS[item.id]}</span>
+                <span className="app-nav__label">{label}</span>
+              </button>
+            );
+          })}
         </nav>
         <div className="app-sidebar__footer">
           <button
             type="button"
             className="app-sidebar__toggle"
             onClick={toggleSidebar}
-            aria-label={collapsed ? "Déplier le menu" : "Réduire le menu"}
+            aria-label={collapsed ? t("nav.expand") : t("nav.collapse")}
             aria-expanded={!collapsed}
-            title={collapsed ? "Déplier le menu" : "Réduire le menu"}
+            title={collapsed ? t("nav.expand") : t("nav.collapse")}
           >
             <span className="app-sidebar__toggle-icon" aria-hidden="true">
               <Svg>
@@ -203,10 +216,10 @@ function App() {
                 )}
               </Svg>
             </span>
-            <span className="app-nav__label">Réduire le menu</span>
+            <span className="app-nav__label">{t("nav.collapse")}</span>
           </button>
           <span className="app-sidebar__version small-caps">
-            Version {__APP_VERSION__}
+            {t("nav.version", { version: __APP_VERSION__ })}
           </span>
         </div>
       </aside>
@@ -214,19 +227,19 @@ function App() {
       <main className="app-main">
         <AppHeaderBar
           brand="MIMS REPORTING"
-          viewLabel={NAV.find((n) => n.id === vue)?.label ?? ""}
+          viewLabel={t(NAV_KEY[vue])}
           lang={lang}
           onLangChange={setLang}
           labels={{
-            notificationsLabel: "Notifications",
-            notificationsTitle: "Notifications",
-            notificationsEmpty: "Aucune notification",
-            languageLabel: "Choisir la langue",
-            accountLabel: "Compte",
+            notificationsLabel: t("header.notifications"),
+            notificationsTitle: t("header.notifications"),
+            notificationsEmpty: t("header.notificationsEmpty"),
+            languageLabel: t("header.language"),
+            accountLabel: t("header.account"),
             accountName: "Jean Mvondo",
-            accountRole: "Administrateur",
-            signIn: "Se connecter",
-            signOut: "Se déconnecter",
+            accountRole: t("header.accountRole"),
+            signIn: t("header.signIn"),
+            signOut: t("header.signOut"),
           }}
         />
         {vue === "accueil" && <HomeView onNavigate={naviguer} />}

@@ -5,9 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-
-/** Langues prises en charge par l'interface. */
-export type Lang = "fr" | "en" | "es";
+import type { Lang } from "../i18n";
 
 /** Libellés courts du sélecteur de langue (non traduits : ce sont des sigles). */
 const LANG_LABELS: Record<Lang, string> = {
