@@ -29,6 +29,14 @@ export interface ImportCounts {
   mouvements: number;
 }
 
+/** Client apparu pour la première fois lors de cet import. */
+export interface NewClient {
+  code: string;
+  nom: string;
+  prenom: string | null;
+  type: "PP" | "PM";
+}
+
 export interface ImportSummary {
   status: "REUSSI";
   importId: string;
@@ -39,6 +47,9 @@ export interface ImportSummary {
   durationMs: number;
   counts: ImportCounts;
   warnings: string[];
+  /** Clients jamais vus avant cet import. */
+  newClients: NewClient[];
+  nbNewClients: number;
 }
 
 export interface AlreadyImported {
@@ -277,16 +288,42 @@ export async function runImport(
     });
 
     // 3. Clients + extensions PP/PM.
+    // Détection des nouveaux clients : codes absents de la base avant écriture.
+    progress("Détection des nouveaux clients…");
+    const existingClients = await withRetry(() =>
+      pb.collection("clients").getFullList({ fields: "code" }),
+    );
+    const existingCodes = new Set(existingClients.map((r) => String(r.code)));
+    const newClients: NewClient[] = derived.clients
+      .filter((c) => !existingCodes.has(c.code))
+      .map((c) => ({
+        code: c.code,
+        nom: c.nom,
+        prenom: c.prenom,
+        type: c.type,
+      }));
+    const newCodes = new Set(newClients.map((c) => c.code));
+
     progress("Dérivation des clients…");
     const clientIdByCode = new Map<string, string>();
     await runPool(derived.clients, POOL, async (c) => {
-      const id = await createOrUpdate(pb, "clients", pb.filter("code = {:v}", { v: c.code }), {
+      const data: Record<string, unknown> = {
         code: c.code,
         type: c.type,
         nom: c.nom,
         prenom: c.prenom,
         provenance: c.provenance,
-      });
+      };
+      // first_seen_at : posé uniquement à la création d'un nouveau client
+      // (createOrUpdate envoie le même payload en create ; pour un client
+      // existant le create échoue et l'update n'inclut pas ce champ).
+      if (newCodes.has(c.code)) data.first_seen_at = startedAt.toISOString();
+      const id = await createOrUpdate(
+        pb,
+        "clients",
+        pb.filter("code = {:v}", { v: c.code }),
+        data,
+      );
       clientIdByCode.set(c.code, id);
     });
     await runPool(derived.clients, POOL, async (c) => {
@@ -433,6 +470,8 @@ export async function runImport(
         ...ingest.parseResult.warnings.map((w) => w.message),
         ...derived.warnings,
       ],
+      newClients,
+      nbNewClients: newClients.length,
     };
   } catch (err) {
     await pb

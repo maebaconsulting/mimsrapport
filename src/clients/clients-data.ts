@@ -19,6 +19,10 @@ export interface ClientRow {
   date_ouverture: string | null;
   nb_positions: number;
   encours_xaf: number;
+  /** Date du premier import ayant fait apparaître le client (ou null). */
+  first_seen_at: string | null;
+  /** Vrai si le client est apparu lors du dernier import réussi. */
+  is_new: boolean;
 }
 
 export interface ClientsData {
@@ -39,6 +43,7 @@ interface ClientRec {
   type: "PP" | "PM";
   nom?: string;
   prenom?: string;
+  first_seen_at?: string;
 }
 
 /** Compose le nom : PP « prénom nom », PM raison sociale (repli sur nom/code). */
@@ -50,18 +55,33 @@ function composeName(c: ClientRec, raisonSociale: string | undefined): string {
 /** Charge et consolide la liste des clients importés. */
 export async function loadClientsData(pb: PocketBase): Promise<ClientsData> {
   // Réessai sur injoignabilité transitoire du sidecar (status 0), tout le lot.
-  const [clients, clientsPm, portefeuilles, positions] = await withRetry(() =>
-    Promise.all([
-      pb.collection("clients").getFullList({ fields: "id,code,type,nom,prenom" }),
-      pb.collection("clients_pm").getFullList({ fields: "client,raison_sociale" }),
-      pb
-        .collection("portefeuilles")
-        .getFullList({ fields: "client,code,statut,date_ouverture" }),
-      pb
-        .collection("positions")
-        .getFullList({ fields: "client,quantite_totale,valorisation_xaf" }),
-    ]),
-  );
+  const [clients, clientsPm, portefeuilles, positions, dernierImport] =
+    await withRetry(() =>
+      Promise.all([
+        pb
+          .collection("clients")
+          .getFullList({ fields: "id,code,type,nom,prenom,first_seen_at" }),
+        pb.collection("clients_pm").getFullList({ fields: "client,raison_sociale" }),
+        pb
+          .collection("portefeuilles")
+          .getFullList({ fields: "client,code,statut,date_ouverture" }),
+        pb
+          .collection("positions")
+          .getFullList({ fields: "client,quantite_totale,valorisation_xaf" }),
+        // Dernier import réussi : sert à marquer les clients « nouveaux ».
+        pb
+          .collection("manar_imports")
+          .getList(1, 1, { filter: 'statut = "REUSSI"', sort: "-created" })
+          .then((l) => l.items[0] ?? null)
+          .catch(() => null),
+      ]),
+    );
+
+  // Borne « nouveau » : début du dernier import réussi (first_seen_at >= borne).
+  const dernierDebut =
+    dernierImport && (dernierImport.started_at || dernierImport.created)
+      ? Date.parse(dernierImport.started_at || dernierImport.created)
+      : NaN;
 
   const pmByClient = new Map<string, string>();
   for (const pm of clientsPm) pmByClient.set(String(pm.client), pm.raison_sociale);
@@ -91,6 +111,11 @@ export async function loadClientsData(pb: PocketBase): Promise<ClientsData> {
   const rows: ClientRow[] = (clients as unknown as ClientRec[]).map((c) => {
     const pf = pfByClient.get(c.id);
     const agg = aggByClient.get(c.id) ?? { nb: 0, encours: 0 };
+    const firstSeen = c.first_seen_at || null;
+    const isNew =
+      !!firstSeen &&
+      !isNaN(dernierDebut) &&
+      Date.parse(firstSeen) >= dernierDebut;
     return {
       id: c.id,
       code: c.code,
@@ -101,6 +126,8 @@ export async function loadClientsData(pb: PocketBase): Promise<ClientsData> {
       date_ouverture: pf?.date_ouverture ?? null,
       nb_positions: agg.nb,
       encours_xaf: agg.encours,
+      first_seen_at: firstSeen,
+      is_new: isNew,
     };
   });
 

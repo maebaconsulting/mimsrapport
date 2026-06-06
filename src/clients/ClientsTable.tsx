@@ -110,6 +110,8 @@ export function ClientsTable({
   const [filtre, setFiltre] = useState<Filtre>("tous");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
+  // Filtre « clients apparus lors du dernier import ».
+  const [nouveauxSeulement, setNouveauxSeulement] = useState(false);
   // Tri par défaut : encours décroissant (cohérent avec le tri initial des données).
   const [sort, setSort] = useState<SortState>({ key: "encours_xaf", dir: "desc" });
 
@@ -142,6 +144,7 @@ export function ClientsTable({
     const q = recherche.trim().toLowerCase();
     const filtrees = state.data.rows.filter((r) => {
       if (filtre !== "tous" && r.type !== filtre) return false;
+      if (nouveauxSeulement && !r.is_new) return false;
       if (!q) return true;
       return (
         r.nom_complet.toLowerCase().includes(q) ||
@@ -163,13 +166,13 @@ export function ClientsTable({
         }) * facteur
       );
     });
-  }, [state, recherche, filtre, sort]);
+  }, [state, recherche, filtre, sort, nouveauxSeulement]);
 
   // Revenir en page 1 quand le filtre, la recherche, la taille de page ou les
   // données changent (évite de rester sur une page désormais vide).
   useEffect(() => {
     setPage(1);
-  }, [recherche, filtre, pageSize, reloadKey, sort]);
+  }, [recherche, filtre, pageSize, reloadKey, sort, nouveauxSeulement]);
 
   const pageCount = Math.max(1, Math.ceil(lignesFiltrees.length / pageSize));
   const pageSure = Math.min(page, pageCount);
@@ -259,6 +262,20 @@ export function ClientsTable({
             </button>
           ))}
         </div>
+        {data.rows.some((r) => r.is_new) && (
+          <button
+            type="button"
+            className={
+              "clients-newfilter" +
+              (nouveauxSeulement ? " clients-newfilter--on" : "")
+            }
+            aria-pressed={nouveauxSeulement}
+            onClick={() => setNouveauxSeulement((v) => !v)}
+            title="N'afficher que les clients apparus au dernier import"
+          >
+            Nouveaux ({data.rows.filter((r) => r.is_new).length})
+          </button>
+        )}
         <span className="clients-count">
           {lignesFiltrees.length.toLocaleString("fr-FR")} sur{" "}
           {data.totaux.nb_clients.toLocaleString("fr-FR")}
@@ -316,7 +333,14 @@ export function ClientsTable({
               {lignesPage.map((r) => (
                 <tr key={r.id}>
                   <td className="data-cell-code">{r.code}</td>
-                  <td className="data-cell-name">{r.nom_complet}</td>
+                  <td className="data-cell-name">
+                    {r.nom_complet}
+                    {r.is_new && (
+                      <span className="pill pill--nouveau" title="Apparu au dernier import">
+                        Nouveau
+                      </span>
+                    )}
+                  </td>
                   <td>
                     <span
                       className={`pill pill--${r.type.toLowerCase()}`}

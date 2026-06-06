@@ -348,3 +348,37 @@
   outline: none;
   box-shadow: var(--mw-ring);
 }
+
+/* Filtre « Nouveaux » dans la barre d'outils */
+.clients-newfilter {
+  border: 1px solid var(--mw-border-strong);
+  background: var(--mw-white);
+  font-family: var(--mw-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mw-fg-muted);
+  padding: 6px 12px;
+  border-radius: var(--mw-radius-full);
+  cursor: pointer;
+  transition: var(--mw-transition);
+}
+.clients-newfilter:hover {
+  color: var(--mw-fg);
+  border-color: var(--mw-fg-subtle);
+}
+.clients-newfilter--on {
+  background: var(--mw-info-bg);
+  border-color: var(--mw-info-solid);
+  color: var(--mw-info-fg);
+}
+.clients-newfilter:focus-visible {
+  outline: none;
+  box-shadow: var(--mw-ring);
+}
+
+/* Pastille « Nouveau » à côté du nom du client */
+.pill--nouveau {
+  margin-left: 8px;
+  background: var(--mw-info-bg);
+  color: var(--mw-info-fg);
+}

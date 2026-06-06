@@ -55,6 +55,11 @@ function statTiles(s: ImportSummary): Array<{ label: string; value: string; sub?
     { label: "Mouvements de titres", value: c.mouvements.toLocaleString("fr-FR") },
     { label: "Positions", value: c.positions.toLocaleString("fr-FR") },
     {
+      label: "Nouveaux clients",
+      value: s.nbNewClients.toLocaleString("fr-FR"),
+      sub: s.nbNewClients > 0 ? "depuis le dernier import" : "aucun",
+    },
+    {
       label: "Montant brut total",
       value: formatXAF(Math.round(s.montantTotalXaf)),
     },
@@ -355,6 +360,23 @@ export function ImportWizard({
               </div>
             ))}
           </div>
+          {phase.summary.nbNewClients > 0 && (
+            <details className="import-warnings">
+              <summary>
+                {phase.summary.nbNewClients} nouveau(x) client(s) détecté(s)
+              </summary>
+              <ul>
+                {phase.summary.newClients.slice(0, 50).map((c) => (
+                  <li key={c.code}>
+                    {c.type === "PP"
+                      ? `${c.prenom ?? ""} ${c.nom}`.trim()
+                      : c.nom}{" "}
+                    · {c.code}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
           {phase.summary.warnings.length > 0 && (
             <details className="import-warnings">
               <summary>{phase.summary.warnings.length} avertissement(s)</summary>
