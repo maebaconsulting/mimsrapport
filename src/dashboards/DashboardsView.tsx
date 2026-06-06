@@ -19,6 +19,7 @@ import { loadDashboardData } from "./data";
 import { computeDashboards, type Dashboards } from "./aggregator";
 import { KpiCard } from "./KpiCard";
 import { LoadingState, ErrorState } from "../ui/states";
+import { ProvenanceBanner } from "../ui/ProvenanceBanner";
 import "./dashboards.css";
 
 const CHART_COLORS = [
@@ -132,6 +133,7 @@ export function DashboardsView() {
       </header>
 
       <section className="app-content">
+        <ProvenanceBanner />
         {state.kind === "chargement" && (
           <LoadingState variant="panels" label="Calcul des indicateurs en cours…" />
         )}

@@ -4,6 +4,7 @@
 // exécutée avec les tokens MoWoBank.
 
 import { ClientsTable } from "./ClientsTable";
+import { ProvenanceBanner } from "../ui/ProvenanceBanner";
 
 export function ClientsView() {
   return (
@@ -17,6 +18,7 @@ export function ClientsView() {
       </header>
 
       <section className="app-content">
+        <ProvenanceBanner />
         <ClientsTable showKpis />
       </section>
     </>

@@ -1,45 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./design/tokens.css";
 import "./App.css";
-import { getPocketBase } from "./lib/pocketbase";
 import { ImportWizard } from "./import/ImportWizard";
 import { ClientsView } from "./clients/ClientsView";
 import { ReportsView } from "./reports/ReportsView";
 import { DashboardsView } from "./dashboards/DashboardsView";
 import { SettingsView } from "./settings/SettingsView";
+import { HomeView } from "./home/HomeView";
 import { LicenseGate } from "./LicenseGate";
 import { getLicenseStatus, type LicenseStatus } from "./lib/license";
-import { withRetry } from "./lib/retry";
-import { ErrorState, Skeleton } from "./ui/states";
 import { confirmDiscardIfDirty } from "./lib/unsaved-guard";
 
 type Vue = "accueil" | "import" | "clients" | "rapports" | "tableaux" | "parametres";
-
-type ConnState =
-  | { phase: "connexion" }
-  | { phase: "pret"; url: string; counts: Record<string, number> }
-  | { phase: "erreur"; message: string };
-
-const COLLECTIONS = [
-  "clients",
-  "portefeuilles",
-  "emetteurs",
-  "instruments",
-  "positions",
-  "mouvements_titres",
-  "manar_imports",
-];
-
-/** Libellés métier français des collections (au lieu des noms techniques). */
-const COLLECTION_LABELS: Record<string, string> = {
-  clients: "Clients",
-  portefeuilles: "Comptes-titres",
-  emetteurs: "Émetteurs",
-  instruments: "Instruments",
-  positions: "Positions",
-  mouvements_titres: "Mouvements de titres",
-  manar_imports: "Imports Manar",
-};
 
 const NAV: Array<{ id: Vue; label: string; enabled: boolean }> = [
   { id: "accueil", label: "Accueil", enabled: true },
@@ -52,7 +24,6 @@ const NAV: Array<{ id: Vue; label: string; enabled: boolean }> = [
 
 function App() {
   const [vue, setVue] = useState<Vue>("accueil");
-  const [state, setState] = useState<ConnState>({ phase: "connexion" });
   const [license, setLicense] = useState<LicenseStatus | null>(null);
 
   // Change de vue, en demandant confirmation si la vue courante a des
@@ -66,24 +37,6 @@ function App() {
   useEffect(() => {
     void getLicenseStatus().then(setLicense);
   }, []);
-
-  const rafraichir = useCallback(async () => {
-    try {
-      const pb = await getPocketBase();
-      const counts: Record<string, number> = {};
-      for (const name of COLLECTIONS) {
-        const list = await withRetry(() => pb.collection(name).getList(1, 1));
-        counts[name] = list.totalItems;
-      }
-      setState({ phase: "pret", url: pb.baseURL, counts });
-    } catch (err) {
-      setState({ phase: "erreur", message: String(err) });
-    }
-  }, []);
-
-  useEffect(() => {
-    void rafraichir();
-  }, [rafraichir]);
 
   if (license === null) {
     return (
@@ -128,9 +81,7 @@ function App() {
       </aside>
 
       <main className="app-main">
-        {vue === "accueil" && (
-          <AccueilView state={state} onRetry={rafraichir} />
-        )}
+        {vue === "accueil" && <HomeView onNavigate={naviguer} />}
         {vue === "import" && (
           <>
             <header className="app-header">
@@ -140,7 +91,7 @@ function App() {
               </p>
             </header>
             <section className="app-content">
-              <ImportWizard onImported={rafraichir} />
+              <ImportWizard />
             </section>
           </>
         )}
@@ -150,71 +101,6 @@ function App() {
         {vue === "parametres" && <SettingsView />}
       </main>
     </div>
-  );
-}
-
-function AccueilView({
-  state,
-  onRetry,
-}: {
-  state: ConnState;
-  onRetry: () => void;
-}) {
-  return (
-    <>
-      <header className="app-header">
-        <h1 className="app-header__title">Accueil</h1>
-        <p className="app-header__subtitle">
-          Outil de reporting pour société de bourse · marché CEMAC / BVMAC
-        </p>
-      </header>
-      <section className="app-content">
-        <div className="card">
-          <span className="small-caps">État de la base locale</span>
-          {state.phase === "connexion" && (
-            <div
-              role="status"
-              aria-live="polite"
-              style={{ marginTop: 12, display: "grid", gap: 10 }}
-            >
-              <span className="sr-only">Connexion au moteur de données…</span>
-              <Skeleton width="90%" />
-              <Skeleton width="70%" />
-              <Skeleton width="55%" />
-            </div>
-          )}
-          {state.phase === "erreur" && (
-            <ErrorState
-              message="Connexion à la base de données locale impossible. Vérifiez que le serveur est démarré, puis réessayez."
-              detail={state.message}
-              onRetry={onRetry}
-            />
-          )}
-          {state.phase === "pret" && (
-            <>
-              <p className="card__lead">
-                Base de données locale opérationnelle. Importez un fichier Manar
-                pour alimenter les rapports et tableaux de bord.
-              </p>
-              <table className="status-table">
-                <tbody>
-                  {COLLECTIONS.map((name) => (
-                    <tr key={name}>
-                      <td className="status-table__name">
-                        {COLLECTION_LABELS[name] ?? name}
-                      </td>
-                      <td className="status-table__count">
-                        {state.counts[name]}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
-        </div>
-      </section>
-    </>
   );
 }
 

@@ -1,0 +1,119 @@
+/* -*- coding: utf-8 -*-
+ * Accueil : grille d'indicateurs, passerelles et état vide.
+ */
+
+.home-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Passerelles vers les vues principales */
+.home-actions__title {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.home-actions__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 760px) {
+  .home-actions__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.home-action {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  padding: 18px 20px;
+  background: var(--mw-white);
+  border: 1px solid var(--mw-border);
+  border-radius: var(--mw-radius-xl);
+  box-shadow: var(--mw-shadow-1);
+  cursor: pointer;
+  transition: var(--mw-transition);
+}
+
+.home-action:hover {
+  border-color: var(--mw-border-strong);
+  box-shadow: var(--mw-shadow-2);
+  transform: translateY(-1px);
+}
+
+.home-action:focus-visible {
+  outline: none;
+  box-shadow: var(--mw-ring);
+}
+
+.home-action__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--mw-fg);
+}
+
+.home-action__arrow {
+  color: var(--mw-fg-muted);
+  transition: transform var(--mw-transition);
+}
+
+.home-action:hover .home-action__arrow {
+  transform: translateX(3px);
+  color: var(--mw-fg);
+}
+
+.home-action__text {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--mw-fg-muted);
+}
+
+/* État vide (aucun import) */
+.home-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  max-width: 520px;
+  margin: 32px auto;
+  padding: 40px 32px;
+  background: var(--mw-white);
+  border: 1px solid var(--mw-border);
+  border-radius: var(--mw-radius-2xl);
+  box-shadow: var(--mw-shadow-1);
+}
+
+.home-empty__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--mw-radius-full);
+  background: var(--mw-accent-soft);
+  color: var(--mw-fg);
+}
+
+.home-empty__title {
+  margin: 4px 0 0;
+  font-size: var(--mw-text-h3);
+  font-weight: 600;
+  color: var(--mw-fg);
+}
+
+.home-empty__text {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--mw-fg-muted);
+}

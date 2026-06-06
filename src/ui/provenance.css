@@ -1,0 +1,36 @@
+/* -*- coding: utf-8 -*-
+ * Bandeau de provenance des données (signal de confiance régulateur).
+ */
+
+.provenance {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  color: var(--mw-fg-muted);
+  background: var(--mw-surface-muted);
+  border: 1px solid var(--mw-border);
+  border-radius: var(--mw-radius-lg);
+}
+
+.provenance__icon {
+  color: var(--mw-fg-subtle);
+  flex-shrink: 0;
+}
+
+.provenance .small-caps {
+  letter-spacing: 0.08em;
+}
+
+.provenance__file {
+  font-family: var(--mw-font-body);
+  font-weight: 600;
+  color: var(--mw-fg);
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
