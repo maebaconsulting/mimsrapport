@@ -187,6 +187,91 @@ function SearchableSelect({
   );
 }
 
+/**
+ * Menu déroulant groupé (sans recherche), aligné sur le style du combobox.
+ * Remplace le `<select>` natif (menu OS) pour rester cohérent avec le design
+ * et avoir la même hauteur que le champ Client. Fermeture au clic extérieur et
+ * à Échap ; ARIA listbox/option.
+ */
+function GroupedSelect({
+  value,
+  onChange,
+  groups,
+  ariaLabel,
+}: {
+  value: string;
+  onChange: (id: string) => void;
+  groups: Array<{ label: string; options: ComboOption[] }>;
+  ariaLabel?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = groups.flatMap((g) => g.options).find((o) => o.id === value);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="combobox" ref={ref}>
+      <button
+        type="button"
+        className="combobox__input combobox__trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={ariaLabel}
+        onClick={() => setOpen((o) => !o)}
+      >
+        {selected?.label ?? ""}
+      </button>
+      <span className="combobox__caret" aria-hidden="true">▾</span>
+      {open && (
+        <ul className="combobox__list" role="listbox" aria-label={ariaLabel}>
+          {groups.flatMap((g) => [
+            <li
+              key={`grp-${g.label}`}
+              className="combobox__group small-caps"
+              role="presentation"
+            >
+              {g.label}
+            </li>,
+            ...g.options.map((o) => (
+              <li
+                key={o.id}
+                role="option"
+                aria-selected={o.id === value}
+                className={
+                  "combobox__option" +
+                  (o.id === value ? " combobox__option--active" : "")
+                }
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onChange(o.id);
+                  setOpen(false);
+                }}
+              >
+                {o.label}
+              </li>
+            )),
+          ])}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 type GenState =
   | { kind: "idle" }
   | { kind: "generation" }
@@ -435,23 +520,22 @@ export function ReportsView({
 
           {clients !== null && (
             <div className="reports-form-row">
-              <label className="report-field">
+              <div className="report-field reports-field--type">
                 <span className="small-caps">{t("reports.field-report-type")}</span>
-                <select
+                <GroupedSelect
                   value={reportType}
-                  onChange={(e) => setReportType(e.target.value as ReportType)}
-                >
-                  {[...new Set(REPORT_TYPES.map((r) => r.groupeKey))].map((g) => (
-                    <optgroup key={g} label={t(g)}>
-                      {REPORT_TYPES.filter((r) => r.groupeKey === g).map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {t(r.labelKey)}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-              </label>
+                  onChange={(id) => setReportType(id as ReportType)}
+                  ariaLabel={t("reports.field-report-type")}
+                  groups={[...new Set(REPORT_TYPES.map((r) => r.groupeKey))].map(
+                    (g) => ({
+                      label: t(g),
+                      options: REPORT_TYPES.filter((r) => r.groupeKey === g).map(
+                        (r) => ({ id: r.id, label: t(r.labelKey) }),
+                      ),
+                    }),
+                  )}
+                />
+              </div>
 
               {scopeOf(reportType) === "client" &&
                 (clients.length > 0 ? (

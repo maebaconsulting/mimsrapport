@@ -882,6 +882,25 @@
   color: var(--mw-fg-muted);
   text-align: center;
 }
+/* Déclencheur de menu : bouton calé sur le style d'un champ combobox
+   (même hauteur/boîte que SearchableSelect), texte aligné à gauche. */
+.combobox__trigger {
+  display: flex;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* En-tête de groupe dans la liste déroulante (non sélectionnable) */
+.combobox__group {
+  padding: 8px 11px 4px;
+  color: var(--mw-fg-muted);
+}
+.combobox__group + .combobox__option {
+  margin-top: 0;
+}
 
 /* Page Rapports · contrôles en barre, aperçu en ligne, modale pour l'impression */
 .reports-controls {
@@ -898,6 +917,10 @@
   gap: 14px;
 }
 
+.reports-field--type {
+  flex: 0 1 320px;
+  min-width: 240px;
+}
 .reports-field--client {
   flex: 1 1 280px;
   min-width: 220px;
