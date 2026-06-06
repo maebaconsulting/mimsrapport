@@ -109,11 +109,85 @@
   font-weight: 600;
 }
 
+.app-nav__icon {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
 .app-sidebar__footer {
   margin-top: auto;
-  padding: 14px 12px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 12px;
   color: var(--mw-fg-on-ink-muted);
   font-size: 12px;
+}
+
+/* Bouton de repli du menu (mêmes affordances qu'une entrée de nav) */
+.app-sidebar__toggle {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--mw-fg-on-ink-muted);
+  font-family: var(--mw-font-body);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 11px 12px;
+  border-radius: var(--mw-radius-md);
+  cursor: pointer;
+  transition: var(--mw-transition);
+}
+.app-sidebar__toggle:hover {
+  color: var(--mw-cream);
+  background: var(--mw-ink-soft);
+}
+.app-sidebar__toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--mw-ring);
+}
+.app-sidebar__toggle-icon {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.app-sidebar__version {
+  padding: 4px 12px 4px;
+  color: var(--mw-fg-on-ink-muted);
+}
+
+/* ---- Menu réduit (icônes seules) ---- */
+.app-shell--collapsed {
+  grid-template-columns: 84px 1fr;
+}
+.app-sidebar--collapsed {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+.app-sidebar--collapsed .app-brand {
+  justify-content: center;
+  padding: 6px 0 22px;
+}
+.app-sidebar--collapsed .app-brand__name,
+.app-sidebar--collapsed .app-nav__section,
+.app-sidebar--collapsed .app-nav__label,
+.app-sidebar--collapsed .app-sidebar__version {
+  display: none;
+}
+.app-sidebar--collapsed .app-nav__item,
+.app-sidebar--collapsed .app-sidebar__toggle {
+  justify-content: center;
+  gap: 0;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /* Zone principale */
