@@ -104,6 +104,7 @@ function App() {
                 "app-nav__item" +
                 (vue === item.id ? " app-nav__item--active" : "")
               }
+              aria-current={vue === item.id ? "page" : undefined}
               onClick={() => item.enabled && setVue(item.id)}
               disabled={!item.enabled}
             >

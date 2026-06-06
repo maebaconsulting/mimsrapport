@@ -159,7 +159,7 @@ export function ClientsTable({ showKpis = true, reloadKey = 0 }: ClientsTablePro
           />
           <KpiCard
             tone="sage"
-            label="Comptes titres"
+            label="Comptes-titres"
             value={data.totaux.nb_comptes.toLocaleString("fr-FR")}
           />
           <KpiCard
@@ -209,7 +209,7 @@ export function ClientsTable({ showKpis = true, reloadKey = 0 }: ClientsTablePro
                 <th>Code</th>
                 <th>Nom</th>
                 <th>Type</th>
-                <th>Compte titres</th>
+                <th>Compte-titres</th>
                 <th className="num">Positions</th>
                 <th className="num">Encours</th>
                 <th>Statut</th>

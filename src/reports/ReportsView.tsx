@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { getPocketBase } from "../lib/pocketbase";
 import { saveBytes } from "../lib/fileio";
 import {
@@ -69,13 +75,15 @@ function SearchableSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [active, setActive] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
+  const listId = "combo-list";
 
   const selected = options.find((o) => o.id === value);
   const q = query.trim().toLowerCase();
-  const filtered = q
-    ? options.filter((o) => o.label.toLowerCase().includes(q))
-    : options;
+  const filtered = (
+    q ? options.filter((o) => o.label.toLowerCase().includes(q)) : options
+  ).slice(0, 50);
 
   useEffect(() => {
     function onDocDown(e: MouseEvent) {
@@ -85,6 +93,40 @@ function SearchableSelect({
     return () => document.removeEventListener("mousedown", onDocDown);
   }, []);
 
+  // Garde l'option active dans les bornes et visible.
+  useEffect(() => {
+    if (active >= filtered.length) setActive(0);
+    if (open) {
+      document
+        .getElementById(`combo-opt-${active}`)
+        ?.scrollIntoView({ block: "nearest" });
+    }
+  }, [active, filtered.length, open]);
+
+  function choisir(id: string) {
+    onChange(id);
+    setOpen(false);
+    setQuery("");
+  }
+
+  function onKey(e: ReactKeyboardEvent) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setOpen(true);
+      setActive((a) => Math.min(a + 1, filtered.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActive((a) => Math.max(a - 1, 0));
+    } else if (e.key === "Enter") {
+      if (open && filtered[active]) {
+        e.preventDefault();
+        choisir(filtered[active].id);
+      }
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
+  }
+
   return (
     <div className="combobox" ref={ref}>
       <input
@@ -92,37 +134,43 @@ function SearchableSelect({
         type="text"
         role="combobox"
         aria-expanded={open}
+        aria-controls={listId}
+        aria-autocomplete="list"
+        aria-activedescendant={open ? `combo-opt-${active}` : undefined}
         placeholder={placeholder}
         value={open ? query : (selected?.label ?? "")}
         onFocus={() => {
           setOpen(true);
           setQuery("");
+          setActive(0);
         }}
         onChange={(e) => {
           setQuery(e.target.value);
           setOpen(true);
+          setActive(0);
         }}
+        onKeyDown={onKey}
       />
       <span className="combobox__caret" aria-hidden="true">▾</span>
       {open && (
-        <ul className="combobox__list" role="listbox">
+        <ul className="combobox__list" role="listbox" id={listId}>
           {filtered.length === 0 ? (
             <li className="combobox__empty">Aucun résultat</li>
           ) : (
-            filtered.slice(0, 50).map((o) => (
+            filtered.map((o, i) => (
               <li
                 key={o.id}
+                id={`combo-opt-${i}`}
                 role="option"
-                aria-selected={o.id === value}
+                aria-selected={i === active}
                 className={
                   "combobox__option" +
-                  (o.id === value ? " combobox__option--active" : "")
+                  (i === active ? " combobox__option--active" : "")
                 }
+                onMouseEnter={() => setActive(i)}
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  onChange(o.id);
-                  setOpen(false);
-                  setQuery("");
+                  choisir(o.id);
                 }}
               >
                 {o.label}
