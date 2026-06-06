@@ -23,6 +23,8 @@ export interface ClientRow {
   first_seen_at: string | null;
   /** Vrai si le client est apparu lors du dernier import réussi. */
   is_new: boolean;
+  /** Vrai si une fiche de contact (email/téléphone…) existe pour ce client. */
+  has_contact: boolean;
 }
 
 export interface ClientsData {
@@ -55,7 +57,7 @@ function composeName(c: ClientRec, raisonSociale: string | undefined): string {
 /** Charge et consolide la liste des clients importés. */
 export async function loadClientsData(pb: PocketBase): Promise<ClientsData> {
   // Réessai sur injoignabilité transitoire du sidecar (status 0), tout le lot.
-  const [clients, clientsPm, portefeuilles, positions, dernierImport] =
+  const [clients, clientsPm, portefeuilles, positions, dernierImport, contacts] =
     await withRetry(() =>
       Promise.all([
         pb
@@ -74,8 +76,24 @@ export async function loadClientsData(pb: PocketBase): Promise<ClientsData> {
           .getList(1, 1, { filter: 'statut = "REUSSI"', sort: "-created" })
           .then((l) => l.items[0] ?? null)
           .catch(() => null),
+        // Contacts saisis manuellement (présence → indicateur dans la table).
+        pb
+          .collection("clients_contacts")
+          .getFullList({ fields: "client,email,mobile,telephone,whatsapp" })
+          .catch(() => [] as Array<Record<string, unknown>>),
       ]),
     );
+
+  // Un client a un contact si au moins un champ de coordonnées est renseigné.
+  const contactByClient = new Set<string>();
+  for (const c of contacts as Array<Record<string, unknown>>) {
+    const has =
+      String(c.email ?? "") ||
+      String(c.mobile ?? "") ||
+      String(c.telephone ?? "") ||
+      String(c.whatsapp ?? "");
+    if (has) contactByClient.add(String(c.client));
+  }
 
   // Borne « nouveau » : début du dernier import réussi (first_seen_at >= borne).
   const dernierDebut =
@@ -128,6 +146,7 @@ export async function loadClientsData(pb: PocketBase): Promise<ClientsData> {
       encours_xaf: agg.encours,
       first_seen_at: firstSeen,
       is_new: isNew,
+      has_contact: contactByClient.has(c.id),
     };
   });
 

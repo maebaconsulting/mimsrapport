@@ -143,4 +143,35 @@ describe.runIf(RUN)("import-service · intégration PocketBase", () => {
     expect(clients.totalItems).toBe(80);
     expect(operations.totalItems).toBe(166); // ancien import supprimé en cascade
   }, 60000);
+
+  it("préserve les contacts clients lors d'un réimport avec remplacement", async () => {
+    // Crée une fiche de contact sur un client existant.
+    const unClient = await client.collection("clients").getFirstListItem("id != ''");
+    await client.collection("clients_contacts").create({
+      client: unClient.id,
+      email: "contact@exemple.cm",
+      mobile: "+237600000000",
+      whatsapp: "+237600000000",
+      adresse: "Douala",
+      notes: "VIP",
+    });
+
+    // Réimport avec remplacement.
+    const data = new Uint8Array(readFileSync(SAMPLE));
+    const result = await runImport(client, {
+      fileName: "ANONYME.xlsx",
+      data,
+      replace: true,
+    });
+    expect(result.status).toBe("REUSSI");
+
+    // Le contact survit (l'import ne supprime jamais de client).
+    const contact = await client
+      .collection("clients_contacts")
+      .getFirstListItem(client.filter("client = {:c}", { c: unClient.id }));
+    expect(contact.email).toBe("contact@exemple.cm");
+    expect(contact.notes).toBe("VIP");
+    const total = await client.collection("clients_contacts").getList(1, 1);
+    expect(total.totalItems).toBe(1);
+  }, 60000);
 });

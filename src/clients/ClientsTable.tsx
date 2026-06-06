@@ -98,12 +98,17 @@ export interface ClientsTableProps {
    * (pour les clients ayant au moins une position). Reçoit l'id du client.
    */
   onGenerateReport?: (clientId: string) => void;
+  /**
+   * Si fourni, rend le nom du client cliquable pour ouvrir sa fiche de contact.
+   */
+  onOpenClient?: (clientId: string, clientName: string) => void;
 }
 
 export function ClientsTable({
   showKpis = true,
   reloadKey = 0,
   onGenerateReport,
+  onOpenClient,
 }: ClientsTableProps) {
   const [state, setState] = useState<State>({ kind: "chargement" });
   const [recherche, setRecherche] = useState("");
@@ -334,7 +339,27 @@ export function ClientsTable({
                 <tr key={r.id}>
                   <td className="data-cell-code">{r.code}</td>
                   <td className="data-cell-name">
-                    {r.nom_complet}
+                    {onOpenClient ? (
+                      <button
+                        type="button"
+                        className="data-cell-namebtn"
+                        onClick={() => onOpenClient(r.id, r.nom_complet)}
+                        title="Ouvrir la fiche de contact"
+                      >
+                        {r.nom_complet}
+                      </button>
+                    ) : (
+                      r.nom_complet
+                    )}
+                    {r.has_contact && (
+                      <span
+                        className="contact-dot"
+                        title="Fiche de contact renseignée"
+                        aria-label="Fiche de contact renseignée"
+                      >
+                        ✉
+                      </span>
+                    )}
                     {r.is_new && (
                       <span className="pill pill--nouveau" title="Apparu au dernier import">
                         Nouveau
