@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getPocketBase } from "../lib/pocketbase";
+import { useRefreshOnSignal } from "../lib/refresh";
 import { KpiCard } from "../dashboards/KpiCard";
 import { loadClientsData, type ClientRow, type ClientsData } from "./clients-data";
 import { LoadingState, ErrorState } from "../ui/states";
@@ -129,20 +130,24 @@ export function ClientsTable({
     });
   }
 
-  const charger = useCallback(async () => {
-    setState({ kind: "chargement" });
+  // `silent` : rafraîchissement en arrière-plan (focus/import) sans squelette
+  // ni écrasement de l'écran en cas d'erreur transitoire.
+  const charger = useCallback(async (silent = false) => {
+    if (!silent) setState({ kind: "chargement" });
     try {
       const pb = await getPocketBase();
       const data = await loadClientsData(pb);
       setState({ kind: "pret", data });
     } catch (err) {
-      setState({ kind: "erreur", message: String(err) });
+      if (!silent) setState({ kind: "erreur", message: String(err) });
     }
   }, []);
 
   useEffect(() => {
     void charger();
   }, [charger, reloadKey]);
+
+  useRefreshOnSignal(() => void charger(true));
 
   const lignesFiltrees = useMemo(() => {
     if (state.kind !== "pret") return [];

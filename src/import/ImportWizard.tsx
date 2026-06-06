@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getPocketBase } from "../lib/pocketbase";
+import { useRefresh } from "../lib/refresh";
 import { pickManarFile } from "../lib/fileio";
 import { runImport } from "./import-service";
 import type { ImportResult, ImportSummary } from "./import-service";
@@ -87,6 +88,13 @@ export function ImportWizard({
   const [confirmRemplace, setConfirmRemplace] = useState(false);
   // Survol d'un fichier au-dessus de la zone de dépôt (retour visuel).
   const [dragSurvol, setDragSurvol] = useState(false);
+  const { refresh } = useRefresh();
+
+  // À la réussite d'un import, signale aux autres vues (Accueil, Clients,
+  // Tableaux de bord, Rapports) de se resynchroniser avec les nouvelles données.
+  useEffect(() => {
+    if (phase.kind === "reussi") refresh();
+  }, [phase.kind, refresh]);
 
   async function doImport(
     fileName: string,

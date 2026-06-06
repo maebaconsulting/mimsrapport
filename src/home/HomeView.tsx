@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useT, useLocale } from "../i18n";
 import { getPocketBase } from "../lib/pocketbase";
+import { useRefreshOnSignal } from "../lib/refresh";
 import { loadClientsData, type ClientsData } from "../clients/clients-data";
 import { KpiCard } from "../dashboards/KpiCard";
 import { LoadingState, ErrorState } from "../ui/states";
@@ -37,8 +38,10 @@ export function HomeView({ onNavigate }: { onNavigate: (c: Cible) => void }) {
   const t = useT();
   const [state, setState] = useState<State>({ kind: "chargement" });
 
-  const charger = useCallback(async () => {
-    setState({ kind: "chargement" });
+  // `silent` : rafraîchissement en arrière-plan (focus/import) sans repasser
+  // par le squelette ni écraser l'écran en cas d'erreur transitoire.
+  const charger = useCallback(async (silent = false) => {
+    if (!silent) setState({ kind: "chargement" });
     try {
       const pb = await getPocketBase();
       const data = await loadClientsData(pb);
@@ -48,13 +51,15 @@ export function HomeView({ onNavigate }: { onNavigate: (c: Cible) => void }) {
           : { kind: "pret", data },
       );
     } catch (err) {
-      setState({ kind: "erreur", message: String(err) });
+      if (!silent) setState({ kind: "erreur", message: String(err) });
     }
   }, []);
 
   useEffect(() => {
     void charger();
   }, [charger]);
+
+  useRefreshOnSignal(() => void charger(true));
 
   return (
     <>

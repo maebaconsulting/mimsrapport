@@ -7,6 +7,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { getPocketBase } from "../lib/pocketbase";
+import { useRefreshOnSignal } from "../lib/refresh";
 import { saveBytes } from "../lib/fileio";
 import {
   generateAttestation,
@@ -330,27 +331,35 @@ export function ReportsView({
   const printOverlayRef = useRef<HTMLDivElement>(null);
   const focusAvantModaleRef = useRef<HTMLElement | null>(null);
 
-  const charger = useCallback(async () => {
-    try {
-      const pb = await getPocketBase();
-      const list = await listClientsWithPositions(pb);
-      setClients(list);
-      if (list.length > 0) {
-        // Honore le client pré-sélectionné s'il a des positions, sinon le 1er.
-        const voulu =
-          initialClientId && list.some((c) => c.id === initialClientId)
+  // `silent` : rafraîchissement en arrière-plan (focus/import) ; conserve la
+  // sélection courante si le client existe toujours, n'écrase pas en cas
+  // d'erreur transitoire.
+  const charger = useCallback(
+    async (silent = false) => {
+      try {
+        const pb = await getPocketBase();
+        const list = await listClientsWithPositions(pb);
+        setClients(list);
+        setClientId((prev) => {
+          if (silent && prev && list.some((c) => c.id === prev)) return prev;
+          if (list.length === 0) return "";
+          return initialClientId && list.some((c) => c.id === initialClientId)
             ? initialClientId
             : list[0].id;
-        setClientId(voulu);
+        });
+        if (!silent) setLoadError(null);
+      } catch (err) {
+        if (!silent) setLoadError(String(err));
       }
-    } catch (err) {
-      setLoadError(String(err));
-    }
-  }, [initialClientId]);
+    },
+    [initialClientId],
+  );
 
   useEffect(() => {
     void charger();
   }, [charger]);
+
+  useRefreshOnSignal(() => void charger(true));
 
   // Libère l'object URL courant au démontage (évite les fuites mémoire).
   useEffect(() => {

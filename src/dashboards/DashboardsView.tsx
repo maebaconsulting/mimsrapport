@@ -17,6 +17,7 @@ import {
   YAxis,
 } from "recharts";
 import { getPocketBase } from "../lib/pocketbase";
+import { useRefreshOnSignal } from "../lib/refresh";
 import { useT, useLocale, formatPercent, type TKey } from "../i18n";
 import { loadDashboardData } from "./data";
 import { computeDashboards, type Dashboards } from "./aggregator";
@@ -125,29 +126,31 @@ export function DashboardsView() {
   const [state, setState] = useState<State>({ kind: "chargement" });
   const [reloadKey, setReloadKey] = useState(0);
 
+  // `silent` : rafraîchissement en arrière-plan (focus/import) sans squelette
+  // ni écrasement de l'écran en cas d'erreur transitoire.
+  const fetchDashboard = useCallback(async (silent: boolean) => {
+    if (!silent) setState({ kind: "chargement" });
+    try {
+      const pb = await getPocketBase();
+      const data = await loadDashboardData(pb);
+      if (data.positions.length === 0) {
+        setState({ kind: "vide" });
+        return;
+      }
+      setState({ kind: "pret", d: computeDashboards(data.positions, data.mouvements) });
+    } catch (err) {
+      if (!silent) setState({ kind: "erreur", message: String(err) });
+    }
+  }, []);
+
+  // Réessai manuel (bouton) : recharge avec squelette.
   const charger = useCallback(() => setReloadKey((k) => k + 1), []);
 
   useEffect(() => {
-    let annule = false;
-    setState({ kind: "chargement" });
-    (async () => {
-      try {
-        const pb = await getPocketBase();
-        const data = await loadDashboardData(pb);
-        if (annule) return;
-        if (data.positions.length === 0) {
-          setState({ kind: "vide" });
-          return;
-        }
-        setState({ kind: "pret", d: computeDashboards(data.positions, data.mouvements) });
-      } catch (err) {
-        if (!annule) setState({ kind: "erreur", message: String(err) });
-      }
-    })();
-    return () => {
-      annule = true;
-    };
-  }, [reloadKey]);
+    void fetchDashboard(false);
+  }, [fetchDashboard, reloadKey]);
+
+  useRefreshOnSignal(() => void fetchDashboard(true));
 
   return (
     <>
