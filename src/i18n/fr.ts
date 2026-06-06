@@ -203,6 +203,10 @@ export const fr = {
   "dashboards.gauge-zone-a-surveiller": "À surveiller",
   "dashboards.gauge-zone-alerte": "Alerte",
   "dashboards.gauge-aria-zone": "zone {zone}",
+  "dashboards.classe-action": "Actions",
+  "dashboards.classe-obligation": "Obligations",
+  "dashboards.classe-opc": "OPC",
+  "dashboards.emetteur-inconnu": "Inconnu",
 
   // Rapports (UI ; les gabarits PDF restent en français hors i18n)
   "reports.type-attestation": "Attestation de portefeuille",

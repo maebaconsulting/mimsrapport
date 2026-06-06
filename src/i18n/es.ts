@@ -196,6 +196,10 @@ export const es: Dict = {
   "dashboards.gauge-zone-a-surveiller": "A vigilar",
   "dashboards.gauge-zone-alerte": "Alerta",
   "dashboards.gauge-aria-zone": "zona {zone}",
+  "dashboards.classe-action": "Acciones",
+  "dashboards.classe-obligation": "Bonos",
+  "dashboards.classe-opc": "Fondos",
+  "dashboards.emetteur-inconnu": "Desconocido",
 
   // Informes (solo la interfaz ; las plantillas PDF permanecen en francés)
   "reports.type-attestation": "Certificado de cartera",

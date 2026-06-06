@@ -17,7 +17,7 @@ import {
   YAxis,
 } from "recharts";
 import { getPocketBase } from "../lib/pocketbase";
-import { useT, useLocale, formatPercent } from "../i18n";
+import { useT, useLocale, formatPercent, type TKey } from "../i18n";
 import { loadDashboardData } from "./data";
 import { computeDashboards, type Dashboards } from "./aggregator";
 import { KpiCard } from "./KpiCard";
@@ -56,6 +56,26 @@ function fmtAxis(n: number): string {
   return String(n);
 }
 
+/** Clé i18n du libellé d'une classe d'actifs (la donnée porte le code `cle`). */
+const CLASSE_KEY: Record<string, TKey> = {
+  ACTION: "dashboards.classe-action",
+  OBLIGATION: "dashboards.classe-obligation",
+  OPC: "dashboards.classe-opc",
+};
+
+/** Libellé d'axe/infobulle pour une période « YYYY-MM », localisé (mois abrégé + année). */
+function fmtPeriode(p: string, locale: string): string {
+  const m = /^(\d{4})-(\d{2})$/.exec(p);
+  if (!m) return p;
+  const annee = Number(m[1]);
+  const mois = Number(m[2]);
+  if (!annee || !mois) return p;
+  return new Date(annee, mois - 1, 1).toLocaleDateString(locale, {
+    month: "short",
+    year: "numeric",
+  });
+}
+
 /** Infobulle MoWoBank : carte blanche arrondie, ombre douce, valeurs mono. */
 function ChartTooltip({
   active,
@@ -68,10 +88,13 @@ function ChartTooltip({
 }) {
   const locale = useLocale();
   if (!active || !payload || payload.length === 0) return null;
+  // fmtPeriode localise un libellé « YYYY-MM » (mois/année) et laisse les
+  // autres libellés inchangés (année « YYYY », catégories).
+  const labelText = fmtPeriode(String(label), locale);
   return (
     <div className="chart-tooltip">
       {label != null && label !== "" ? (
-        <div className="chart-tooltip__label">{String(label)}</div>
+        <div className="chart-tooltip__label">{labelText}</div>
       ) : null}
       {payload.map((p, i) => (
         <div className="chart-tooltip__row" key={i}>
@@ -160,6 +183,12 @@ export function DashboardsView() {
 function DashboardsContent({ d }: { d: Dashboards }) {
   const t = useT();
   const locale = useLocale();
+  // Libellés issus de la couche données : on traduit via le code stable `cle`
+  // (classes d'actifs) et la sentinelle « INCONNU » (émetteur sans nom).
+  const classeLabel = (item: { cle: string; libelle: string }) =>
+    CLASSE_KEY[item.cle] ? t(CLASSE_KEY[item.cle]) : item.libelle;
+  const emetteurLabel = (item: { cle: string; libelle: string }) =>
+    item.cle === "INCONNU" ? t("dashboards.emetteur-inconnu") : item.libelle;
   return (
     <div className="dash-grid">
       {/* 1. Encours global + indicateurs clés */}
@@ -299,7 +328,11 @@ function DashboardsContent({ d }: { d: Dashboards }) {
                   stroke="var(--mw-border)"
                   strokeDasharray="3 3"
                 />
-                <XAxis dataKey="periode" tick={{ fontSize: 10 }} />
+                <XAxis
+                  dataKey="periode"
+                  tick={{ fontSize: 10 }}
+                  tickFormatter={(v) => fmtPeriode(String(v), locale)}
+                />
                 <YAxis tickFormatter={(v) => fmtAxis(Number(v))} tick={{ fontSize: 11 }} />
                 <Tooltip content={<ChartTooltip />} />
                 <Area
@@ -321,13 +354,13 @@ function DashboardsContent({ d }: { d: Dashboards }) {
         <Panel titre={t("dashboards.panel-repartition-classe")}>
           <DonutChart
             data={d.repartitionClasse.map((c) => ({
-              name: c.libelle,
+              name: classeLabel(c),
               value: c.valorisation,
             }))}
           />
           <Legend
             items={d.repartitionClasse.map((c, i) => ({
-              libelle: c.libelle,
+              libelle: classeLabel(c),
               valeur: formatPercent(c.part, locale),
               color: CHART_COLORS[i % CHART_COLORS.length],
             }))}
@@ -350,7 +383,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
         >
           <HBarChart
             data={d.concentrationEmetteur.items.slice(0, 6).map((e) => ({
-              name: e.libelle,
+              name: emetteurLabel(e),
               value: e.valorisation,
               part: e.part,
             }))}
@@ -376,7 +409,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
             <ResponsiveContainer width="100%" height={220}>
               <Treemap
                 data={d.concentrationEmetteur.items.slice(0, 12).map((e, i) => ({
-                  name: e.libelle,
+                  name: emetteurLabel(e),
                   size: e.valorisation,
                   part: e.part,
                   fill:
@@ -405,7 +438,11 @@ function DashboardsContent({ d }: { d: Dashboards }) {
                   stroke="var(--mw-border)"
                   strokeDasharray="3 3"
                 />
-                <XAxis dataKey="periode" tick={{ fontSize: 10 }} />
+                <XAxis
+                  dataKey="periode"
+                  tick={{ fontSize: 10 }}
+                  tickFormatter={(v) => fmtPeriode(String(v), locale)}
+                />
                 <YAxis tickFormatter={(v) => fmtAxis(Number(v))} tick={{ fontSize: 11 }} />
                 <Tooltip content={<ChartTooltip />} />
                 <ReferenceLine y={0} stroke="var(--mw-border-strong)" />
@@ -477,7 +514,11 @@ function DashboardsContent({ d }: { d: Dashboards }) {
                   stroke="var(--mw-border)"
                   strokeDasharray="3 3"
                 />
-                <XAxis dataKey="periode" tick={{ fontSize: 10 }} />
+                <XAxis
+                  dataKey="periode"
+                  tick={{ fontSize: 10 }}
+                  tickFormatter={(v) => fmtPeriode(String(v), locale)}
+                />
                 <YAxis tickFormatter={(v) => fmtAxis(Number(v))} tick={{ fontSize: 11 }} />
                 <Tooltip content={<ChartTooltip />} />
                 <Area

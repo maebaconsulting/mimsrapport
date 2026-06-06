@@ -189,6 +189,10 @@ export const en: Dict = {
   "dashboards.gauge-zone-a-surveiller": "To watch",
   "dashboards.gauge-zone-alerte": "Alert",
   "dashboards.gauge-aria-zone": "zone {zone}",
+  "dashboards.classe-action": "Equities",
+  "dashboards.classe-obligation": "Bonds",
+  "dashboards.classe-opc": "Funds",
+  "dashboards.emetteur-inconnu": "Unknown",
 
   // Reports (UI only; PDF templates stay in French, out of i18n scope)
   "reports.type-attestation": "Portfolio statement",
