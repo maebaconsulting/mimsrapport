@@ -10,6 +10,7 @@ import { SettingsView } from "./settings/SettingsView";
 import { LicenseGate } from "./LicenseGate";
 import { getLicenseStatus, type LicenseStatus } from "./lib/license";
 import { withRetry } from "./lib/retry";
+import { ErrorState, Skeleton } from "./ui/states";
 
 type Vue = "accueil" | "import" | "clients" | "rapports" | "tableaux" | "parametres";
 
@@ -117,7 +118,7 @@ function App() {
 
       <main className="app-main">
         {vue === "accueil" && (
-          <AccueilView state={state} />
+          <AccueilView state={state} onRetry={rafraichir} />
         )}
         {vue === "import" && (
           <>
@@ -141,7 +142,13 @@ function App() {
   );
 }
 
-function AccueilView({ state }: { state: ConnState }) {
+function AccueilView({
+  state,
+  onRetry,
+}: {
+  state: ConnState;
+  onRetry: () => void;
+}) {
   return (
     <>
       <header className="app-header">
@@ -154,12 +161,23 @@ function AccueilView({ state }: { state: ConnState }) {
         <div className="card">
           <span className="small-caps">État de la base locale</span>
           {state.phase === "connexion" && (
-            <p className="card__lead">Connexion au moteur de données…</p>
+            <div
+              role="status"
+              aria-live="polite"
+              style={{ marginTop: 12, display: "grid", gap: 10 }}
+            >
+              <span className="sr-only">Connexion au moteur de données…</span>
+              <Skeleton width="90%" />
+              <Skeleton width="70%" />
+              <Skeleton width="55%" />
+            </div>
           )}
           {state.phase === "erreur" && (
-            <p className="card__lead" style={{ color: "var(--color-danger)" }}>
-              Connexion impossible : {state.message}
-            </p>
+            <ErrorState
+              message="Connexion à la base de données locale impossible. Vérifiez que le serveur est démarré, puis réessayez."
+              detail={state.message}
+              onRetry={onRetry}
+            />
           )}
           {state.phase === "pret" && (
             <>

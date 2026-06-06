@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getPocketBase } from "../lib/pocketbase";
 import { KpiCard } from "../dashboards/KpiCard";
 import { loadClientsData, type ClientRow, type ClientsData } from "./clients-data";
+import { LoadingState, ErrorState } from "../ui/states";
 import "../dashboards/dashboards.css";
 import "./clients.css";
 
@@ -108,29 +109,21 @@ export function ClientsTable({ showKpis = true, reloadKey = 0 }: ClientsTablePro
 
   if (state.kind === "chargement") {
     return (
-      <div className="card">
-        <p className="card__lead">Chargement des clients…</p>
-      </div>
+      <LoadingState
+        variant={showKpis ? "table" : "card"}
+        label="Chargement des clients en cours…"
+        cols={8}
+      />
     );
   }
 
   if (state.kind === "erreur") {
     return (
-      <div className="import-notice import-notice--danger">
-        <p>
-          Le serveur de données local est momentanément injoignable. Vérifiez
-          qu'il est démarré, puis réessayez.
-        </p>
-        <details className="import-warnings">
-          <summary>Détail technique</summary>
-          <p style={{ marginTop: 6 }}>{state.message}</p>
-        </details>
-        <div className="import-notice__actions" style={{ marginTop: 10 }}>
-          <button className="btn" onClick={() => void charger()}>
-            Réessayer
-          </button>
-        </div>
-      </div>
+      <ErrorState
+        message="Le serveur de données local est momentanément injoignable. Vérifiez qu'il est démarré, puis réessayez."
+        detail={state.message}
+        onRetry={() => void charger()}
+      />
     );
   }
 

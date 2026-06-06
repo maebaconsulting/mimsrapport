@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -18,6 +18,7 @@ import { getPocketBase } from "../lib/pocketbase";
 import { loadDashboardData } from "./data";
 import { computeDashboards, type Dashboards } from "./aggregator";
 import { KpiCard } from "./KpiCard";
+import { LoadingState, ErrorState } from "../ui/states";
 import "./dashboards.css";
 
 const CHART_COLORS = [
@@ -95,9 +96,13 @@ type State =
 
 export function DashboardsView() {
   const [state, setState] = useState<State>({ kind: "chargement" });
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const charger = useCallback(() => setReloadKey((k) => k + 1), []);
 
   useEffect(() => {
     let annule = false;
+    setState({ kind: "chargement" });
     (async () => {
       try {
         const pb = await getPocketBase();
@@ -115,7 +120,7 @@ export function DashboardsView() {
     return () => {
       annule = true;
     };
-  }, []);
+  }, [reloadKey]);
 
   return (
     <>
@@ -128,9 +133,7 @@ export function DashboardsView() {
 
       <section className="app-content">
         {state.kind === "chargement" && (
-          <div className="card">
-            <p className="card__lead">Calcul des indicateurs…</p>
-          </div>
+          <LoadingState variant="panels" label="Calcul des indicateurs en cours…" />
         )}
         {state.kind === "vide" && (
           <div className="import-notice import-notice--warn">
@@ -138,9 +141,11 @@ export function DashboardsView() {
           </div>
         )}
         {state.kind === "erreur" && (
-          <div className="import-notice import-notice--danger">
-            <p>Chargement impossible : {state.message}</p>
-          </div>
+          <ErrorState
+            message="Impossible de calculer les indicateurs. Vérifiez que le serveur de données local est démarré, puis réessayez."
+            detail={state.message}
+            onRetry={charger}
+          />
         )}
         {state.kind === "pret" && <DashboardsContent d={state.d} />}
       </section>

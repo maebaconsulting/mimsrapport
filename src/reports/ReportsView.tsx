@@ -22,6 +22,7 @@ import {
   generateEtatClientsDesherence,
   generateLettreRelanceDesherence,
 } from "./services/desherence";
+import { ErrorState } from "../ui/states";
 
 type ReportType =
   | "attestation"
@@ -347,9 +348,14 @@ export function ReportsView() {
           <span className="small-caps">Production de rapports</span>
 
           {loadError && (
-            <div className="import-notice import-notice--danger">
-              <p>Chargement des clients impossible : {loadError}</p>
-            </div>
+            <ErrorState
+              message="Impossible de charger la liste des clients. Vérifiez que le serveur de données local est démarré, puis réessayez."
+              detail={loadError}
+              onRetry={() => {
+                setLoadError(null);
+                void charger();
+              }}
+            />
           )}
 
           {clients !== null && (
@@ -425,10 +431,16 @@ export function ReportsView() {
           )}
 
           {gen.kind === "erreur" && (
-            <div className="import-notice import-notice--danger">
-              <p>Échec de la génération : {gen.message}</p>
-            </div>
+            <ErrorState
+              message="La génération du rapport a échoué. Réessayez ; si le problème persiste, vérifiez les données importées."
+              detail={gen.message}
+              onRetry={generer}
+            />
           )}
+
+          <div className="sr-only" role="status" aria-live="polite">
+            {gen.kind === "generation" ? "Génération du rapport en cours…" : ""}
+          </div>
         </div>
 
         {preview ? (
@@ -458,16 +470,18 @@ export function ReportsView() {
                 </button>
               </div>
 
-              {save.kind === "ok" && (
-                <div className="preview-rail__notice preview-rail__notice--ok">
-                  Enregistré · {save.filename}
-                </div>
-              )}
-              {save.kind === "annule" && (
-                <div className="preview-rail__notice">
-                  Enregistrement annulé.
-                </div>
-              )}
+              <div role="status" aria-live="polite">
+                {save.kind === "ok" && (
+                  <div className="preview-rail__notice preview-rail__notice--ok">
+                    Enregistré · {save.filename}
+                  </div>
+                )}
+                {save.kind === "annule" && (
+                  <div className="preview-rail__notice">
+                    Enregistrement annulé.
+                  </div>
+                )}
+              </div>
 
               <section className="preview-rail__block">
                 <span className="small-caps">Informations clés</span>
