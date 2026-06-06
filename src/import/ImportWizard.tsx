@@ -3,6 +3,11 @@ import { getPocketBase } from "../lib/pocketbase";
 import { pickManarFile } from "../lib/fileio";
 import { runImport } from "./import-service";
 import type { ImportResult, ImportSummary } from "./import-service";
+import { readManarWorkbook } from "./manar-parser";
+import { detectMapping } from "./manar-detect";
+import { loadMappingForHeaders } from "./mapping-store";
+import { REQUIRED_FIELDS, type ColumnMapping } from "./manar-fields";
+import { MappingStep } from "./MappingStep";
 import { ClientsTable } from "../clients/ClientsTable";
 import { ImportHistory } from "./ImportHistory";
 import { ErrorState } from "../ui/states";
@@ -11,7 +16,22 @@ import "./import.css";
 type Phase =
   | { kind: "idle" }
   | { kind: "encours"; step: string; fileName: string }
-  | { kind: "deja"; fileName: string; existingFileName: string; data: Uint8Array }
+  | {
+      kind: "mapping";
+      fileName: string;
+      data: Uint8Array;
+      headers: string[];
+      sampleRows: string[][];
+      mapping: ColumnMapping;
+      missingRequired: string[];
+    }
+  | {
+      kind: "deja";
+      fileName: string;
+      existingFileName: string;
+      data: Uint8Array;
+      mapping?: ColumnMapping;
+    }
   | { kind: "reussi"; summary: ImportSummary }
   | { kind: "erreur"; message: string };
 
@@ -60,6 +80,7 @@ export function ImportWizard({
     fileName: string,
     data: Uint8Array,
     replace: boolean,
+    mapping?: ColumnMapping,
   ) {
     setConfirmRemplace(false);
     setPhase({ kind: "encours", step: "Préparation…", fileName });
@@ -69,6 +90,7 @@ export function ImportWizard({
         fileName,
         data,
         replace,
+        mapping,
         onProgress: (step) => setPhase({ kind: "encours", step, fileName }),
       });
       if (result.status === "DEJA_IMPORTE") {
@@ -77,6 +99,7 @@ export function ImportWizard({
           fileName,
           existingFileName: result.existingFileName,
           data,
+          mapping,
         });
       } else {
         setPhase({ kind: "reussi", summary: result });
@@ -89,10 +112,47 @@ export function ImportWizard({
     }
   }
 
+  // Détermine la correspondance de colonnes avant l'import : mapping mémorisé,
+  // sinon auto-détection ; si la structure est inconnue, ouvre l'étape de mapping.
+  async function preparerImport(fileName: string, data: Uint8Array) {
+    setPhase({ kind: "encours", step: "Analyse de la structure…", fileName });
+    let wb;
+    try {
+      wb = readManarWorkbook(data);
+    } catch (err) {
+      setPhase({ kind: "erreur", message: String(err) });
+      return;
+    }
+    try {
+      const pb = await getPocketBase();
+      const stored = await loadMappingForHeaders(pb, wb.headers);
+      if (stored && REQUIRED_FIELDS.every((k) => stored.mapping[k] != null)) {
+        await doImport(fileName, data, false, stored.mapping);
+        return;
+      }
+      const det = detectMapping(wb.headers, wb.sampleRows);
+      if (det.confidence === "auto") {
+        await doImport(fileName, data, false, det.mapping);
+        return;
+      }
+      setPhase({
+        kind: "mapping",
+        fileName,
+        data,
+        headers: wb.headers,
+        sampleRows: wb.sampleRows,
+        mapping: det.mapping,
+        missingRequired: det.missingRequired,
+      });
+    } catch (err) {
+      setPhase({ kind: "erreur", message: String(err) });
+    }
+  }
+
   async function handlePick() {
     const picked = await pickManarFile();
     if (!picked) return;
-    await doImport(picked.name, picked.bytes, false);
+    await preparerImport(picked.name, picked.bytes);
   }
 
   // Glisser-déposer réel : dépose d'un .xls/.xlsx sur la zone. Le clic reste le
@@ -111,7 +171,7 @@ export function ImportWizard({
       return;
     }
     const bytes = new Uint8Array(await file.arrayBuffer());
-    await doImport(file.name, bytes, false);
+    await preparerImport(file.name, bytes);
   }
 
   const busy = phase.kind === "encours";
@@ -170,6 +230,29 @@ export function ImportWizard({
             </p>
           )}
 
+          {phase.kind === "mapping" && (
+            <MappingStep
+              headers={phase.headers}
+              sampleRows={phase.sampleRows}
+              initialMapping={phase.mapping}
+              onCancel={() => setPhase({ kind: "idle" })}
+              onConfirm={(mapping, remember) => {
+                if (remember) {
+                  void getPocketBase()
+                    .then((pb) =>
+                      import("./mapping-store").then((m) =>
+                        m.saveMapping(pb, { headers: phase.headers, mapping }),
+                      ),
+                    )
+                    .catch(() => {
+                      /* la mémorisation est best-effort */
+                    });
+                }
+                void doImport(phase.fileName, phase.data, false, mapping);
+              }}
+            />
+          )}
+
           {phase.kind === "deja" && !confirmRemplace && (
             <div className="import-notice import-notice--warn" role="status">
               <p>
@@ -200,7 +283,9 @@ export function ImportWizard({
               <div className="import-notice__actions">
                 <button
                   className="btn btn--danger"
-                  onClick={() => doImport(phase.fileName, phase.data, true)}
+                  onClick={() =>
+                    doImport(phase.fileName, phase.data, true, phase.mapping)
+                  }
                 >
                   Oui, remplacer définitivement
                 </button>
