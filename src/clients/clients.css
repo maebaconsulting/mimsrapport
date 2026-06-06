@@ -283,3 +283,43 @@
   background: var(--mw-surface-sunken);
   color: var(--mw-fg-muted);
 }
+
+/* En-têtes triables : le bouton porte le rembourrage pour une cible pleine. */
+.data-table thead th:has(.data-sort) {
+  padding: 0;
+}
+.data-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 13px 16px;
+  border: none;
+  background: none;
+  font: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: color var(--mw-transition);
+}
+.data-table th.num .data-sort {
+  justify-content: flex-end;
+}
+.data-sort:hover,
+.data-sort--active {
+  color: var(--mw-fg);
+}
+.data-sort__icon {
+  font-size: 9px;
+  opacity: 0.55;
+}
+.data-sort--active .data-sort__icon {
+  opacity: 1;
+}
+.data-sort:focus-visible {
+  outline: none;
+  box-shadow: var(--mw-ring);
+  border-radius: var(--mw-radius-sm);
+}

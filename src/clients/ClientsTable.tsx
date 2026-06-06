@@ -19,6 +19,35 @@ const TYPE_LABEL: Record<"PP" | "PM", string> = {
   PM: "Personne morale",
 };
 
+type SortKey =
+  | "code"
+  | "nom_complet"
+  | "type"
+  | "compte_titres"
+  | "nb_positions"
+  | "encours_xaf"
+  | "statut"
+  | "date_ouverture";
+
+/** Colonnes triables de la table (libellé, clé de tri, alignement, type). */
+const COLUMNS: Array<{
+  key: SortKey;
+  label: string;
+  num?: boolean;
+  numeric?: boolean;
+}> = [
+  { key: "code", label: "Code" },
+  { key: "nom_complet", label: "Nom" },
+  { key: "type", label: "Type" },
+  { key: "compte_titres", label: "Compte-titres" },
+  { key: "nb_positions", label: "Positions", num: true, numeric: true },
+  { key: "encours_xaf", label: "Encours", num: true, numeric: true },
+  { key: "statut", label: "Statut" },
+  { key: "date_ouverture", label: "Ouverture" },
+];
+
+type SortState = { key: SortKey; dir: "asc" | "desc" };
+
 const PAGE_SIZE_OPTIONS = [15, 30, 50];
 
 type State =
@@ -72,6 +101,17 @@ export function ClientsTable({ showKpis = true, reloadKey = 0 }: ClientsTablePro
   const [filtre, setFiltre] = useState<Filtre>("tous");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
+  // Tri par défaut : encours décroissant (cohérent avec le tri initial des données).
+  const [sort, setSort] = useState<SortState>({ key: "encours_xaf", dir: "desc" });
+
+  function trier(key: SortKey) {
+    setSort((s) => {
+      if (s.key === key) return { key, dir: s.dir === "asc" ? "desc" : "asc" };
+      // Premier clic : numérique → décroissant, texte → croissant.
+      const numeric = COLUMNS.find((c) => c.key === key)?.numeric;
+      return { key, dir: numeric ? "desc" : "asc" };
+    });
+  }
 
   const charger = useCallback(async () => {
     setState({ kind: "chargement" });
@@ -91,7 +131,7 @@ export function ClientsTable({ showKpis = true, reloadKey = 0 }: ClientsTablePro
   const lignesFiltrees = useMemo(() => {
     if (state.kind !== "pret") return [];
     const q = recherche.trim().toLowerCase();
-    return state.data.rows.filter((r) => {
+    const filtrees = state.data.rows.filter((r) => {
       if (filtre !== "tous" && r.type !== filtre) return false;
       if (!q) return true;
       return (
@@ -100,13 +140,27 @@ export function ClientsTable({ showKpis = true, reloadKey = 0 }: ClientsTablePro
         r.compte_titres.toLowerCase().includes(q)
       );
     });
-  }, [state, recherche, filtre]);
+    const facteur = sort.dir === "asc" ? 1 : -1;
+    return [...filtrees].sort((a, b) => {
+      const va = a[sort.key];
+      const vb = b[sort.key];
+      if (typeof va === "number" && typeof vb === "number") {
+        return (va - vb) * facteur;
+      }
+      return (
+        String(va ?? "").localeCompare(String(vb ?? ""), "fr", {
+          numeric: true,
+          sensitivity: "base",
+        }) * facteur
+      );
+    });
+  }, [state, recherche, filtre, sort]);
 
   // Revenir en page 1 quand le filtre, la recherche, la taille de page ou les
   // données changent (évite de rester sur une page désormais vide).
   useEffect(() => {
     setPage(1);
-  }, [recherche, filtre, pageSize, reloadKey]);
+  }, [recherche, filtre, pageSize, reloadKey, sort]);
 
   const pageCount = Math.max(1, Math.ceil(lignesFiltrees.length / pageSize));
   const pageSure = Math.min(page, pageCount);
@@ -212,14 +266,36 @@ export function ClientsTable({ showKpis = true, reloadKey = 0 }: ClientsTablePro
             </caption>
             <thead>
               <tr>
-                <th scope="col">Code</th>
-                <th scope="col">Nom</th>
-                <th scope="col">Type</th>
-                <th scope="col">Compte-titres</th>
-                <th scope="col" className="num">Positions</th>
-                <th scope="col" className="num">Encours</th>
-                <th scope="col">Statut</th>
-                <th scope="col">Ouverture</th>
+                {COLUMNS.map((col) => {
+                  const actif = sort.key === col.key;
+                  return (
+                    <th
+                      key={col.key}
+                      scope="col"
+                      className={col.num ? "num" : undefined}
+                      aria-sort={
+                        actif
+                          ? sort.dir === "asc"
+                            ? "ascending"
+                            : "descending"
+                          : "none"
+                      }
+                    >
+                      <button
+                        type="button"
+                        className={
+                          "data-sort" + (actif ? " data-sort--active" : "")
+                        }
+                        onClick={() => trier(col.key)}
+                      >
+                        {col.label}
+                        <span className="data-sort__icon" aria-hidden="true">
+                          {actif ? (sort.dir === "asc" ? "▲" : "▼") : "↕"}
+                        </span>
+                      </button>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
