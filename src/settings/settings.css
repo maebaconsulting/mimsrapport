@@ -174,3 +174,31 @@
 .settings-actions__notice--err {
   color: var(--mw-danger-fg);
 }
+
+/* Indicateur « modifications non enregistrées » dans la barre d'actions */
+.settings-actions__dirty {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mw-warning-fg);
+  background: var(--mw-warning-bg);
+  padding: 4px 10px;
+  border-radius: var(--mw-radius-full);
+}
+
+/* Validation des champs */
+.report-field__required {
+  color: var(--mw-danger-fg);
+}
+.report-field__error {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--mw-danger-fg);
+}
+.settings-view .report-field input.input--invalid {
+  border-color: var(--mw-danger-fg);
+  background: var(--mw-danger-bg);
+}
+.settings-view .report-field input.input--invalid:focus {
+  border-color: var(--mw-danger-fg);
+}

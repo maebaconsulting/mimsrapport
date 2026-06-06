@@ -11,6 +11,7 @@ import { LicenseGate } from "./LicenseGate";
 import { getLicenseStatus, type LicenseStatus } from "./lib/license";
 import { withRetry } from "./lib/retry";
 import { ErrorState, Skeleton } from "./ui/states";
+import { confirmDiscardIfDirty } from "./lib/unsaved-guard";
 
 type Vue = "accueil" | "import" | "clients" | "rapports" | "tableaux" | "parametres";
 
@@ -53,6 +54,14 @@ function App() {
   const [vue, setVue] = useState<Vue>("accueil");
   const [state, setState] = useState<ConnState>({ phase: "connexion" });
   const [license, setLicense] = useState<LicenseStatus | null>(null);
+
+  // Change de vue, en demandant confirmation si la vue courante a des
+  // modifications non enregistrées (cf. Paramètres).
+  function naviguer(cible: Vue) {
+    if (cible === vue) return;
+    if (!confirmDiscardIfDirty()) return;
+    setVue(cible);
+  }
 
   useEffect(() => {
     void getLicenseStatus().then(setLicense);
@@ -106,7 +115,7 @@ function App() {
                 (vue === item.id ? " app-nav__item--active" : "")
               }
               aria-current={vue === item.id ? "page" : undefined}
-              onClick={() => item.enabled && setVue(item.id)}
+              onClick={() => item.enabled && naviguer(item.id)}
               disabled={!item.enabled}
             >
               {item.label}
