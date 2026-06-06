@@ -484,7 +484,7 @@ export function ReportsView() {
 
           {gen.kind === "erreur" && (
             <ErrorState
-              message="La génération du rapport a échoué. Réessayez ; si le problème persiste, vérifiez les données importées."
+              message="La génération du rapport a échoué. Réessayez ; si le problème persiste, vérifiez les données importées."
               detail={gen.message}
               onRetry={generer}
             />
@@ -585,7 +585,7 @@ export function ReportsView() {
               </svg>
             </div>
             <p className="reports-empty__text">
-              Choisissez un rapport puis cliquez « Générer l'aperçu » : le
+              Choisissez un rapport puis cliquez « Générer l'aperçu » : le
               document s'affichera ici, prêt à imprimer ou télécharger.
             </p>
           </div>

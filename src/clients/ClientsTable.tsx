@@ -206,7 +206,7 @@ export function ClientsTable({ showKpis = true, reloadKey = 0 }: ClientsTablePro
         <div className="data-scroll">
           <table className="data-table">
             <caption className="sr-only">
-              Liste des clients consolidés issus de l'import Manar : code, nom,
+              Liste des clients consolidés issus de l'import Manar : code, nom,
               type, compte-titres, nombre de positions, encours, statut et date
               d'ouverture.
             </caption>

@@ -385,7 +385,7 @@ function DashboardsContent({ d }: { d: Dashboards }) {
 
       <p className="dash-note small-caps">
         Les vues d'évolution temporelle s'appuient sur la chronologie des
-        mouvements importés ; sur un import unique, elles restent partielles.
+        mouvements importés ; sur un import unique, elles restent partielles.
       </p>
     </div>
   );

@@ -94,8 +94,8 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
         <div className="card import-card">
           <span className="small-caps">Assistant d'import</span>
           <p className="card__lead">
-            Sélectionnez le fichier Manar (« État des instruments saisis sur
-            Manar », format .xls ou .xlsx). L'import enregistre les clients,
+            Sélectionnez le fichier Manar (« État des instruments saisis sur
+            Manar », format .xls ou .xlsx). L'import enregistre les clients,
             portefeuilles, instruments, émetteurs, positions et mouvements.
           </p>
 
@@ -119,7 +119,7 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
                 {busy ? "Import en cours…" : "Choisir un fichier Manar"}
               </span>
               <span className="import-dropzone__hint">
-                Formats acceptés : .xls, .xlsx
+                Formats acceptés : .xls, .xlsx
               </span>
             </button>
           )}
@@ -133,7 +133,7 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
           {phase.kind === "deja" && !confirmRemplace && (
             <div className="import-notice import-notice--warn" role="status">
               <p>
-                Ce fichier a déjà été importé avec succès (« {phase.existingFileName}{" "}
+                Ce fichier a déjà été importé avec succès (« {phase.existingFileName}{" "}
                 »). Vous pouvez annuler ou remplacer l'import précédent.
               </p>
               <div className="import-notice__actions">
@@ -153,7 +153,7 @@ export function ImportWizard({ onImported }: { onImported?: () => void }) {
           {phase.kind === "deja" && confirmRemplace && (
             <div className="import-notice import-notice--danger" role="alert">
               <p>
-                Confirmer le remplacement ? Les données de l'import précédent
+                Confirmer le remplacement ? Les données de l'import précédent
                 seront définitivement supprimées puis recréées à partir de ce
                 fichier. Cette action est irréversible.
               </p>

@@ -49,7 +49,7 @@ export function LicenseGate({
         </p>
         {status.sdb && status.sdb !== "Mode développement" && (
           <p className="license-card__meta">
-            Licence détectée : {status.sdb}
+            Licence détectée : {status.sdb}
             {status.expires_at ? ` · expiration ${status.expires_at}` : ""}
           </p>
         )}
