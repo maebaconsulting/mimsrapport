@@ -59,6 +59,12 @@ export interface AggregatedPosition {
   isin: string;
   quantite_totale: number;
   pmp_xaf: number | null;
+  /** Valeur nominale (Manar MONTANTDEV) reprise de l'opération la plus récente. */
+  valeur_nominale_xaf: number | null;
+  /** Coupon couru (Manar INTERET COURU) repris de l'opération la plus récente. */
+  courus_xaf: number | null;
+  /** Date du dernier mouvement de la position (ISO « yyyy-mm-dd »). */
+  derniere_maj: string | null;
 }
 
 export interface MovementToCreate {
@@ -67,6 +73,10 @@ export interface MovementToCreate {
   sens: MovementSens;
   quantite: number;
   prix_unitaire_xaf: number | null;
+  /** Valeur nominale de l'opération (Manar MONTANTDEV). */
+  valeur_nominale_xaf: number | null;
+  /** Coupon couru de l'opération (Manar INTERET COURU). */
+  courus_xaf: number | null;
   date_operation: string;
   date_valeur: string;
   statut: MimsStatut;
@@ -259,17 +269,46 @@ export function syntheticRccm(clientCode: string): string {
 export function aggregatePositionsByClientInstrument(
   movements: MovementToCreate[],
 ): AggregatedPosition[] {
-  const map = new Map<string, { quantite: number; cost: number }>();
+  const map = new Map<
+    string,
+    {
+      quantite: number;
+      cost: number;
+      valeur_nominale_xaf: number | null;
+      courus_xaf: number | null;
+      derniere_maj: string | null;
+    }
+  >();
   for (const m of movements) {
     if (m.statut !== "VALIDE") continue;
     const key = `${m.client_code}::${m.isin}`;
-    const current = map.get(key) ?? { quantite: 0, cost: 0 };
+    const current =
+      map.get(key) ??
+      ({
+        quantite: 0,
+        cost: 0,
+        valeur_nominale_xaf: null,
+        courus_xaf: null,
+        derniere_maj: null,
+      } as const);
     const signedQty =
       m.sens === "ACHAT" || m.sens === "OST_ENTREE" ? m.quantite : -m.quantite;
     const cost = signedQty * (m.prix_unitaire_xaf ?? 0);
+    // Nominal, coupon couru et date « dernière maj » repris de l'opération la
+    // plus récente de la position (dates ISO comparables lexicographiquement).
+    // Sémantique provisoire, à confirmer côté métier (cf. courrier).
+    const plusRecent =
+      current.derniere_maj === null || m.date_operation > current.derniere_maj;
     map.set(key, {
       quantite: current.quantite + signedQty,
       cost: current.cost + cost,
+      valeur_nominale_xaf: plusRecent
+        ? (m.valeur_nominale_xaf ?? current.valeur_nominale_xaf)
+        : current.valeur_nominale_xaf,
+      courus_xaf: plusRecent
+        ? (m.courus_xaf ?? current.courus_xaf)
+        : current.courus_xaf,
+      derniere_maj: plusRecent ? m.date_operation : current.derniere_maj,
     });
   }
 
@@ -282,6 +321,9 @@ export function aggregatePositionsByClientInstrument(
       isin,
       quantite_totale: value.quantite,
       pmp_xaf: value.quantite > 0 ? value.cost / value.quantite : null,
+      valeur_nominale_xaf: value.valeur_nominale_xaf,
+      courus_xaf: value.courus_xaf,
+      derniere_maj: value.derniere_maj,
     });
   }
   return positions;
@@ -426,6 +468,10 @@ export function deriveEntities(rows: ManarMappedRow[]): DerivedEntities {
         sens: deduceSensFromNatureOperation(op.nature_operation),
         quantite: deduceQuantiteFromRow(op),
         prix_unitaire_xaf: op.prix_xaf ? parseNumeric(op.prix_xaf) || null : null,
+        valeur_nominale_xaf: op.valeur_nominale_xaf
+          ? parseNumeric(op.valeur_nominale_xaf) || null
+          : null,
+        courus_xaf: op.courus_xaf ? parseNumeric(op.courus_xaf) || null : null,
         date_operation: op.date_operation
           ? toIsoDate(op.date_operation)
           : today,

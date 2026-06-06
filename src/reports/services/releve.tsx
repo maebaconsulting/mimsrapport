@@ -63,6 +63,10 @@ async function buildBaseProps(
         prix_moyen_pondere: Number(p.pmp_xaf ?? 0),
         valorisation_xaf: Number(p.valorisation_xaf ?? 0),
         devise: inst.devise ?? "XAF",
+        valeur_nominale_xaf:
+          p.valeur_nominale_xaf != null ? Number(p.valeur_nominale_xaf) : null,
+        courus_xaf: p.courus_xaf != null ? Number(p.courus_xaf) : null,
+        derniere_maj: (p.derniere_maj as string) || null,
       };
     });
 

@@ -64,6 +64,12 @@ export interface ReleveCompteTitresPdfProps {
     prix_moyen_pondere: number;
     valorisation_xaf: number;
     devise: string;
+    /** Valeur nominale (Manar MONTANTDEV) ; colonne « Nominal ». */
+    valeur_nominale_xaf?: number | null;
+    /** Coupon couru (Manar INTERET COURU) ; colonne « CC ». */
+    courus_xaf?: number | null;
+    /** Date du dernier mouvement ; colonne « Dernière M. ». */
+    derniere_maj?: string | null;
   }>;
   mouvements: Array<{
     date: string;
@@ -104,6 +110,13 @@ function fmtDate(iso: string): string {
 
 function fmtNombre(n: number): string {
   return n.toLocaleString("fr-FR").replace(/\u202f/g, "\u00a0");
+}
+
+/** Montant avec d\u00e9cimales (jusqu'\u00e0 3) \u00b7 coupon couru, cours. */
+function fmtDecimal(n: number): string {
+  return n
+    .toLocaleString("fr-FR", { maximumFractionDigits: 3 })
+    .replace(/\u202f/g, "\u00a0");
 }
 
 // ---------------------------------------------------------------------------
@@ -710,19 +723,19 @@ export function ReleveCompteTitresPdf({
                     {fmtNombre(pos.quantite)}
                   </Text>
                   <Text style={[styles.tableCellMono, styles.posColNominal, { textAlign: "right" }]}>
-                    -
+                    {pos.valeur_nominale_xaf != null ? fmtNombre(pos.valeur_nominale_xaf) : "-"}
                   </Text>
                   <Text style={[styles.tableCellMono, styles.posColCours, { textAlign: "right" }]}>
                     {pos.prix_moyen_pondere.toLocaleString("fr-FR", { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
                   </Text>
                   <Text style={[styles.tableCellMono, styles.posColCC, { textAlign: "right" }]}>
-                    -
+                    {pos.courus_xaf != null ? fmtDecimal(pos.courus_xaf) : "-"}
                   </Text>
                   <Text style={[styles.tableCellMono, styles.posColValorisation, { textAlign: "right" }]}>
                     {fmtNombre(pos.valorisation_xaf)}
                   </Text>
                   <Text style={[styles.tableCellMono, styles.posColDerniere, { textAlign: "right", fontSize: 6 }]}>
-                    {fmtDate(periode.fin)}
+                    {pos.derniere_maj ? fmtDate(pos.derniere_maj) : fmtDate(periode.fin)}
                   </Text>
                 </View>
               ))

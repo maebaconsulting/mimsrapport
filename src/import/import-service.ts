@@ -430,7 +430,11 @@ export async function runImport(
           pmp_xaf: pos.pmp_xaf,
           valorisation_xaf:
             pos.pmp_xaf != null ? pos.pmp_xaf * pos.quantite_totale : null,
-          derniere_maj: startedAt.toISOString(),
+          valeur_nominale_xaf: pos.valeur_nominale_xaf,
+          courus_xaf: pos.courus_xaf,
+          // Date du dernier mouvement de la position ; repli sur l'horodatage
+          // d'import si la position n'a pas de date de mouvement.
+          derniere_maj: pos.derniere_maj ?? startedAt.toISOString(),
         },
       );
       nbPositions++;
