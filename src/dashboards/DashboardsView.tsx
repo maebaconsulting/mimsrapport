@@ -18,6 +18,7 @@ import { getPocketBase } from "../lib/pocketbase";
 import { loadDashboardData } from "./data";
 import { computeDashboards, type Dashboards } from "./aggregator";
 import { KpiCard } from "./KpiCard";
+import { GaugeCard } from "./GaugeCard";
 import { LoadingState, ErrorState } from "../ui/states";
 import { ProvenanceBanner } from "../ui/ProvenanceBanner";
 import "./dashboards.css";
@@ -186,6 +187,88 @@ function DashboardsContent({ d }: { d: Dashboards }) {
           tone="yellow"
         />
       </div>
+
+      {/* 2. Indicateurs financiers complémentaires */}
+      <div className="kpi-row">
+        <KpiCard
+          label="Plus/moins-value latente"
+          value={fmtXAFCompact(d.pnl.plusValueLatente)}
+          sub={`${fmtPct(d.pnl.perfPct)} vs coût de revient`}
+          variant={d.pnl.plusValueLatente >= 0 ? "success" : "danger"}
+          tone="sage"
+        />
+        <KpiCard
+          label="Encours moyen / médian"
+          value={fmtXAFCompact(d.encoursParCompte.moyen)}
+          sub={`médian ${fmtXAFCompact(d.encoursParCompte.median)}`}
+          tone="lilac"
+        />
+        <KpiCard
+          label="Maturité moyenne obligataire"
+          value={`${d.maturiteMoyenne.toLocaleString("fr-FR")} ans`}
+          sub={`échéant < 12 mois : ${fmtPct(d.murEcheances.pct12m)}`}
+          tone="yellow"
+        />
+        <KpiCard
+          label="Collecte nette (période)"
+          value={fmtXAFCompact(d.activite.collecteNette)}
+          sub={`rotation ${fmtPct(d.activite.turnover)}`}
+          variant={d.activite.collecteNette >= 0 ? "success" : "danger"}
+          tone="peach"
+        />
+      </div>
+
+      {/* 3. Jauges de ratio (risque & conformité) */}
+      <span className="dash-section-title small-caps">Risque et conformité</span>
+      <div className="dash-gauges">
+        <GaugeCard
+          label="Concentration max émetteur"
+          valeur={d.concentrationEmetteur.concentrationMax}
+          max={100}
+          seuils={{ attention: 20, critique: 30 }}
+          unite="%"
+          reference={{ valeur: 30, libelle: "limite COSUMAF" }}
+          formatValeur={(n) => fmtPct(n)}
+        />
+        <GaugeCard
+          label="Concentration 1er client"
+          valeur={d.concentrationClientStats.top1}
+          max={100}
+          seuils={{ attention: 15, critique: 25 }}
+          unite="%"
+          formatValeur={(n) => fmtPct(n)}
+        />
+        <GaugeCard
+          label="Mur d'échéances < 12 mois"
+          valeur={d.murEcheances.pct12m}
+          max={100}
+          seuils={{ attention: 15, critique: 30 }}
+          unite="%"
+          formatValeur={(n) => fmtPct(n)}
+        />
+        <GaugeCard
+          label="Score de diversification"
+          valeur={d.concentrationEmetteur.score}
+          max={100}
+          seuils={{ attention: 30, critique: 60 }}
+          sensInverse
+          formatValeur={(n) => `${Math.round(n)}/100`}
+        />
+      </div>
+
+      {(d.qualite.positionsSansEmetteur > 0 ||
+        d.qualite.obligSansEcheance > 0 ||
+        d.qualite.positionsValoNulle > 0) && (
+        <p className="dash-quality small-caps">
+          Qualité des données : intégrité émetteur {fmtPct(d.qualite.integriteEmetteurPct)}
+          {d.qualite.positionsSansEmetteur > 0 &&
+            ` · ${d.qualite.positionsSansEmetteur} position(s) sans émetteur`}
+          {d.qualite.obligSansEcheance > 0 &&
+            ` · ${d.qualite.obligSansEcheance} obligation(s) sans échéance`}
+          {d.qualite.positionsValoNulle > 0 &&
+            ` · ${d.qualite.positionsValoNulle} position(s) à valorisation nulle`}
+        </p>
+      )}
 
       <div className="dash-panels">
         {/* 1. Évolution de l'encours reconstitué (pleine largeur) */}

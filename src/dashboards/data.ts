@@ -58,6 +58,7 @@ export async function loadDashboardData(
       date_echeance: instrument.date_echeance ?? null,
       quantite: Number(p.quantite_totale ?? 0),
       valorisation_xaf: Number(p.valorisation_xaf ?? 0),
+      pmp_xaf: Number(p.pmp_xaf ?? 0),
     };
   });
 

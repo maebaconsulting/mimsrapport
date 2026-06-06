@@ -16,6 +16,7 @@ export interface DashPosition {
   date_echeance: string | null;
   quantite: number;
   valorisation_xaf: number;
+  pmp_xaf: number; // prix moyen pondéré unitaire (coût de revient)
 }
 
 export interface DashMouvement {
@@ -63,6 +64,33 @@ export interface Dashboards {
     corporate: number;
   };
   tauxMoyenPondereObligataire: number; // %
+  /** Plus/moins-value latente (valorisation − coût de revient pmp). */
+  pnl: { coutTotal: number; plusValueLatente: number; perfPct: number };
+  /** Concentration clientèle : part du 1er et des 5 premiers détenteurs (%). */
+  concentrationClientStats: { top1: number; top5: number };
+  /** Indice de Herfindahl émetteur (0-1) et nb d'émetteurs « effectif » (1/HHI). */
+  diversification: { hhi: number; nbEffectif: number; nbEmetteurs: number };
+  /** Mur d'échéances obligataire : part échéant à court terme (%). */
+  murEcheances: { pct12m: number; pct24m: number; montant12m: number };
+  /** Maturité moyenne pondérée du book obligataire (années). */
+  maturiteMoyenne: number;
+  /** Statistiques d'encours par compte. */
+  encoursParCompte: { moyen: number; median: number };
+  /** Collecte nette (flux entrants − sortants) et rotation du book. */
+  activite: { collecteNette: number; turnover: number };
+  /** Part souveraine du book (%). */
+  partSouveraine: number;
+  /** Flux net mensuel (pour cascade / barres divergentes). */
+  fluxNetMensuel: Array<{ periode: string; net: number }>;
+  /** Indicateurs de qualité des données importées. */
+  qualite: {
+    positionsSansEmetteur: number;
+    partSansEmetteur: number; // %
+    obligSansEcheance: number;
+    obligSansTaux: number;
+    positionsValoNulle: number;
+    integriteEmetteurPct: number; // % de positions rattachées
+  };
 }
 
 /** Statut d'un score (gauge segmentée, seuils spec 05). */
@@ -227,6 +255,91 @@ export function computeDashboards(
   const tauxMoyenPondereObligataire =
     sommePoids > 0 ? sommePondere / sommePoids : 0;
 
+  // P&L latent : valorisation − coût de revient (pmp × quantité).
+  const coutTotal = positions.reduce((s, p) => s + p.pmp_xaf * p.quantite, 0);
+  const plusValueLatente = valorisationTotale - coutTotal;
+  const perfPct = coutTotal > 0 ? (plusValueLatente / coutTotal) * 100 : 0;
+
+  // Concentration clientèle (parts déjà triées par toParts ci-dessous).
+  const itemsClient = toParts(parClient, valorisationTotale);
+  const top1Client = itemsClient.length > 0 ? itemsClient[0].part : 0;
+  const top5Client = itemsClient.slice(0, 5).reduce((s, i) => s + i.part, 0);
+
+  // Indice de Herfindahl (HHI) sur les émetteurs (parts en fraction).
+  const hhi = itemsEmetteur.reduce((s, i) => s + (i.part / 100) ** 2, 0);
+  const nbEffectif = hhi > 0 ? 1 / hhi : 0;
+  const nbEmetteurs = new Set(
+    positions.map((p) => p.emetteur_id).filter((x): x is string => !!x),
+  ).size;
+
+  // Mur d'échéances obligataire (< 12 et < 24 mois) sur l'encours obligataire.
+  const now = new Date();
+  const dans12m = new Date(now.getFullYear(), now.getMonth() + 12, now.getDate());
+  const dans24m = new Date(now.getFullYear(), now.getMonth() + 24, now.getDate());
+  let valoOblig = 0;
+  let montant12m = 0;
+  let montant24m = 0;
+  let sommeMaturite = 0;
+  for (const p of positions) {
+    if (p.instrument_type !== "OBLIGATION") continue;
+    valoOblig += p.valorisation_xaf;
+    if (!p.date_echeance) continue;
+    const d = new Date(p.date_echeance);
+    if (isNaN(d.getTime())) continue;
+    if (d <= dans12m) montant12m += p.valorisation_xaf;
+    if (d <= dans24m) montant24m += p.valorisation_xaf;
+    const annees = (d.getTime() - now.getTime()) / (365.25 * 24 * 3600 * 1000);
+    if (annees > 0) sommeMaturite += annees * p.valorisation_xaf;
+  }
+  const pct12m = valoOblig > 0 ? (montant12m / valoOblig) * 100 : 0;
+  const pct24m = valoOblig > 0 ? (montant24m / valoOblig) * 100 : 0;
+  const maturiteMoyenne = valoOblig > 0 ? sommeMaturite / valoOblig : 0;
+
+  // Encours par compte (moyen + médian).
+  const encoursParClient = [...parClient.values()].map((v) => v.valo).sort((a, b) => a - b);
+  const moyenCompte =
+    encoursParClient.length > 0 ? valorisationTotale / encoursParClient.length : 0;
+  const medianCompte =
+    encoursParClient.length === 0
+      ? 0
+      : encoursParClient.length % 2 === 1
+        ? encoursParClient[(encoursParClient.length - 1) / 2]
+        : (encoursParClient[encoursParClient.length / 2 - 1] +
+            encoursParClient[encoursParClient.length / 2]) /
+          2;
+
+  // Collecte nette + rotation (turnover) à partir des mouvements.
+  let collecteNette = 0;
+  let volumeTraite = 0;
+  for (const m of mouvements) {
+    const signe = m.sens === "ACHAT" || m.sens === "OST_ENTREE" ? 1 : -1;
+    collecteNette += signe * m.montant_xaf;
+    volumeTraite += m.montant_xaf;
+  }
+  const turnover = valorisationTotale > 0 ? (volumeTraite / valorisationTotale) * 100 : 0;
+
+  const partSouveraine =
+    souverain + corporate > 0 ? (souverain / (souverain + corporate)) * 100 : 0;
+
+  const fluxNetMensuel = moisTries.map(([periode, net]) => ({ periode, net }));
+
+  // Qualité des données.
+  const positionsSansEmetteur = positions.filter((p) => !p.emetteur_id).length;
+  const valoSansEmetteur = positions
+    .filter((p) => !p.emetteur_id)
+    .reduce((s, p) => s + p.valorisation_xaf, 0);
+  const obligSansEcheance = positions.filter(
+    (p) => p.instrument_type === "OBLIGATION" && !p.date_echeance,
+  ).length;
+  const obligSansTaux = positions.filter(
+    (p) => p.instrument_type === "OBLIGATION" && p.taux_interet == null,
+  ).length;
+  const positionsValoNulle = positions.filter((p) => p.valorisation_xaf <= 0).length;
+  const integriteEmetteurPct =
+    positions.length > 0
+      ? ((positions.length - positionsSansEmetteur) / positions.length) * 100
+      : 100;
+
   return {
     encours: {
       valorisationTotale,
@@ -241,7 +354,7 @@ export function computeDashboards(
       score,
       status: scoreToStatus(score),
     },
-    concentrationClient: toParts(parClient, valorisationTotale),
+    concentrationClient: itemsClient,
     echeancier,
     fluxActivite,
     evolutionEncours,
@@ -253,5 +366,43 @@ export function computeDashboards(
     souverainVsCorporate: { souverain, corporate },
     tauxMoyenPondereObligataire:
       Math.round(tauxMoyenPondereObligataire * 100) / 100,
+    pnl: {
+      coutTotal,
+      plusValueLatente,
+      perfPct: Math.round(perfPct * 100) / 100,
+    },
+    concentrationClientStats: {
+      top1: Math.round(top1Client * 10) / 10,
+      top5: Math.round(top5Client * 10) / 10,
+    },
+    diversification: {
+      hhi: Math.round(hhi * 1000) / 1000,
+      nbEffectif: Math.round(nbEffectif * 10) / 10,
+      nbEmetteurs,
+    },
+    murEcheances: {
+      pct12m: Math.round(pct12m * 10) / 10,
+      pct24m: Math.round(pct24m * 10) / 10,
+      montant12m,
+    },
+    maturiteMoyenne: Math.round(maturiteMoyenne * 10) / 10,
+    encoursParCompte: { moyen: moyenCompte, median: medianCompte },
+    activite: {
+      collecteNette,
+      turnover: Math.round(turnover * 10) / 10,
+    },
+    partSouveraine: Math.round(partSouveraine * 10) / 10,
+    fluxNetMensuel,
+    qualite: {
+      positionsSansEmetteur,
+      partSansEmetteur:
+        valorisationTotale > 0
+          ? Math.round((valoSansEmetteur / valorisationTotale) * 1000) / 10
+          : 0,
+      obligSansEcheance,
+      obligSansTaux,
+      positionsValoNulle,
+      integriteEmetteurPct: Math.round(integriteEmetteurPct * 10) / 10,
+    },
   };
 }

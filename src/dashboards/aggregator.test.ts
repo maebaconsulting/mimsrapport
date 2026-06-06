@@ -20,6 +20,7 @@ function pos(p: Partial<DashPosition>): DashPosition {
     date_echeance: "2029-12-31",
     quantite: 100,
     valorisation_xaf: 1_000_000,
+    pmp_xaf: 9_000,
     ...p,
   };
 }
