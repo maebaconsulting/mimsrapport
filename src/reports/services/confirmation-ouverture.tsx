@@ -82,6 +82,7 @@ export async function generateConfirmationOuverture(
   pb: PocketBase,
   clientId: string,
   dateArrete: string,
+  log = true,
 ): Promise<ConfirmationOuvertureOutput> {
   registerPdfFonts();
   const base = await buildBaseProps(pb, clientId, dateArrete);
@@ -96,12 +97,14 @@ export async function generateConfirmationOuverture(
   ).toBlob();
   const bytes = new Uint8Array(await blob.arrayBuffer());
 
-  await pb.collection("exports_log").create({
-    type_rapport: "confirmation_ouverture",
-    cible: `${base.numero_compte} · ${dateArrete}`,
-    hash_pdf: hash,
-    user: pb.authStore.record?.id ?? null,
-  });
+  if (log) {
+    await pb.collection("exports_log").create({
+      type_rapport: "confirmation_ouverture",
+      cible: `${base.numero_compte} · ${dateArrete}`,
+      hash_pdf: hash,
+      user: pb.authStore.record?.id ?? null,
+    });
+  }
 
   const filename = `confirmation-ouverture-${base.numero_compte}-${dateArrete}.pdf`;
   return { blob, bytes, hash, filename };

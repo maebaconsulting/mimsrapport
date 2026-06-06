@@ -169,6 +169,7 @@ export async function generateAttestation(
   pb: PocketBase,
   clientId: string,
   dateArrete: string,
+  log = true,
 ): Promise<AttestationOutput> {
   registerPdfFonts();
 
@@ -185,12 +186,14 @@ export async function generateAttestation(
   const bytes = new Uint8Array(await blob.arrayBuffer());
 
   // Journalisation AVANT remise du fichier (traçabilité, équivalent auditLogger).
-  await pb.collection("exports_log").create({
-    type_rapport: "attestation_portefeuille",
-    cible: `${base.client.code} · ${dateArrete}`,
-    hash_pdf: hash,
-    user: pb.authStore.record?.id ?? null,
-  });
+  if (log) {
+    await pb.collection("exports_log").create({
+      type_rapport: "attestation_portefeuille",
+      cible: `${base.client.code} · ${dateArrete}`,
+      hash_pdf: hash,
+      user: pb.authStore.record?.id ?? null,
+    });
+  }
 
   const filename = `attestation-portefeuille-${base.client.code}-${dateArrete}.pdf`;
   return { blob, bytes, hash, filename, clientLabel: base.client.nom_complet };

@@ -443,6 +443,34 @@ export function ReportsView({
     setPrinting(false);
   }
 
+  // Produit le PDF du rapport courant. `logExport` contrôle l'écriture du
+  // journal des exports : faux pour un simple aperçu, vrai au téléchargement /
+  // impression (l'« export » réel). Rendu déterministe (même empreinte).
+  async function produire(logExport: boolean): Promise<{
+    blob: Blob;
+    bytes: Uint8Array;
+    hash: string;
+    filename: string;
+  }> {
+    const pb = await getPocketBase();
+    switch (reportType) {
+      case "attestation":
+        return generateAttestation(pb, clientId, dateArrete, logExport);
+      case "releve":
+        return generateReleve(pb, clientId, dateArrete, logExport);
+      case "confirmation_ouverture":
+        return generateConfirmationOuverture(pb, clientId, dateArrete, logExport);
+      case "lettre_desherence":
+        return generateLettreRelanceDesherence(pb, clientId, dateArrete, logExport);
+      case "cosumaf_transactions":
+        return generateTransactionsBoursieres(pb, dateArrete, logExport);
+      case "cosumaf_avoirs":
+        return generateSituationAvoirs(pb, dateArrete, logExport);
+      case "etat_desherence":
+        return generateEtatClientsDesherence(pb, dateArrete, logExport);
+    }
+  }
+
   async function generer() {
     const scope = scopeOf(reportType);
     if (scope === "client" && !clientId) return;
@@ -452,33 +480,9 @@ export function ReportsView({
     setGen({ kind: "generation" });
     setSave({ kind: "idle" });
     try {
-      const pb = await getPocketBase();
-      let out: { blob: Blob; bytes: Uint8Array; hash: string; filename: string };
-      switch (reportType) {
-        case "attestation":
-          out = await generateAttestation(pb, clientId, dateArrete);
-          break;
-        case "releve":
-          out = await generateReleve(pb, clientId, dateArrete);
-          break;
-        case "confirmation_ouverture":
-          out = await generateConfirmationOuverture(pb, clientId, dateArrete);
-          break;
-        case "lettre_desherence":
-          out = await generateLettreRelanceDesherence(pb, clientId, dateArrete);
-          break;
-        case "cosumaf_transactions":
-          out = await generateTransactionsBoursieres(pb, dateArrete);
-          break;
-        case "cosumaf_avoirs":
-          out = await generateSituationAvoirs(pb, dateArrete);
-          break;
-        case "etat_desherence":
-          out = await generateEtatClientsDesherence(pb, dateArrete);
-          break;
-      }
+      // Aperçu : aucune écriture dans le journal des exports.
+      const out = await produire(false);
 
-      // Aperçu avant tout enregistrement : on n'écrit rien sur disque ici.
       if (preview) URL.revokeObjectURL(preview.url);
       const url = URL.createObjectURL(out.blob);
       const labelKey = REPORT_TYPES.find((r) => r.id === reportType)?.labelKey;
@@ -505,8 +509,11 @@ export function ReportsView({
   async function telecharger() {
     if (!preview) return;
     try {
-      const ok = await saveBytes(preview.bytes, preview.filename);
-      setSave(ok ? { kind: "ok", filename: preview.filename } : { kind: "annule" });
+      // Régénère en journalisant l'export (rendu déterministe, même empreinte)
+      // puis enregistre : le journal n'est écrit qu'au téléchargement réel.
+      const out = await produire(true);
+      const ok = await saveBytes(out.bytes, out.filename);
+      setSave(ok ? { kind: "ok", filename: out.filename } : { kind: "annule" });
     } catch (err) {
       setGen({ kind: "erreur", message: String(err) });
     }
@@ -516,6 +523,8 @@ export function ReportsView({
   // document y déclenche le dialogue d'impression natif (cf. lancerImpression).
   function imprimer() {
     setPrinting(true);
+    // Journalise l'impression comme un export (régénération déterministe en fond).
+    void produire(true).catch(() => {});
   }
 
   function lancerImpression() {

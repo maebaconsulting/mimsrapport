@@ -149,6 +149,7 @@ async function buildTransactionsDonnees(
 export async function generateTransactionsBoursieres(
   pb: PocketBase,
   dateArrete: string,
+  log = true,
 ): Promise<CosumafOutput> {
   registerPdfFonts();
   const { shell, ctxCode, periode } = await buildShellBase(
@@ -167,12 +168,14 @@ export async function generateTransactionsBoursieres(
   ).toBlob();
   const bytes = new Uint8Array(await blob.arrayBuffer());
 
-  await pb.collection("exports_log").create({
-    type_rapport: "cosumaf_transactions_boursieres",
-    cible: `Société · ${periode.ym}`,
-    hash_pdf: hash,
-    user: pb.authStore.record?.id ?? null,
-  });
+  if (log) {
+    await pb.collection("exports_log").create({
+      type_rapport: "cosumaf_transactions_boursieres",
+      cible: `Société · ${periode.ym}`,
+      hash_pdf: hash,
+      user: pb.authStore.record?.id ?? null,
+    });
+  }
 
   const filename = `cosumaf-transactions-boursieres-${periode.ym}.pdf`;
   return { blob, bytes, hash, filename };
@@ -225,6 +228,7 @@ async function buildAvoirsDonnees(
 export async function generateSituationAvoirs(
   pb: PocketBase,
   dateArrete: string,
+  log = true,
 ): Promise<CosumafOutput> {
   registerPdfFonts();
   const { shell, ctxCode, periode } = await buildShellBase(
@@ -243,12 +247,14 @@ export async function generateSituationAvoirs(
   ).toBlob();
   const bytes = new Uint8Array(await blob.arrayBuffer());
 
-  await pb.collection("exports_log").create({
-    type_rapport: "cosumaf_situation_avoirs",
-    cible: `Société · ${periode.ym}`,
-    hash_pdf: hash,
-    user: pb.authStore.record?.id ?? null,
-  });
+  if (log) {
+    await pb.collection("exports_log").create({
+      type_rapport: "cosumaf_situation_avoirs",
+      cible: `Société · ${periode.ym}`,
+      hash_pdf: hash,
+      user: pb.authStore.record?.id ?? null,
+    });
+  }
 
   const filename = `cosumaf-situation-avoirs-${periode.ym}.pdf`;
   return { blob, bytes, hash, filename };

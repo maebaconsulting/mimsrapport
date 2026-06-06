@@ -141,6 +141,7 @@ export async function generateReleve(
   pb: PocketBase,
   clientId: string,
   dateArrete: string,
+  log = true,
 ): Promise<ReleveOutput> {
   registerPdfFonts();
   const base = await buildBaseProps(pb, clientId, dateArrete);
@@ -154,12 +155,14 @@ export async function generateReleve(
   ).toBlob();
   const bytes = new Uint8Array(await blob.arrayBuffer());
 
-  await pb.collection("exports_log").create({
-    type_rapport: "releve_compte_titres",
-    cible: `${base.client.code} · ${dateArrete}`,
-    hash_pdf: hash,
-    user: pb.authStore.record?.id ?? null,
-  });
+  if (log) {
+    await pb.collection("exports_log").create({
+      type_rapport: "releve_compte_titres",
+      cible: `${base.client.code} · ${dateArrete}`,
+      hash_pdf: hash,
+      user: pb.authStore.record?.id ?? null,
+    });
+  }
 
   const filename = `releve-compte-titres-${base.client.code}-${dateArrete}.pdf`;
   return { blob, bytes, hash, filename };

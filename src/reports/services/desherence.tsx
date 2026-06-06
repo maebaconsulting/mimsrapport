@@ -150,6 +150,7 @@ async function buildEtatLignes(
 export async function generateEtatClientsDesherence(
   pb: PocketBase,
   dateArrete: string,
+  log = true,
 ): Promise<DesherenceOutput> {
   registerPdfFonts();
   const ctx = await buildSdbReportContext(pb, dateArrete, "declaration");
@@ -177,12 +178,14 @@ export async function generateEtatClientsDesherence(
   ).toBlob();
   const bytes = new Uint8Array(await blob.arrayBuffer());
 
-  await pb.collection("exports_log").create({
-    type_rapport: "etat_clients_desherence",
-    cible: `Société · ${dateArrete} · ${lignes.length} ligne(s)`,
-    hash_pdf: hash,
-    user: pb.authStore.record?.id ?? null,
-  });
+  if (log) {
+    await pb.collection("exports_log").create({
+      type_rapport: "etat_clients_desherence",
+      cible: `Société · ${dateArrete} · ${lignes.length} ligne(s)`,
+      hash_pdf: hash,
+      user: pb.authStore.record?.id ?? null,
+    });
+  }
 
   const filename = `etat-clients-desherence-${dateArrete}.pdf`;
   return { blob, bytes, hash, filename };
@@ -193,6 +196,7 @@ export async function generateLettreRelanceDesherence(
   pb: PocketBase,
   clientId: string,
   dateArrete: string,
+  log = true,
 ): Promise<DesherenceOutput> {
   registerPdfFonts();
   const ctx = await buildSdbReportContext(pb, dateArrete, "declaration");
@@ -240,12 +244,14 @@ export async function generateLettreRelanceDesherence(
   ).toBlob();
   const bytes = new Uint8Array(await blob.arrayBuffer());
 
-  await pb.collection("exports_log").create({
-    type_rapport: "lettre_relance_desherence",
-    cible: `${numeroCompte} · ${dateArrete}`,
-    hash_pdf: hash,
-    user: pb.authStore.record?.id ?? null,
-  });
+  if (log) {
+    await pb.collection("exports_log").create({
+      type_rapport: "lettre_relance_desherence",
+      cible: `${numeroCompte} · ${dateArrete}`,
+      hash_pdf: hash,
+      user: pb.authStore.record?.id ?? null,
+    });
+  }
 
   const filename = `lettre-relance-desherence-${numeroCompte}-${dateArrete}.pdf`;
   return { blob, bytes, hash, filename };
