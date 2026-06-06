@@ -122,7 +122,9 @@ function App() {
             </button>
           ))}
         </nav>
-        <div className="app-sidebar__footer small-caps">Version 0.1.0</div>
+        <div className="app-sidebar__footer small-caps">
+          Version {__APP_VERSION__}
+        </div>
       </aside>
 
       <main className="app-main">

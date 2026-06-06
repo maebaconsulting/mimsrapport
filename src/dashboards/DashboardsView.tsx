@@ -165,7 +165,12 @@ function DashboardsContent({ d }: { d: Dashboards }) {
           tone="sage"
           spark={d.sparkEncours}
         />
-        <KpiCard label="Comptes titres" value={String(d.encours.nbComptes)} tone="lilac" />
+        <KpiCard
+          label="Comptes-titres"
+          value={String(d.encours.nbComptes)}
+          sub="Portefeuilles-titres distincts"
+          tone="lilac"
+        />
         <KpiCard
           label="Concentration max émetteur"
           value={fmtPct(d.concentrationEmetteur.concentrationMax)}

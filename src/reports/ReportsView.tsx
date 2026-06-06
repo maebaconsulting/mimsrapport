@@ -214,6 +214,14 @@ function todayIso(): string {
   ).padStart(2, "0")}`;
 }
 
+/** Dernier jour du mois « AAAA-MM » au format ISO (date d'arrêté mensuelle). */
+function finDeMois(ym: string): string {
+  if (!/^\d{4}-\d{2}$/.test(ym)) return todayIso();
+  const [a, m] = ym.split("-").map(Number);
+  const dernier = new Date(a, m, 0).getDate(); // jour 0 du mois suivant = fin du mois
+  return `${ym}-${String(dernier).padStart(2, "0")}`;
+}
+
 export function ReportsView() {
   const [clients, setClients] = useState<ClientChoice[] | null>(null);
   const [clientId, setClientId] = useState<string>("");
@@ -456,14 +464,22 @@ export function ReportsView() {
               <label className="report-field">
                 <span className="small-caps">
                   {scopeOf(reportType) === "societe"
-                    ? "Date d'arrêté (mois)"
+                    ? "Mois d'arrêté"
                     : "Date d'arrêté"}
                 </span>
-                <input
-                  type="date"
-                  value={dateArrete}
-                  onChange={(e) => setDateArrete(e.target.value)}
-                />
+                {scopeOf(reportType) === "societe" ? (
+                  <input
+                    type="month"
+                    value={dateArrete.slice(0, 7)}
+                    onChange={(e) => setDateArrete(finDeMois(e.target.value))}
+                  />
+                ) : (
+                  <input
+                    type="date"
+                    value={dateArrete}
+                    onChange={(e) => setDateArrete(e.target.value)}
+                  />
+                )}
               </label>
 
               <button
