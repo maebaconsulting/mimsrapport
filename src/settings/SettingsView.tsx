@@ -345,7 +345,6 @@ export function SettingsView() {
   return (
     <>
       <header className="app-header">
-        <h1 className="app-header__title">{t("settings.title")}</h1>
         <p className="app-header__subtitle">{t("settings.subtitle")}</p>
       </header>
 

@@ -22,7 +22,6 @@ export function ClientsView({
   return (
     <>
       <header className="app-header">
-        <h1 className="app-header__title">{t("clients.titre")}</h1>
         <p className="app-header__subtitle">{t("clients.sous-titre")}</p>
       </header>
 

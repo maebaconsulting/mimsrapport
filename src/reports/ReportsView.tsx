@@ -413,7 +413,6 @@ export function ReportsView({
   return (
     <>
       <header className="app-header">
-        <h1 className="app-header__title">{t("reports.header-title")}</h1>
         <p className="app-header__subtitle">
           {t("reports.header-subtitle")}
         </p>

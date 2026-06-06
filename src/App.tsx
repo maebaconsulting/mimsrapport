@@ -246,7 +246,6 @@ function App() {
         {vue === "import" && (
           <>
             <header className="app-header">
-              <h1 className="app-header__title">{t("import.page-title")}</h1>
               <p className="app-header__subtitle">
                 {t("import.page-subtitle")}
               </p>
