@@ -9,8 +9,10 @@ import {
   Label,
   Pie,
   PieChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
+  Treemap,
   XAxis,
   YAxis,
 } from "recharts";
@@ -353,8 +355,62 @@ function DashboardsContent({ d }: { d: Dashboards }) {
           />
         </Panel>
 
-        {/* 5. Échéancier obligataire */}
-        <Panel titre="Échéancier obligataire">
+        {/* 4b. Treemap d'exposition par émetteur */}
+        <Panel titre="Exposition par émetteur (treemap)">
+          {d.concentrationEmetteur.items.length === 0 ? (
+            <Vide />
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <Treemap
+                data={d.concentrationEmetteur.items.slice(0, 12).map((e, i) => ({
+                  name: e.libelle,
+                  size: e.valorisation,
+                  part: e.part,
+                  fill:
+                    e.part > 30
+                      ? "var(--mw-danger-solid)"
+                      : CHART_COLORS[i % CHART_COLORS.length],
+                }))}
+                dataKey="size"
+                stroke="var(--mw-white)"
+                content={<TreemapCell />}
+                isAnimationActive={false}
+              />
+            </ResponsiveContainer>
+          )}
+        </Panel>
+
+        {/* 4c. Flux net mensuel (barres divergentes) */}
+        <Panel titre="Flux net mensuel (collecte)">
+          {d.fluxNetMensuel.length === 0 ? (
+            <Vide />
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={d.fluxNetMensuel} margin={{ left: 4, right: 8, top: 8 }}>
+                <CartesianGrid
+                  vertical={false}
+                  stroke="var(--mw-border)"
+                  strokeDasharray="3 3"
+                />
+                <XAxis dataKey="periode" tick={{ fontSize: 10 }} />
+                <YAxis tickFormatter={(v) => fmtAxis(Number(v))} tick={{ fontSize: 11 }} />
+                <Tooltip content={<ChartTooltip />} />
+                <ReferenceLine y={0} stroke="var(--mw-border-strong)" />
+                <Bar dataKey="net" name="Flux net" radius={[3, 3, 0, 0]}>
+                  {d.fluxNetMensuel.map((m) => (
+                    <Cell
+                      key={m.periode}
+                      fill={m.net >= 0 ? "var(--chart-4)" : "var(--chart-5)"}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </Panel>
+
+        {/* 5. Échéancier obligataire · mur de liquidité (couleur par horizon) */}
+        <Panel titre="Échéancier obligataire (mur de liquidité)">
           {d.echeancier.length === 0 ? (
             <Vide />
           ) : (
@@ -368,7 +424,19 @@ function DashboardsContent({ d }: { d: Dashboards }) {
                 <XAxis dataKey="annee" tick={{ fontSize: 11 }} />
                 <YAxis tickFormatter={(v) => fmtAxis(Number(v))} tick={{ fontSize: 11 }} />
                 <Tooltip content={<ChartTooltip />} />
-                <Bar dataKey="montant" name="Échéance" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="montant" name="Échéance" radius={[4, 4, 0, 0]}>
+                  {d.echeancier.map((e) => {
+                    const an = Number(e.annee);
+                    const ecart = an - new Date().getFullYear();
+                    const couleur =
+                      ecart <= 1
+                        ? "var(--mw-danger-solid)"
+                        : ecart <= 2
+                          ? "var(--mw-warning-solid)"
+                          : "var(--mw-success-solid)";
+                    return <Cell key={e.annee} fill={couleur} />;
+                  })}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -509,6 +577,36 @@ function Panel({
 
 function Vide() {
   return <p className="dash-vide">Aucune donnée disponible.</p>;
+}
+
+/** Cellule de treemap : rectangle coloré + libellé si la place le permet. */
+function TreemapCell(props: {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  name?: string;
+  part?: number;
+  fill?: string;
+}) {
+  const { x = 0, y = 0, width = 0, height = 0, name, part, fill } = props;
+  return (
+    <g>
+      <rect x={x} y={y} width={width} height={height} fill={fill} stroke="var(--mw-white)" />
+      {width > 64 && height > 30 && (
+        <>
+          <text x={x + 8} y={y + 18} fontSize={11} fontWeight={600} fill="var(--mw-ink)">
+            {name}
+          </text>
+          {part != null && (
+            <text x={x + 8} y={y + 33} fontSize={10} fill="var(--mw-ink)">
+              {part.toFixed(1)} %
+            </text>
+          )}
+        </>
+      )}
+    </g>
+  );
 }
 
 function DonutChart({
