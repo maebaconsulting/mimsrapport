@@ -208,9 +208,9 @@ export function EtatClientsDesherencePdf({
   return (
     <Document
       title={`État des clients en déshérence - ${sdb.code} - ${fmtDate(date_arrete)}`}
-      author="Reporting Manar · MAEBA Consulting"
+      author="MIMS REPORTING · MAEBA Consulting"
       subject="État des clients en déshérence · CEMAC 02/25"
-      creator="Reporting Manar"
+      creator="MIMS REPORTING"
     >
       <Page size="A4" orientation="landscape" style={styles.page} wrap>
         <View style={styles.header} fixed>
@@ -310,7 +310,7 @@ export function EtatClientsDesherencePdf({
 
         <View style={styles.footer} fixed>
           <Text style={styles.footerLeft}>
-            Document généré par Reporting Manar · Conforme Règlement CEMAC N°02/25 (avoirs en déshérence) · RG-267
+            Document généré par MIMS REPORTING · Conforme Règlement CEMAC N°02/25 (avoirs en déshérence) · RG-267
           </Text>
           <Text style={styles.footerCenter}>
             {"Hash SHA-256 · "}{hashTronque}{"... · Horodatage RFC 3161 mock"}
@@ -321,7 +321,7 @@ export function EtatClientsDesherencePdf({
         <View style={styles.cachet} fixed>
           <Text style={{ fontFamily: "JetBrainsMono", fontSize: 10, color: INFO }}>[V]</Text>
           <Text style={styles.cachetLabel}>Cachet électronique</Text>
-          <Text style={styles.cachetLabel}>Reporting Manar</Text>
+          <Text style={styles.cachetLabel}>MIMS REPORTING</Text>
           <Text style={styles.cachetSub}>{timestamp_rfc3161_mock.slice(0, 10)}</Text>
         </View>
       </Page>

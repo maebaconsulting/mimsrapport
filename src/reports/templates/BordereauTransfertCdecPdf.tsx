@@ -84,7 +84,7 @@ export function BordereauTransfertCdecPdf({
   const total = lignes.reduce((s, l) => s + l.montant_xaf, 0);
 
   return (
-    <Document title={`Bordereau transfert ${destinataire} - ${sdb.code}`} author="Reporting Manar · MAEBA Consulting" subject="Bordereau transfert déshérence CEMAC 02/25" creator="Reporting Manar">
+    <Document title={`Bordereau transfert ${destinataire} - ${sdb.code}`} author="MIMS REPORTING · MAEBA Consulting" subject="Bordereau transfert déshérence CEMAC 02/25" creator="MIMS REPORTING">
       <Page size="A4" style={styles.page} wrap>
         <View style={styles.header}>
           <View style={styles.logoBlock}>
@@ -148,13 +148,13 @@ export function BordereauTransfertCdecPdf({
         </View>
 
         <View style={styles.footer} fixed>
-          <Text style={styles.footerText}>Bordereau généré par Reporting Manar · Conforme Règlement CEMAC N°02/25 · RG-267</Text>
+          <Text style={styles.footerText}>Bordereau généré par MIMS REPORTING · Conforme Règlement CEMAC N°02/25 · RG-267</Text>
           <Text style={styles.footerMono}>{"Hash SHA-256 · "}{hashTronque}{"... · Horodatage RFC 3161 mock"}</Text>
         </View>
         <View style={styles.cachet} fixed>
           <Text style={{ fontFamily: "JetBrainsMono", fontSize: 10, color: INFO }}>[V]</Text>
           <Text style={styles.cachetLabel}>Cachet électronique</Text>
-          <Text style={styles.cachetLabel}>Reporting Manar</Text>
+          <Text style={styles.cachetLabel}>MIMS REPORTING</Text>
           <Text style={styles.cachetSub}>{timestamp_rfc3161_mock.slice(0, 10)}</Text>
         </View>
       </Page>

@@ -36,9 +36,9 @@ export function LicenseGate({
     <div className="license-gate">
       <div className="license-card">
         <div className="app-brand" style={{ justifyContent: "center" }}>
-          <span className="app-brand__mark">RM</span>
+          <span className="app-brand__mark">MR</span>
           <span className="app-brand__name" style={{ color: "var(--color-ink)" }}>
-            Reporting Manar
+            MIMS REPORTING
           </span>
         </div>
         <h1 className="license-card__title">Licence requise</h1>

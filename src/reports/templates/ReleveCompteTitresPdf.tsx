@@ -553,9 +553,9 @@ export function ReleveCompteTitresPdf({
   return (
     <Document
       title={`Relevé de compte-titres - ${client.code} - ${fmtDate(periode.fin)}`}
-      author="Reporting Manar · MAEBA Consulting"
+      author="MIMS REPORTING · MAEBA Consulting"
       subject="Relevé de compte-titres COSUMAF"
-      creator="Reporting Manar"
+      creator="MIMS REPORTING"
     >
       <Page size="A4" style={styles.page} wrap>
 
@@ -877,7 +877,7 @@ export function ReleveCompteTitresPdf({
             [V]
           </Text>
           <Text style={styles.cachetLabel}>Cachet électronique</Text>
-          <Text style={styles.cachetLabel}>Reporting Manar</Text>
+          <Text style={styles.cachetLabel}>MIMS REPORTING</Text>
           <Text style={styles.cachetSub}>
             {timestamp_rfc3161_mock.slice(0, 10)}
           </Text>

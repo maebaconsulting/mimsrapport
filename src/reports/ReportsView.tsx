@@ -468,7 +468,7 @@ export function ReportsView({
                   <div className="import-notice import-notice--warn reports-warn">
                     <p>
                       Aucun client avec position. Importez d'abord un fichier
-                      Manar pour les documents par client.
+                      d'export pour les documents par client.
                     </p>
                   </div>
                 ))}

@@ -1,7 +1,7 @@
 // -*- coding: utf-8 -*-
 // Accueil : tableau de bord d'entrée. Cartes KPI métier consolidées, bandeau de
 // provenance, et passerelles vers les vues principales. Quand la base est vide,
-// un appel à l'action invite à importer un fichier Manar.
+// un appel à l'action invite à importer un fichier d'export.
 
 import { useCallback, useEffect, useState } from "react";
 import { getPocketBase } from "../lib/pocketbase";
@@ -110,12 +110,12 @@ function EmptyHome({ onImport }: { onImport: () => void }) {
       </div>
       <h2 className="home-empty__title">Aucune donnée pour l'instant</h2>
       <p className="home-empty__text">
-        Importez un fichier Manar (« État des instruments saisis sur Manar ») pour
+        Importez un fichier d'export pour
         alimenter les indicateurs, les tableaux de bord et la production de
         rapports.
       </p>
       <button className="btn btn--primary" onClick={onImport}>
-        Importer un fichier Manar
+        Importer un fichier d'export
       </button>
     </div>
   );
@@ -202,7 +202,7 @@ function ReadyHome({
             onClick={() => onNavigate("rapports")}
           />
           <ActionCard
-            titre="Nouvel import Manar"
+            titre="Nouvel import"
             texte="Charger un nouveau fichier ou remplacer l'import courant."
             onClick={() => onNavigate("import")}
           />

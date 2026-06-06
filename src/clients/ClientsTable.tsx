@@ -1,5 +1,5 @@
 // -*- coding: utf-8 -*-
-// Table autonome des clients consolidés issus de l'import Manar.
+// Table autonome des clients consolidés issus du dernier import.
 // Charge ses propres données et gère recherche + filtre PP/PM. Réutilisée par la
 // vue « Clients » (avec bandeau KPI) et par l'écran d'import (après import réussi).
 
@@ -200,7 +200,7 @@ export function ClientsTable({
     return (
       <div className="import-notice import-notice--warn">
         <p>
-          Aucun client. Importez d'abord un fichier Manar pour alimenter cette
+          Aucun client. Importez d'abord un fichier d'export pour alimenter cette
           vue.
         </p>
       </div>
@@ -269,7 +269,7 @@ export function ClientsTable({
         <div className="data-scroll">
           <table className="data-table">
             <caption className="sr-only">
-              Liste des clients consolidés issus de l'import Manar : code, nom,
+              Liste des clients consolidés issus du dernier import : code, nom,
               type, compte-titres, nombre de positions, encours, statut et date
               d'ouverture.
             </caption>

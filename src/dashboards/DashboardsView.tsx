@@ -139,7 +139,7 @@ export function DashboardsView() {
         )}
         {state.kind === "vide" && (
           <div className="import-notice import-notice--warn">
-            <p>Aucune position. Importez d'abord un fichier Manar.</p>
+            <p>Aucune position. Importez d'abord un fichier d'export.</p>
           </div>
         )}
         {state.kind === "erreur" && (

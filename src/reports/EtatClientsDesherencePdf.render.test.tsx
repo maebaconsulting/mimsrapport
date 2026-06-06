@@ -79,7 +79,7 @@ describe("rendu réel · EtatClientsDesherencePdf", () => {
     const props: EtatClientsDesherencePdfProps = {
       ...sampleProps("e".repeat(64)),
       provenance: [
-        "Source : positions et mouvements de titres importés depuis Manar.",
+        "Source : positions et mouvements de titres issus du fichier d'export.",
         "Coupons et espèces hors périmètre.",
       ],
     };

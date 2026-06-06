@@ -545,9 +545,9 @@ export function CompteRenduTransactionsPdf({
   return (
     <Document
       title={`Compte rendu - ${ordre.code_ordre}`}
-      author="Reporting Manar · MAEBA Consulting"
+      author="MIMS REPORTING · MAEBA Consulting"
       subject="Compte rendu des transactions réalisées"
-      creator="Reporting Manar"
+      creator="MIMS REPORTING"
     >
       <Page size="A4" style={styles.page} wrap>
 
@@ -768,7 +768,7 @@ export function CompteRenduTransactionsPdf({
         {/* Section 7 · Pied légal */}
         <View style={styles.footer} fixed>
           <Text style={styles.footerLeft}>
-            Reporting Manar · COSUMAF Règlement n° 2014/03 · RG-056 à RG-063 (quatre yeux) · RG-045 (9 contrôles)
+            MIMS REPORTING · COSUMAF Règlement n° 2014/03 · RG-056 à RG-063 (quatre yeux) · RG-045 (9 contrôles)
           </Text>
           <Text style={styles.footerCenter}>
             {'Hash · '}{hashTronque}{'... · RFC 3161 mock'}
@@ -784,7 +784,7 @@ export function CompteRenduTransactionsPdf({
             [V]
           </Text>
           <Text style={styles.cachetLabel}>Cachet électronique</Text>
-          <Text style={styles.cachetLabel}>Reporting Manar</Text>
+          <Text style={styles.cachetLabel}>MIMS REPORTING</Text>
           <Text style={styles.cachetSub}>
             {timestamp_rfc3161_mock.slice(0, 10)}
           </Text>

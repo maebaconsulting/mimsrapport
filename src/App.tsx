@@ -15,7 +15,7 @@ type Vue = "accueil" | "import" | "clients" | "rapports" | "tableaux" | "paramet
 
 const NAV: Array<{ id: Vue; label: string; enabled: boolean }> = [
   { id: "accueil", label: "Accueil", enabled: true },
-  { id: "import", label: "Import Manar", enabled: true },
+  { id: "import", label: "Import", enabled: true },
   { id: "clients", label: "Clients", enabled: true },
   { id: "rapports", label: "Rapports", enabled: true },
   { id: "tableaux", label: "Tableaux de bord", enabled: true },
@@ -63,8 +63,8 @@ function App() {
     <div className="app-shell">
       <aside className="app-sidebar">
         <div className="app-brand">
-          <span className="app-brand__mark">RM</span>
-          <span className="app-brand__name">Reporting Manar</span>
+          <span className="app-brand__mark">MR</span>
+          <span className="app-brand__name">MIMS REPORTING</span>
         </div>
         <nav className="app-nav">
           <span className="small-caps app-nav__section">Navigation</span>
@@ -93,9 +93,9 @@ function App() {
         {vue === "import" && (
           <>
             <header className="app-header">
-              <h1 className="app-header__title">Import Manar</h1>
+              <h1 className="app-header__title">Import des données</h1>
               <p className="app-header__subtitle">
-                Chargement du fichier Manar et enregistrement des entités
+                Chargement du fichier d'export et enregistrement des entités
               </p>
             </header>
             <section className="app-content">

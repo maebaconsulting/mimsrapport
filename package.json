@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Reporting Manar · application desktop de reporting pour société de bourse CEMAC/BVMAC",
+  "description": "MIMS REPORTING · application desktop de reporting pour société de bourse CEMAC/BVMAC",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

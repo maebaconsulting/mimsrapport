@@ -361,7 +361,7 @@ export function ManarReconciliationReport(props: ManarReconciliationReportProps)
             <Text style={styles.headerLogo}>MIMS</Text>
             <Text style={styles.headerSdb}>{sdbName}</Text>
             <Text style={styles.headerConfidentiel}>
-              RAPPORT DE RÉCONCILIATION MANAR BRIDGE · CONFIDENTIEL
+              RAPPORT DE RÉCONCILIATION · CONFIDENTIEL
             </Text>
           </View>
           <View style={styles.headerRight}>
@@ -543,7 +543,7 @@ export function ManarReconciliationReport(props: ManarReconciliationReportProps)
           <Text
             style={styles.footerText}
             render={({ pageNumber, totalPages }) =>
-              `Page ${pageNumber} / ${totalPages} · Généré par Reporting Manar · ${fmtDateTime(exportedAt)}`
+              `Page ${pageNumber} / ${totalPages} · Généré par MIMS REPORTING · ${fmtDateTime(exportedAt)}`
             }
           />
           <View style={{ alignItems: 'flex-end' }}>

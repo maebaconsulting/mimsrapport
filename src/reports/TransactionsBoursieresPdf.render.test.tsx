@@ -90,7 +90,7 @@ describe("rendu réel · TransactionsBoursieresPdf", () => {
     props.shell = {
       ...props.shell,
       provenance: [
-        "Source : mouvements de titres importés depuis Manar.",
+        "Source : mouvements de titres issus du fichier d'export.",
         "Hors périmètre : exécutions d'ordres, OST, frais.",
       ],
     };

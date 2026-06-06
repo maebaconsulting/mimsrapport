@@ -106,7 +106,7 @@ export function LettreRelanceDesherencePdf({
   const mentions = mentionsLines && mentionsLines.length > 0 ? mentionsLines : DEFAULT_MENTIONS;
 
   return (
-    <Document title={`Relance déshérence - ${numero_compte}`} author="Reporting Manar · MAEBA Consulting" subject="Relance déshérence RG-267" creator="Reporting Manar">
+    <Document title={`Relance déshérence - ${numero_compte}`} author="MIMS REPORTING · MAEBA Consulting" subject="Relance déshérence RG-267" creator="MIMS REPORTING">
       <Page size="A4" style={styles.page} wrap>
         <View style={styles.headerTopRow}>
           <View style={styles.logoBlock}>
@@ -161,7 +161,7 @@ export function LettreRelanceDesherencePdf({
         <View style={styles.cachet} fixed>
           <Text style={{ fontFamily: "JetBrainsMono", fontSize: 10, color: INFO }}>[V]</Text>
           <Text style={styles.cachetLabel}>Cachet électronique</Text>
-          <Text style={styles.cachetLabel}>Reporting Manar</Text>
+          <Text style={styles.cachetLabel}>MIMS REPORTING</Text>
           <Text style={styles.cachetSub}>{timestamp_rfc3161_mock.slice(0, 10)}</Text>
         </View>
       </Page>

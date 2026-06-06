@@ -283,9 +283,9 @@ export function ConfirmationOuverturePdf({
   return (
     <Document
       title={`Confirmation d'ouverture de compte - ${numero_compte}`}
-      author="Reporting Manar · MAEBA Consulting"
+      author="MIMS REPORTING · MAEBA Consulting"
       subject="Confirmation d'ouverture de compte titre"
-      creator="Reporting Manar"
+      creator="MIMS REPORTING"
     >
       <Page size="A4" style={styles.page} wrap>
         {/* En-tête */}
@@ -357,7 +357,7 @@ export function ConfirmationOuverturePdf({
         <View style={styles.cachet} fixed>
           <Text style={{ fontFamily: "JetBrainsMono", fontSize: 10, color: INFO }}>[V]</Text>
           <Text style={styles.cachetLabel}>Cachet électronique</Text>
-          <Text style={styles.cachetLabel}>Reporting Manar</Text>
+          <Text style={styles.cachetLabel}>MIMS REPORTING</Text>
           <Text style={styles.cachetSub}>{timestamp_rfc3161_mock.slice(0, 10)}</Text>
         </View>
       </Page>

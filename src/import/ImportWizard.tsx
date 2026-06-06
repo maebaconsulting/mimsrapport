@@ -122,8 +122,7 @@ export function ImportWizard({
         <div className="card import-card">
           <span className="small-caps">Assistant d'import</span>
           <p className="card__lead">
-            Sélectionnez le fichier Manar (« État des instruments saisis sur
-            Manar », format .xls ou .xlsx). L'import enregistre les clients,
+            Sélectionnez le fichier d'export (.xls ou .xlsx). L'import enregistre les clients,
             portefeuilles, instruments, émetteurs, positions et mouvements.
           </p>
 
@@ -157,7 +156,7 @@ export function ImportWizard({
                   ? "Import en cours…"
                   : dragSurvol
                     ? "Déposez le fichier ici"
-                    : "Choisir un fichier Manar"}
+                    : "Choisir un fichier d'export"}
               </span>
               <span className="import-dropzone__hint">
                 Glissez-déposez un fichier ou cliquez · .xls, .xlsx
@@ -217,7 +216,7 @@ export function ImportWizard({
 
           {phase.kind === "erreur" && (
             <ErrorState
-              message="L'import du fichier Manar a échoué. Vérifiez le fichier puis recommencez."
+              message="L'import du fichier d'export a échoué. Vérifiez le fichier puis recommencez."
               detail={phase.message}
               onRetry={() => setPhase({ kind: "idle" })}
               retryLabel="Recommencer"

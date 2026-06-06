@@ -17,7 +17,7 @@ use tauri_plugin_dialog::DialogExt;
 #[derive(Default)]
 pub struct PickedPath(pub Mutex<Option<PathBuf>>);
 
-/// Ouvre le dialogue de sélection d'un fichier Manar. Mémorise le chemin choisi
+/// Ouvre le dialogue de sélection du fichier d'export. Mémorise le chemin choisi
 /// côté Rust et retourne seulement le nom du fichier (ou null si annulé).
 ///
 /// `async` est requis : une commande synchrone s'exécute sur le thread principal,
@@ -31,7 +31,7 @@ pub async fn pick_manar_file(
     let picked = app
         .dialog()
         .file()
-        .add_filter("Fichier Manar", &["xls", "xlsx"])
+        .add_filter("Fichier d'export", &["xls", "xlsx"])
         .blocking_pick_file();
 
     match picked {

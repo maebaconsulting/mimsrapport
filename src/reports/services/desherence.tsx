@@ -4,7 +4,7 @@
 //  · Lettre de relance déshérence (par client)
 //
 // Adaptation desktop · l'inactivité se mesure sur la seule activité titres
-// (mouvements importés depuis Manar). Coupons et espèces ne sont pas connus :
+// (mouvements issus du fichier d'export). Coupons et espèces ne sont pas connus :
 // coupon = 0 (affiché « - »), et le montant à reverser retient la valorisation
 // des titres. Seuils par défaut CEMAC, aucune saisie. Rendu webview, double hash.
 
@@ -41,7 +41,7 @@ export interface DesherenceOutput {
 }
 
 const PROVENANCE_ETAT = [
-  "Source : positions et mouvements de titres importés depuis Manar.",
+  "Source : positions et mouvements de titres issus du fichier d'export.",
   "Inactivité mesurée sur la seule activité titres (dernier mouvement) — ordres, portail et contacts non disponibles.",
   "Coupons et espèces hors périmètre (affichés « - ») ; montant à reverser = valorisation des titres.",
   `Seuils CEMAC par défaut : inactif ${DEFAULT_DESHERENCE_SEUILS.seuil_inactif_mois} mois, déshérence ${DEFAULT_DESHERENCE_SEUILS.seuil_desherence_ans} ans.`,
@@ -132,7 +132,7 @@ async function buildEtatLignes(
       nom_client: await nomClient(clientId),
       compte_titres: pf?.code ?? clientId,
       nature_instrument: inst.libelle_fr ?? inst.isin ?? "—",
-      date_souscription: null, // non disponible dans l'import Manar
+      date_souscription: null, // non disponible dans le fichier d'export
       date_maturite: echeance,
       montant_investi_xaf: montantInvesti,
       coupon_xaf: 0, // hors périmètre

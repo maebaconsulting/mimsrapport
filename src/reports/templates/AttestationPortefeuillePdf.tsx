@@ -316,9 +316,9 @@ export function AttestationPortefeuillePdf({
   return (
     <Document
       title={`Attestation de portefeuille - ${client.code} - ${fmtDate(date_arrete)}`}
-      author="Reporting Manar · MAEBA Consulting"
+      author="MIMS REPORTING · MAEBA Consulting"
       subject="Attestation de portefeuille de titres"
-      creator="Reporting Manar"
+      creator="MIMS REPORTING"
     >
       <Page size="A4" style={styles.page} wrap>
         <View style={styles.headerTopRow}>
@@ -455,7 +455,7 @@ export function AttestationPortefeuillePdf({
             [V]
           </Text>
           <Text style={styles.cachetLabel}>Cachet électronique</Text>
-          <Text style={styles.cachetLabel}>Reporting Manar</Text>
+          <Text style={styles.cachetLabel}>MIMS REPORTING</Text>
           <Text style={styles.cachetSub}>
             {timestamp_rfc3161_mock.slice(0, 10)}
           </Text>

@@ -16,7 +16,7 @@ export function ClientsView({
       <header className="app-header">
         <h1 className="app-header__title">Clients</h1>
         <p className="app-header__subtitle">
-          Données consolidées issues de l'import Manar · comptes, positions et
+          Données consolidées issues du dernier import · comptes, positions et
           encours par client
         </p>
       </header>

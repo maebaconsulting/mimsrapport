@@ -412,7 +412,7 @@ export function deriveEntities(rows: ManarMappedRow[]): DerivedEntities {
       portefeuilleMap.set(portefeuilleCode, {
         code: portefeuilleCode,
         client_code: clientCode,
-        libelle: `Portefeuille migré Manar · ${clientCode}`,
+        libelle: `Portefeuille · ${clientCode}`,
         devise: "XAF",
         statut: "ACTIF",
       });

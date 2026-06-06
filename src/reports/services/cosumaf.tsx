@@ -94,8 +94,8 @@ interface InstrumentLite {
 // ---------------------------------------------------------------------------
 
 const PROVENANCE_TRANSACTIONS = [
-  "Source : mouvements de titres importés depuis Manar, sens ACHAT et VENTE.",
-  "Hors périmètre (non disponible dans l'import Manar) : exécutions d'ordres détaillées, opérations sur titres (OST), frais.",
+  "Source : mouvements de titres issus du fichier d'export, sens ACHAT et VENTE.",
+  "Hors périmètre (non disponible dans le fichier d'export) : exécutions d'ordres détaillées, opérations sur titres (OST), frais.",
   "Montant estimé par quantité × prix unitaire du mouvement.",
 ];
 
@@ -183,8 +183,8 @@ export async function generateTransactionsBoursieres(
 // ---------------------------------------------------------------------------
 
 const PROVENANCE_AVOIRS = [
-  "Source : positions valorisées importées depuis Manar, à la date d'arrêté.",
-  "Catégorisation : tous les comptes sont rattachés à « Clientèle » — Dirigeants et Personnel non renseignés dans l'import Manar.",
+  "Source : positions valorisées issues du fichier d'export, à la date d'arrêté.",
+  "Catégorisation : tous les comptes sont rattachés à « Clientèle » — Dirigeants et Personnel non renseignés dans le fichier d'export.",
   "Hors périmètre : soldes espèces non disponibles, fixés à 0.",
 ];
 
