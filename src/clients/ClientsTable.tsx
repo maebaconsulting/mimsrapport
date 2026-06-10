@@ -8,41 +8,33 @@ import { getPocketBase } from "../lib/pocketbase";
 import { useRefreshOnSignal } from "../lib/refresh";
 import { KpiCard } from "../dashboards/KpiCard";
 import { loadClientsData, type ClientRow, type ClientsData } from "./clients-data";
+import {
+  filterAndSortRows,
+  nextSort,
+  type Filtre,
+  type SortKey,
+  type SortState,
+} from "./clients-table-logic";
 import { LoadingState, ErrorState } from "../ui/states";
 import { useT, useLocale, type TFunc, type TKey } from "../i18n";
 import "../dashboards/dashboards.css";
 import "./clients.css";
 
-type Filtre = "tous" | "PP" | "PM";
-
-type SortKey =
-  | "code"
-  | "nom_complet"
-  | "type"
-  | "compte_titres"
-  | "nb_positions"
-  | "encours_xaf"
-  | "statut"
-  | "date_ouverture";
-
-/** Colonnes triables de la table (clé de libellé i18n, clé de tri, alignement, type). */
+/** Colonnes triables de la table (clé de libellé i18n, clé de tri, alignement). */
 const COLUMNS: Array<{
   key: SortKey;
   labelKey: TKey;
   num?: boolean;
-  numeric?: boolean;
 }> = [
   { key: "code", labelKey: "clients.col-code" },
   { key: "nom_complet", labelKey: "clients.col-nom" },
   { key: "type", labelKey: "clients.col-type" },
   { key: "compte_titres", labelKey: "clients.col-compte-titres" },
-  { key: "nb_positions", labelKey: "clients.col-positions", num: true, numeric: true },
-  { key: "encours_xaf", labelKey: "clients.col-encours", num: true, numeric: true },
+  { key: "nb_positions", labelKey: "clients.col-positions", num: true },
+  { key: "encours_xaf", labelKey: "clients.col-encours", num: true },
   { key: "statut", labelKey: "clients.col-statut" },
   { key: "date_ouverture", labelKey: "clients.col-ouverture" },
 ];
-
-type SortState = { key: SortKey; dir: "asc" | "desc" };
 
 const PAGE_SIZE_OPTIONS = [15, 30, 50];
 
@@ -122,12 +114,7 @@ export function ClientsTable({
   const [sort, setSort] = useState<SortState>({ key: "encours_xaf", dir: "desc" });
 
   function trier(key: SortKey) {
-    setSort((s) => {
-      if (s.key === key) return { key, dir: s.dir === "asc" ? "desc" : "asc" };
-      // Premier clic : numérique → décroissant, texte → croissant.
-      const numeric = COLUMNS.find((c) => c.key === key)?.numeric;
-      return { key, dir: numeric ? "desc" : "asc" };
-    });
+    setSort((s) => nextSort(s, key));
   }
 
   // `silent` : rafraîchissement en arrière-plan (focus/import) sans squelette
@@ -151,30 +138,11 @@ export function ClientsTable({
 
   const lignesFiltrees = useMemo(() => {
     if (state.kind !== "pret") return [];
-    const q = recherche.trim().toLowerCase();
-    const filtrees = state.data.rows.filter((r) => {
-      if (filtre !== "tous" && r.type !== filtre) return false;
-      if (nouveauxSeulement && !r.is_new) return false;
-      if (!q) return true;
-      return (
-        r.nom_complet.toLowerCase().includes(q) ||
-        r.code.toLowerCase().includes(q) ||
-        r.compte_titres.toLowerCase().includes(q)
-      );
-    });
-    const facteur = sort.dir === "asc" ? 1 : -1;
-    return [...filtrees].sort((a, b) => {
-      const va = a[sort.key];
-      const vb = b[sort.key];
-      if (typeof va === "number" && typeof vb === "number") {
-        return (va - vb) * facteur;
-      }
-      return (
-        String(va ?? "").localeCompare(String(vb ?? ""), "fr", {
-          numeric: true,
-          sensitivity: "base",
-        }) * facteur
-      );
+    return filterAndSortRows(state.data.rows, {
+      recherche,
+      filtre,
+      nouveauxSeulement,
+      sort,
     });
   }, [state, recherche, filtre, sort, nouveauxSeulement]);
 
