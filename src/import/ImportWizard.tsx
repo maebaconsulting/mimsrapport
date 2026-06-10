@@ -35,7 +35,9 @@ type Phase =
       mapping?: ColumnMapping;
     }
   | { kind: "reussi"; summary: ImportSummary }
-  | { kind: "erreur"; message: string };
+  // `message` est toujours affiché tel quel (déjà rédigé pour l'utilisateur) ;
+  // `detail` porte la trace technique brute, repliée sous « Détail technique ».
+  | { kind: "erreur"; message: string; detail?: string };
 
 function formatXAF(n: number, locale: string): string {
   return n.toLocaleString(locale) + " XAF";
@@ -127,7 +129,7 @@ export function ImportWizard({
       }
       setHistoryKey((k) => k + 1); // l'historique manar_imports a changé
     } catch (err) {
-      setPhase({ kind: "erreur", message: String(err) });
+      setPhase({ kind: "erreur", message: t("import.error-failed"), detail: String(err) });
       setHistoryKey((k) => k + 1);
     }
   }
@@ -140,7 +142,7 @@ export function ImportWizard({
     try {
       wb = readManarWorkbook(data);
     } catch (err) {
-      setPhase({ kind: "erreur", message: String(err) });
+      setPhase({ kind: "erreur", message: t("import.error-failed"), detail: String(err) });
       return;
     }
     try {
@@ -165,7 +167,7 @@ export function ImportWizard({
         missingRequired: det.missingRequired,
       });
     } catch (err) {
-      setPhase({ kind: "erreur", message: String(err) });
+      setPhase({ kind: "erreur", message: t("import.error-failed"), detail: String(err) });
     }
   }
 
@@ -311,8 +313,8 @@ export function ImportWizard({
 
           {phase.kind === "erreur" && (
             <ErrorState
-              message={t("import.error-failed")}
-              detail={phase.message}
+              message={phase.message}
+              detail={phase.detail}
               onRetry={() => setPhase({ kind: "idle" })}
               retryLabel={t("import.retry-label")}
             />
